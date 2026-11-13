@@ -2,6 +2,17 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
+/** Keep useful client activation errors while excluding authentication and profile data. */
+export function safeBrowserDiagnostic(raw: string): string {
+  if (/authorization|set-cookie|\bcookie\b|password|credential|api[_ -]?key|\bsecret\b|\bbearer\b|private[_ -]?key|BEGIN[\s\S]{0,80}PRIVATE KEY/i.test(raw)) return '[sensitive diagnostic omitted]'
+  return raw.replace(/mcp-proxy:\/\/associate\/[^\s"'<>]+/gi, '[activation omitted]')
+    .replace(/https?:\/\/[^\s"'<>)]*/gi, value => { try { const url = new URL(value); return url.origin + url.pathname } catch { return '[url omitted]' } })
+    .replace(/\btoken=[^\s"'&,;]*/gi, 'token=[redacted]')
+    .replace(/[A-Za-z0-9_-]{40,}/g, '[redacted]')
+    .replace(/[A-Za-z0-9_.+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, '[email omitted]')
+    .slice(0, 2048)
+}
+
 export async function eventually<T>(read: () => Promise<T | undefined | false>, label: string, timeout = 30000): Promise<T> {
   const deadline = Date.now() + timeout
   while (Date.now() < deadline) {
@@ -14,9 +25,26 @@ export async function eventually<T>(read: () => Promise<T | undefined | false>, 
 export class BrowserCdp {
   private id = 0
   private readonly pending = new Map<number, { resolve(value: unknown): void; reject(error: Error): void; timer: ReturnType<typeof setTimeout> }>()
-  private constructor(private readonly socket: WebSocket) {
+  private readonly errors: Array<{ kind: string; message: string }> = []
+  private readonly scripts = new Map<string, string>()
+  private constructor(private readonly socket: WebSocket, private readonly diagnosticOrigin?: string) {
     socket.addEventListener('message', event => {
-      const message = JSON.parse(String(event.data)) as { id?: number; error?: unknown; result?: unknown }
+      const message = JSON.parse(String(event.data)) as { id?: number; error?: unknown; result?: unknown; method?: string;
+        params?: { type?: string; url?: string; hash?: string; args?: Array<{ value?: unknown; description?: string }>;
+          exceptionDetails?: { text?: string; exception?: { description?: string } }; entry?: { level?: string; text?: string } } }
+      const record = (kind: string, value: string) => { this.errors.push({ kind, message: safeBrowserDiagnostic(value) }); if (this.errors.length > 64) this.errors.shift() }
+      if (message.method === 'Runtime.exceptionThrown') record('exception', message.params?.exceptionDetails?.exception?.description ?? message.params?.exceptionDetails?.text ?? 'Client exception')
+      if (message.method === 'Runtime.consoleAPICalled') {
+        const value = (message.params?.args ?? []).slice(0, 10).map(arg => typeof arg.value === 'string' ? arg.value : arg.description ?? '').join(' ')
+        if (['error', 'warning'].includes(message.params?.type ?? '') || /\berror\b|\bfailed\b|mcp-proxy|ui-config|locale|slots/i.test(value)) record('console', value)
+      }
+      if (message.method === 'Log.entryAdded' && ['error', 'warning'].includes(message.params?.entry?.level ?? '')) record('log', message.params?.entry?.text ?? 'Client log error')
+      if (message.method === 'Debugger.scriptParsed' && this.diagnosticOrigin && /^[A-Za-z0-9_-]{16,128}$/.test(message.params?.hash ?? '')) {
+        try {
+          const url = new URL(message.params?.url ?? '')
+          if (url.origin === this.diagnosticOrigin && /[.]m?js$/.test(url.pathname) && this.scripts.size < 128) this.scripts.set(url.pathname, message.params!.hash!)
+        } catch { /* Ignore blank/evaluated scripts and unrelated browser code. */ }
+      }
       if (!message.id) return
       const entry = this.pending.get(message.id)
       if (!entry) return
@@ -25,7 +53,7 @@ export class BrowserCdp {
     })
     socket.addEventListener('close', () => { for (const entry of this.pending.values()) { clearTimeout(entry.timer); entry.reject(new Error('CDP closed')) }; this.pending.clear() })
   }
-  static async page(profile: string): Promise<BrowserCdp> {
+  static async page(profile: string, diagnosticOrigin?: string): Promise<BrowserCdp> {
     const port = await eventually(async () => {
       try { return Number((await readFile(join(profile, 'DevToolsActivePort'), 'utf8')).split('\n')[0]) || undefined } catch { return undefined }
     }, 'owned browser debugging endpoint')
@@ -36,7 +64,9 @@ export class BrowserCdp {
     }, 'browser page')
     const socket = new WebSocket(target.webSocketDebuggerUrl)
     await new Promise<void>((resolve, reject) => { socket.addEventListener('open', () => resolve(), { once: true }); socket.addEventListener('error', () => reject(new Error('Cannot open browser CDP')), { once: true }) })
-    return new BrowserCdp(socket)
+    const client = new BrowserCdp(socket, diagnosticOrigin)
+    await Promise.all([client.send('Runtime.enable'), client.send('Log.enable'), ...(diagnosticOrigin ? [client.send('Debugger.enable')] : [])])
+    return client
   }
   send(method: string, params: Record<string, unknown> = {}): Promise<unknown> {
     return new Promise((resolve, reject) => {
@@ -56,6 +86,8 @@ export class BrowserCdp {
     await this.send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...point, button: 'left', clickCount: 1 })
   }
   close(): void { this.socket.close() }
+  diagnostics(): ReadonlyArray<{ kind: string; message: string }> { return [...this.errors] }
+  moduleRevisions(): ReadonlyArray<{ path: string; sourceHash: string }> { return [...this.scripts].map(([path, sourceHash]) => ({ path: safeBrowserDiagnostic(path), sourceHash })) }
 }
 
 /** Fresh public DSH profiles show a nonbinding notice and optional model setup. Use real UI controls. */

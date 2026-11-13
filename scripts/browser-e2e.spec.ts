@@ -3,7 +3,7 @@ import { copyFile, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { assertDesktopPreflight, requireBrowserMatrix, ownedCertificate, uniqueTarget, activeMcpIdentities } from './browser-e2e-contract.ts'
-import { prepareDshPage } from './browser-cdp.ts'
+import { prepareDshPage, safeBrowserDiagnostic } from './browser-cdp.ts'
 import { compileDesktopProbe, nativeProbe, nativeActionSession, nativeConfirmationPoll, confirmNativeAction, confirmNativeProtocol } from './browser-native.ts'
 
 it('refuses existing URI owners and noninteractive desktops before touching user state', () => {
@@ -124,4 +124,13 @@ it.skipIf(process.platform !== 'win32')('recognizes protocol app names in senten
   ]
   await writeFile(input, JSON.stringify(cases.map(([text]) => text)))
   expect(await nativeProbe(helper, 'protocol-brand-fixture', input)).toEqual(cases.map(([, expected]) => expected))
+})
+it('retains useful client errors while omitting credentials, activation tickets and URL queries', () => {
+  const ticket = 'a'.repeat(43)
+  const error = safeBrowserDiagnostic(`TypeError: locale register at https://user:pass@localhost:3443/client.js?token=${ticket}#private mcp-proxy://associate/${ticket}?v=2 user@example.com`)
+  expect(error).toContain('TypeError: locale register')
+  for (const value of [ticket, 'user:pass', '#private', '?token=', 'user@example.com', 'mcp-proxy://associate/']) expect(error).not.toContain(value)
+  for (const value of ['Authorization: Bearer short', 'Cookie: local=value', 'password=short', '-----BEGIN PRIVATE KEY-----']) {
+    expect(safeBrowserDiagnostic(value)).toBe('[sensitive diagnostic omitted]')
+  }
 })

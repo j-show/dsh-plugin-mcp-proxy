@@ -63,6 +63,7 @@ export async function runBrowserMatrix(repository: string, state: string, helper
   }
   try {
     web = await startBrowserWeb(repository, scope, serverArtifact)
+    await writeFile(join(repository, `.artifacts/ci/browser-${browser}-framework.json`), JSON.stringify(web.frameworks, null, 2))
     stage = 'CA trust'
     certificate = await nativeProbe(helper, 'ca-add', web.caFile)
     await writeFile(settings, JSON.stringify({ version: 2, directory: workspace, identityFile: join(scope, 'identity.yaml'),
@@ -89,7 +90,7 @@ export async function runBrowserMatrix(repository: string, state: string, helper
       '--no-default-browser-check', '--disable-background-mode', '--force-renderer-accessibility', '--window-size=1200,800', 'about:blank'], { env, stdio: 'ignore', windowsHide: false })
     await once(browserProcess, 'spawn')
     browserIdentity = await remember(browserProcess.pid!)
-    cdp = await BrowserCdp.page(profile)
+    cdp = await BrowserCdp.page(profile, web.origin)
     const version = await cdp.send('Browser.getVersion') as { product: string; userAgent: string }
     await cdp.send('Page.bringToFront')
     await eventually(() => cdp!.evaluate<boolean>('document.readyState === "complete" && !!document.body'), 'owned blank document')
@@ -217,6 +218,7 @@ export async function runBrowserMatrix(repository: string, state: string, helper
           scenarios: { ...scenarios }, servers: snapshot.servers.map(row => ({ state: row.state })), nativeStages, requests: web?.diagnostics() ?? [] }, null, 2))
       } catch { /* Never mask the primary failure when its owned runtime has already exited. */ }
       if (cdp) {
+        await cleanup('sanitized client diagnostics', () => writeFile(join(repository, `.artifacts/ci/browser-${browser}-console.json`), JSON.stringify({ messages: cdp!.diagnostics(), modules: cdp!.moduleRevisions() }, null, 2)))
         try {
           const page = await cdp.evaluate<{ query: string; text: string; controls: string[] }>(`({query:location.search,text:document.body.innerText,controls:[...document.querySelectorAll('button,a,[role="tab"],[role="menuitem"]')].map(e=>e.getAttribute('aria-label')||e.getAttribute('title')||e.textContent?.trim()||'').filter(Boolean).slice(0,80)})`)
           const controls = page.controls.map(text => text.replace(/[A-Za-z0-9_-]{43,}/g, '[redacted]'))

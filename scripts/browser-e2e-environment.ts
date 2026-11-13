@@ -5,8 +5,9 @@ import { mkdir, readFile, copyFile, writeFile } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
 import { createServer } from 'node:net'
 import { once } from 'node:events'
-import { join, resolve } from 'node:path'
+import { isAbsolute, join, relative, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
+import { createRequire } from 'node:module'
 import { generateDevelopmentTls, developmentDshCli } from './development.ts'
 import { createDevelopmentProxy } from './development-proxy.ts'
 import { eventually } from './browser-cdp.ts'
@@ -24,8 +25,36 @@ async function port(): Promise<number> {
   const address = server.address(); if (!address || typeof address === 'string') throw new Error('No loopback port')
   await new Promise<void>(resolve => server.close(() => resolve())); return address.port
 }
-export interface WebFixture { origin: string; bootstrap: string; caFile: string; pluginSha256: string; diagnostics(): Array<{ path: string; status: number }>; stop(): Promise<void> }
+export interface FrameworkVersion { name: string; version: string; anchor: string; source: string; packageSha256: string }
+export interface WebFixture { origin: string; bootstrap: string; caFile: string; pluginSha256: string; frameworks: FrameworkVersion[]; diagnostics(): Array<{ path: string; status: number }>; stop(): Promise<void> }
 export interface ServerArtifact { archive: string; sha256: string }
+async function frameworkVersions(repository: string, home: string, cli: string): Promise<FrameworkVersion[]> {
+  const entries: FrameworkVersion[] = []
+  const within = (parent: string, child: string) => { const path = relative(parent, child); return path === '' || (!path.startsWith('..') && !isAbsolute(path)) }
+  for (const [anchor, file] of [['profile', join(home, 'profiles/web/package.json')], ['cli', cli]] as const) {
+    const require = createRequire(file)
+    for (const name of ['@deepseek-ai/dsh', '@deepseek-ai/cordis', '@deepseek-ai/dsh-app-boot', '@deepseek-ai/dsh-client-modules',
+      '@deepseek-ai/dsh-client-locale', '@deepseek-ai/dsh-client-ui-slots', '@deepseek-ai/dsh-client-ui-renderer', '@j-show/dsh-plugin-mcp-proxy']) {
+      const before = entries.length
+      try {
+        let directory: string
+        try { directory = resolve(require.resolve(name + '/package.json'), '..') }
+        catch { directory = resolve(require.resolve(name), '..') }
+        for (let depth = 0; depth < 8; depth++, directory = resolve(directory, '..')) {
+          try {
+            const bytes = await readFile(join(directory, 'package.json')), value = JSON.parse(bytes.toString('utf8')) as { name: string; version: string }
+            if (value.name !== name) continue
+            if (!/^[A-Za-z0-9.+-]{1,100}$/.test(value.version)) throw new Error('Invalid package version')
+            const source = within(home, directory) ? 'fixture' : within(repository, directory) ? 'repository' : 'external'
+            entries.push({ name, version: value.version, anchor, source, packageSha256: createHash('sha256').update(bytes).digest('hex') }); break
+          } catch { /* Parent traversal reads only public package metadata. */ }
+        }
+      } catch { /* Missing resolvers are evidence; do not substitute a presumed version. */ }
+      if (entries.length === before) entries.push({ name, version: 'unresolved', anchor, source: 'unresolved', packageSha256: '' })
+    }
+  }
+  return entries
+}
 export async function bindServerArtifact(repository: string, directory: string): Promise<ServerArtifact> {
   const metadata = JSON.parse(await readFile(join(repository, 'release/mcp-plugin/release.json'), 'utf8')) as { archive: string }
   if (!/^[A-Za-z0-9_.-]+\.tgz$/.test(metadata.archive)) throw new Error('Invalid server artifact')
@@ -73,6 +102,6 @@ export async function startBrowserWeb(repository: string, directory: string, bou
       if (child.exitCode !== null) throw new Error('Isolated DSH exited before Web readiness')
       return /http:\/\/127\.0\.0\.1:\d+\/\?token=([^\s]+)/.exec(output)?.[1]
     }, 'DSH Web startup', 90000)
-    return { origin, bootstrap: `${origin}/?token=${token}`, caFile: join(tls, 'ca.pem'), pluginSha256, diagnostics: () => [...requests], stop }
+    return { origin, bootstrap: `${origin}/?token=${token}`, caFile: join(tls, 'ca.pem'), pluginSha256, frameworks: await frameworkVersions(repository, home, cli), diagnostics: () => [...requests], stop }
   } catch (error) { await stop(); throw error }
 }

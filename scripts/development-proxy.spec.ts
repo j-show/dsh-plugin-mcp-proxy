@@ -37,11 +37,17 @@ it.skipIf(process.platform !== 'win32')('creates unique trusted localhost TLS an
   })
   expect(JSON.parse(value)).toEqual({ url: '/mcp-proxy/pair?private=ticket', host: 'localhost:3443', origin: 'https://localhost:3443', cookie: 'test-only' })
   expect(observed).toEqual([{ path: '/mcp-proxy/pair', status: 200 }])
+  await new Promise<void>((resolve, reject) => {
+    const call = request({ hostname: '127.0.0.1', port: target.port, path: '/api/mcp-proxy/ui-config?private=bootstrap', ca }, response => {
+      response.resume(); response.once('end', resolve)
+    })
+    call.once('error', reject); call.end()
+  })
   for (const path of ['/api/live?private=browser', '/mcp-proxy/connect?private=device']) {
     await new Promise<void>((resolve, reject) => {
       const call = request({ hostname: '127.0.0.1', port: target.port, path, ca, headers: { Connection: 'Upgrade', Upgrade: 'websocket' } })
       call.once('upgrade', (_response, socket) => { socket.destroy(); resolve() }); call.once('error', reject); call.end()
     })
   }
-  expect(observed).toEqual([{ path: '/mcp-proxy/pair', status: 200 }, { path: '/mcp-proxy/connect', status: 101 }])
+  expect(observed).toEqual([{ path: '/mcp-proxy/pair', status: 200 }, { path: '/api/mcp-proxy/ui-config', status: 200 }, { path: '/mcp-proxy/connect', status: 101 }])
 })

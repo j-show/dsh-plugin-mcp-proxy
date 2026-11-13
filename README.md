@@ -41,6 +41,7 @@ profiles and test CAs are owned and removed by the run. Reports under `.artifact
 exclude tickets, private state and the address bar. See the [acceptance guide](docs/acceptance.md)
 and [implementation evidence](docs/evidence/browser-desktop-e2e-2026-11-13.md) for scope and results.
 Failure reports preserve native dialog structure and the last safe control error.
+Client activation diagnostics include scrubbed errors and observed framework/module revisions.
 Exit checks cover the actual tray menu and termination of the GUI, service and owned children.
 Protocol prompts use native app/origin context across browser-specific labels and sentence punctuation.
 

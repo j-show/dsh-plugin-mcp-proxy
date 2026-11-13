@@ -132,3 +132,8 @@ Chrome 七场景及回收全部通过；Edge 到达初次配对，应用名按�
 运行 [43474602708](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43474602708)
 已核对源码 SHA 为 d4231e0（GitHub ref 元数据同步后手动启动，旧 SHA 任务取消不计）。Chrome 完整矩阵及两项拒绝 guard 通过，Edge 明确匹配来源/Cancel但 app-label-missing。
 新增原生品牌文本回归复现句末句号误拒及点分前缀误认；修复保留句末自然语言标点，并拒绝 not.mcp-proxy、mcp-proxy.foo、mcp-proxy.exe.old 等名称。
+
+运行 [43477202103](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43477202103)
+默认测试 572 通过、8 跳过，Chrome 矩阵完整通过；Edge 页面截图显示 @j-show/dsh-mcp-proxy-ui 激活失败，未到原生协议确认。
+暂未确认产品根因，不改 apply 或放宽就绪断言。新增客户端 exception/console/log 脱敏记录、ui-config HTTP 状态、实际解析的框架包版本/元数据哈希和同源 JS source hash，
+区分 profile/CLI anchor、fixture/repository/external source 与 unresolved；原始日志、查询参数和凭据不上传。脱敏与 config 路径观察回归通过。

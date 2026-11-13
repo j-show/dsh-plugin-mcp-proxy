@@ -13,7 +13,7 @@ export function createDevelopmentProxy(pfx: Buffer, upstreamPort: number, observ
     const upstream = requestHttp({ hostname: '127.0.0.1', port: upstreamPort, path: incoming.url, method: incoming.method,
       headers: incoming.headers, timeout: 60000 }, response => {
         const path = incoming.url!.split('?')[0]!
-        if (['/mcp-proxy/pair', '/api/mcp-proxy/begin', '/api/mcp-proxy/finish', '/api/mcp-proxy/status'].includes(path)) observe?.({ path, status: response.statusCode ?? 502 })
+        if (['/mcp-proxy/pair', '/api/mcp-proxy/ui-config', '/api/mcp-proxy/begin', '/api/mcp-proxy/finish', '/api/mcp-proxy/status'].includes(path)) observe?.({ path, status: response.statusCode ?? 502 })
         outgoing.writeHead(response.statusCode ?? 502, response.headers); response.pipe(outgoing)
       })
     upstream.on('timeout', () => { upstream.destroy(new Error('upstream timeout')) })
