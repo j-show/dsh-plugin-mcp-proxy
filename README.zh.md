@@ -28,8 +28,8 @@
 release CI 在两端打包后自动执行，详见[验收指南](docs/acceptance.md)。
 
 `pnpm test:browser` 验证真实 Chrome/Edge 协议确认、自动配对及 GUI/托盘生命周期。
-需要交互桌面、Explorer 托盘及空闲 URI 注册项；`--preflight` 可安全检查，绝不覆盖现有安装。
-release CI 要求两种浏览器场景全部执行，不以跳过算成功。
+需要活动 Windows 会话、交互桌面、Explorer 托盘及空闲服务位/用户与系统 URI 注册；`--preflight` 安全检查，绝不覆盖现有安装。
+release CI 要求两种浏览器各七场景及网页伪确认/托盘遮挡拒绝检查全部执行，不以跳过算成功；[已验证范围](docs/evidence/browser-desktop-e2e-2026-11-13.md)与未覆盖矩阵分别记录。
 
 使用 Node.js 22.19+ 或 24+，以及 pnpm 11.7.0。依赖均来自公共 npm 仓库，不需要 Harness 源码目录。
 

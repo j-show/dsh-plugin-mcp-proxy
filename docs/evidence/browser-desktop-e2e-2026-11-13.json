@@ -1,0 +1,126 @@
+{
+  "sourceRevision": "ed2e5009f56e672d9f6bd58602200d8d7d09a3d0",
+  "verificationRecordedAt": "2026-11-13T18:25:53.3353015+00:00",
+  "workflow": {
+    "runId": 43482404091,
+    "url": "https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43482404091",
+    "artifactId": 14066836293,
+    "conclusion": "success"
+  },
+  "environment": {
+    "node": "v24.21.0",
+    "pnpm": "11.7.0",
+    "os": "Microsoft Windows 10.0.26100",
+    "runner": "windows-2025"
+  },
+  "checks": [
+    {
+      "command": "pnpm dev:doctor --packaging",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm dev:init",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm build",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm typecheck",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm test",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm dev:check",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm build:mcp-proxy --skip-build",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm build:mcp-plugin --skip-build",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm test:product",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm test:browser",
+      "exitCode": 0
+    }
+  ],
+  "coreTests": {
+    "passed": 573,
+    "skipped": 8,
+    "source": "workflow job log; five product and three POSIX cases are separate/platform skips"
+  },
+  "nativeProduct": {
+    "passed": 5,
+    "skipped": 0,
+    "serviceBefore": "idle",
+    "serviceAfter": "idle",
+    "cleanup": "test-owned data removed"
+  },
+  "build": {
+    "buildId": "build-proxy-OmG3G9",
+    "executableSha256": "e46d7eaf40bfe5a907e69d1b3b7678007e8b94247439763851389b9e336de3df",
+    "runtimeManifestSha256": "5c5dbcff858ed5fbfb89e36ba394f9f33e0c88531fcfb6a039bb9d70079b0b43",
+    "serverPluginSha256": "2bc993b729a089aca712891f8f37fd51cafb40cc71f652be91c254c3862f8ac4"
+  },
+  "browsers": [
+    {
+      "browser": "chrome",
+      "scenarios": {
+        "pair": true,
+        "hide": true,
+        "trayRestore": true,
+        "secondLaunch": true,
+        "reconnect": true,
+        "trayExit": true,
+        "cleanup": true
+      },
+      "guards": {
+        "webDocumentRejected": true,
+        "documentDepth": 51,
+        "ancestorLimit": 32,
+        "trayOcclusionRefused": true
+      },
+      "pluginSha256": "2bc993b729a089aca712891f8f37fd51cafb40cc71f652be91c254c3862f8ac4",
+      "version": "Chrome/156.0.8078.80 / Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+    },
+    {
+      "browser": "edge",
+      "scenarios": {
+        "pair": true,
+        "hide": true,
+        "trayRestore": true,
+        "secondLaunch": true,
+        "reconnect": true,
+        "trayExit": true,
+        "cleanup": true
+      },
+      "guards": {
+        "webDocumentRejected": true,
+        "documentDepth": 51,
+        "ancestorLimit": 32,
+        "trayOcclusionRefused": true
+      },
+      "pluginSha256": "2bc993b729a089aca712891f8f37fd51cafb40cc71f652be91c254c3862f8ac4",
+      "version": "Edg/156.0.4314.58 / Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36 Edg/156.0.0.0"
+    }
+  ],
+  "cleanup": "owned private state removed; URI/CA/process/service checks passed",
+  "excluded": [
+    "real model invocation",
+    "multi-device/concurrent DSH deployments",
+    "cross-user/privilege matrix",
+    "complete transport/fault/deployment matrix",
+    "npm/GitHub release publication"
+  ]
+}

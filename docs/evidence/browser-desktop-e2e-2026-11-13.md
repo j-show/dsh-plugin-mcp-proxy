@@ -1,139 +1,71 @@
-# Windows 浏览器与桌面验收入口
+# Windows 浏览器与桌面验收
 
-基线：33379e82589596fa37af53c93983115848a1f84f。设计已由用户批准。
+记录日期：2026-11-14（Asia/Shanghai）。基线为 `33379e82589596fa37af53c93983115848a1f84f`，范围按[已批准设计](../superpowers/specs/2026-11-13-browser-desktop-e2e-design.md)执行。
 
-本次增加真实 Chrome/Edge、浏览器协议确认、系统 URI handler、TLS 自动配对和 GUI/托盘生命周期矩阵，入口为 `pnpm test:browser`。
-它不代替真实模型、多设备或跨用户验收，不把缺失桌面条件或跳过当作成功。
+## 已验证结果
 
-## 本地验证
+实现提交：`ed2e5009f56e672d9f6bd58602200d8d7d09a3d0`。完整 [Windows CI 43482404091](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43482404091) 成功，checkout 为 clean，十条 release 验证命令均退出 0。
+[机器可读证据](browser-desktop-e2e-2026-11-13.json)保留提交、运行、环境、浏览器版本、构建摘要及全部场景标志；不引用本机聊天记录或私有配置作为验收前提。
 
-- `pnpm test`：退出 0；71 文件通过、2 文件跳过，565 项测试通过、8 跳过。
-- `pnpm typecheck`：退出 0。
-- 原生 UIA helper 编译成功；本机检测交互桌面与 Explorer 托盘可用，Chrome/Edge 已安装。
-- `pnpm test:browser --preflight`：因已有真实 URI owner 返回非零；核对前后 owner 未改变。这是安全拒绝证据，不是完整矩阵通过。
-- 同次服务端插件归档可以在隔离 profile 中安装，真实 DSH Web 启动与正常退出 smoke 成功。
-- 新增 URI app-data 回归在修复前出现 3 项失败，修复后通过；安装记录可选保存 LOCALAPPDATA，旧记录仍继承原环境。
-- 独立复审指出两页互斥导致 GUI 展示断言错误，已改为真实点击导航分别验证连接页和 MCP 页；复审无剩余可确认 P1/P2。
+| 检查 | 结果 |
+| --- | --- |
+| 默认测试 | 573 通过、8 跳过；5 项 product 由独立入口执行，3 项 POSIX 按 Windows 平台跳过 |
+| 开发检查 | 58 通过；类型检查、两端打包成功 |
+| 原生产物 | 5 项实际通过、零跳过；服务位前后 idle，测试数据已删除 |
+| Chrome | 156.0.8078.80；七场景全部通过 |
+| Edge | 156.0.4314.58；七场景全部通过 |
+| 网页伪确认拒绝 | 两浏览器均实际测得 Document 深度 51，超过原生祖先上限 32，定位器拒绝 |
+| 托盘遮挡拒绝 | 两浏览器均以本轮顶层窗口遮挡目标，验证拒绝后销毁，再执行真实鼠标点击 |
+| 回收 | 两浏览器的窗口、后台及 MCP 进程退出；URI、临时 CA、服务位检查通过，私有状态已删除 |
 
-## 运行和回收契约
+七场景为：真实 URI 唤起与 HTTPS/WSS 自动配对、关闭隐藏、托盘恢复、二次启动无重复实例、GUI 断开与重新配对、原生托盘菜单退出、资源回收。
+实际点击/输入进入原生 UI；不以注册表存在、单元测试数量或管理 API 的成功代替浏览器/托盘动作。
 
-构建专属客户端 EXE/runtime 经过现有记录与完整清单校验，服务端归档复制并绑定哈希后由两个浏览器共用。
-只操作独立 profile、当前测试的 URI owner、刚导入的 CA 指纹、创建时间匹配的 PID 和唯一私有目录。
-浏览器协议确认、窗口关闭和托盘动作使用真实输入，不模拟 Tray 事件。未知 owner、缺失桌面或失败清理均使验收非零退出。
+两个浏览器均绑定同一构建 `build-proxy-OmG3G9`：
 
-截图只包含新测试 GUI、经过 token 检查的页面视口或协议控件区域；协议证据裁剪 Open/Cancel 与复选框所在子树，
-拒绝完整浏览器根窗口，并扫描 Name/Value，不上传地址栏、原始登录 URL、浏览器 profile、身份、CA 私钥或原始服务器日志。
+- 客户端 EXE SHA256：`e46d7eaf40bfe5a907e69d1b3b7678007e8b94247439763851389b9e336de3df`
+- runtime 清单 SHA256：`5c5dbcff858ed5fbfb89e36ba394f9f33e0c88531fcfb6a039bb9d70079b0b43`
+- 服务端插件 SHA256：`2bc993b729a089aca712891f8f37fd51cafb40cc71f652be91c254c3862f8ac4`
 
-完整矩阵的最终结论以本次提交对应的实际 GitHub Actions 运行及报告为准。当前本地拒绝、单元测试或服务端 smoke 不能替代该结果。
+产物被后续构建覆盖后须重新验证，不能将此摘要用于另一份二进制。该记录不表示已发布 npm 包或 GitHub release。
 
-## 首轮 CI 反馈与确认修复
+## 复现入口
 
-运行 [43417575963](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43417575963) 的桌面预检通过，
-默认/开发/原生产物检查及打包均完成，但 CA 导入等待 Windows 安全确认而超时。
-本机复现并通过只读检查确认该窗口属于测试 helper。修复为创建身份和映像路径固定的 UIA 确认，
-同时覆盖导入、移除两个方向；原生指针点击先验证命中目标，防止背景或遮挡误点。
-新生成测试 CA 的完整导入、确认、移除 smoke 均成功，类型检查通过，独立复审无新 P1/P2。
+在具备活动输入桌面、Explorer 和 Chrome/Edge 的 Windows x64 环境中执行：
 
-下一运行 [43420184132](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43420184132)
-越过 CA 阶段，进程身份捕获遇到已退出的启动 PID。MCP SDK 的版本协商可以关闭初始子进程后
-使用兼容驱动，因此标记不是“全部仍在运行”的清单。回归现区分退出标记、服务实际子树和存活的
-未知 PID；二次启动比较当前子进程身份及前后标记增量，仍拒绝新进程或归属缺失。
+```powershell
+pnpm install --frozen-lockfile
+pnpm test:browser --preflight
+./scripts/verify.ps1 -Mode release
+```
 
-运行 [43421631186](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43421631186)
-到达 Chrome 设置导航。脱敏控件与截图显示新 profile 的 Internal Testing Notice 遮挡背景设置按钮。
-新增正常引导：实际点击非约束性声明 Continue，若需要则通过 Configure later 延后模型配置；
-每次浏览器点击增加命中检查，不能把后台按钮坐标当作前台可用控件。引导回归要求等待弹窗消失且不重复提交。
+服务位及用户/系统合并 URI 注册必须空闲。已有安装会安全拒绝；使用独立测试机器、虚拟机或测试用户前仍须核对机器服务位。
+单独执行浏览器矩阵前先完成 `pnpm build:mcp-proxy` 与 `pnpm build:mcp-plugin`。入口使用构建记录，不按目录时间选择产物。
 
-运行 [43423186926](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43423186926)
-完成真实 Chrome 协议确认，但自动配对尚未连接。新增固定阶段与状态码诊断，区分原生转发、票据兑换和 WSS；
-不输出 URI、查询参数、请求头或私有日志，仍保留原 TLS 和连接断言。
+详细操作及维护约束见[开发指南](../development.md#真实浏览器和桌面验收)。失败 profile、CA 私钥和原始服务日志保留在本轮私有目录，不上传；CI 只保留经过检查的报告和界面区域。
 
-运行 [43426136991](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43426136991)
-显示 begin 200、finish 409，未出现设备票据兑换，原生阶段为空。单独用完整 8.3 可执行路径复现了日志缺失；
-短路径回归修复前失败，改用完整长路径确定日志目录和文件名，继续定位实际唤起失败。
+## 已定位并覆盖的回归
 
-运行 [43427569643](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43427569643)
-仍无原生阶段和票据兑换。协议确认改为命中校验后的真实鼠标点击，并增加弹窗消失和 handler 执行证据断言。
-修正升级诊断只观察 MCP 路径，避免把 Web 自身的 WebSocket 误记为设备通道；回归覆盖不同升级路径与查询参数脱敏。
+| 问题 | 修复与证据 |
+| --- | --- |
+| URI 由 Explorer 启动丢失 app-data 上下文 | trusted receipt 保存 LOCALAPPDATA；3 种原生启动回归修复前失败、修复后通过 |
+| 完整 8.3 路径缺失诊断 | 用规范长路径定位日志；真实短路径启动回归保留，日志无 URI |
+| 进程加载期间 MainModule 不可用 | 只读有限权限句柄查询映像；真实挂起进程回归验证模块未就绪、映像正确及子进程终止 |
+| SDK 协商会退出初始 MCP 子进程 | 区分已退出标记与当前创建身份子树；拒绝存活的未知标记，二次启动比较实际实例 |
+| 新 DSH 引导遮挡设置 | 实际点击非约束性 Continue 与可选 Configure later；点击前核对命中 |
+| Chromium 协议提示保护期 | 等待焦点/前台/边界稳定及系统保护间隔后只输入一次；不抑制提示或保护 |
+| Edge Open 标签与句末标点 | 最小原生上下文核对品牌、来源、唯一 Cancel，拒绝 Document；原生文本回归覆盖标点与名称伪装 |
+| UIA FromPoint 返回逻辑祖先 | 通知图标组合物理 HWND 命中、限定祖先与交叠控件检查；真实遮挡负回归保留 |
+| 模态按钮在两个窗口路径重复枚举 | Automation.Compare 去重同一元素，两个不同同名控件仍拒绝；GUI 断开与重新配对实际通过 |
+| 原生托盘菜单不在桌面直接子层 | 右键一次后读取 GUI 自有可见窗口中的唯一 Exit；等待菜单而不重发鼠标动作 |
+| 不确定输入在回收中被重放 | session 禁止后续托盘 UI 回收，转入归属校验的服务/进程回收；成功/未知确认门、并发 tick 有回归 |
+| 原生升级组合用例总预算不足 | 总预算 90 秒，PowerShell 各限 10 秒，安装/卸载各 5 秒及全部 owner/文件断言保留 |
 
-运行 [43429347293](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43429347293)
-在真实指针确认阶段失败，尚未执行 handler。保留重试最后一次原生控件错误，避免通用 deadline 掩盖拒绝原因。
+本机另用不注册 URI 的私有开发入口做过定向定位：管理 API 仅建立 connected 前置状态，真实 GUI 确认后 disconnected，真实托盘 Exit 后进程/服务退出，原 URI 哈希不变。
+这不是同构建浏览器验收；上面的 release CI 才是本轮双浏览器结论。
 
-运行 [43430317648](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43430317648)
-明确报出 Native control is occluded。确认动作现按唯一按钮所属根窗口聚焦并等待前台稳定；
-预检核对输入桌面与进程桌面，命中诊断限定 PID、控件类型和 class，不记录 Name、Title 或 URL。
+## 仍未覆盖与待观察
 
-运行 [43431351885](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43431351885)
-前台定位通过，按钮中心命中同浏览器的 Group。指针现尝试系统建议点和目标内部点，仍只接受目标或子元素命中；
-脱敏检查通过时可保留归属已验证的协议窗口截图，以区分坐标与实际遮挡。
-
-运行 [43432822489](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43432822489)
-的协议窗口截图确认 Open mcp-proxy 按钮可见，坐标吻合，但所有内部点的 UIA 命中仍返回 Group。
-协议确认改为真实 SendInput 空格，前置必须同时满足按钮 HasKeyboardFocus、FocusedElement 匹配和所属根窗口在前台；
-后置仍要求弹窗消失、handler 执行和完整 TLS 配对。托盘保留实际指针及命中检查。
-部分 SendInput 插入会释放已按下的空格并终止；派发后的原生异常、helper 超时或无原生错误信息均不重试。
-回归验证前置焦点拒绝可以重试，而不确定输入、超时和无确认退出只调用一次。
-
-运行 [43434652629](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43434652629)
-键盘焦点与 SendInput 两事件插入检查通过，但协议提示仍未关闭。预检新增 WTS active 会话核对，
-以验证 hosted runner 是否实际处于可交互会话；不将同名桌面或成功插入输入等同于真实接收输入。
-协议截图表明 Open 按钮已实际取得焦点。[Chromium 当前实现](https://github.com/chromium/chromium/blob/main/chrome/browser/ui/views/external_protocol_dialog.cc)
-在窗口激活时重新启用输入保护，且键盘事件也受保护。确认前新增至少一秒、并长于系统双击间隔的焦点/前台/坐标稳定期；
-不关闭保护、不发送第二次同一确认。该原因是否解释 CI 失败仍以新运行结果核实。
-
-[43436591764](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43436591764) 首次尝试未建立 Chrome 调试入口，
-第二次尝试完成 Chrome 真实 URI handler 转发、TLS 配对、Web/GUI 与 MCP 页面展示及关闭隐藏，
-失败推进至 tray restore。通知区展开入口现优先匹配唯一 SystemTray.OverflowButton，并兼容 Hidden icon menu 标签；
-失败结构报告只输出控件类型、安全 ID 和固定 test-icon/other 分类，不输出原始 tooltip。
-退出后的图标检查也展开隐藏通知区，核对无匹配图标后关闭本次检查打开的弹层；不把折叠区未显示等同于已清理。
-
-运行 [43440414249](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43440414249)
-在打包前的 short-path 回归耗尽 20 秒整体时限，托盘改动尚未执行。该用例包含一次编译、两次 PowerShell 冷启动和多次注册事务；
-总预算调整为 90 秒，两个 PowerShell 调用各加 10 秒上限，每次安装/卸载仍为 5 秒，原有实际文件和 owner 断言保留。
-
-运行 [43441508678](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43441508678)
-完成配对/隐藏并实际展开 TopLevelWindowForOverflowXamlIsland，结构中有 NotifyItemIcon 按钮，但 Name 前缀不能识别本应用。
-根据 [UIA tooltip 契约](https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-supporttooltipcontroltype)，
-托盘现同时核对 Name 和 HelpText 中的精确应用标签；只输出 empty/test-icon/contains-brand/electron/other 分类，不输出原始文本。
-URI 预检改读合并的 ClassesRoot，拒绝用户级或系统级已有 handler；本机已确认仍安全拒绝现有注册。
-
-运行 [43444484478](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43444484478)
-在 GUI 启动枚举遇到 MainModule 尚不可用而空引用，未到达 tooltip 改动。新增挂起进程回归：旧读取方式出现 partial-copy 失败，
-改用 QueryFullProcessImageName 和只读有限权限句柄后通过，同时核对路径、实际终止及 PID 创建身份；所有创建的句柄均在 finally 关闭。
-
-运行 [43447587172](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43447587172)
-默认测试 569 通过、8 跳过，托盘 tooltip 匹配已成功；实际点击因 UIA 返回通知弹层 Pane 而被旧叶子命中假设拒绝。
-[Microsoft FromPoint 契约](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationelement.frompoint?view=netframework-4.8.1)
-允许返回更靠近根的逻辑元素。通知图标现组合物理 Win32 窗口命中、受限祖先链、无交叠可操作控件及派发前重查；
-实际 SendInput 鼠标动作前，先创建本轮顶层遮挡窗口验证拒绝路径并销毁，不使用托盘事件注入。
-独立复审发现失败回收可能重放不确定右键，现用 NativeActionSession 禁止此类后续托盘 UI 回收，转到既有归属校验的服务停止和进程回收；
-回归验证 uncertain、timeout、无原生错误报告时均只派发一次，确认未派发的前置拒绝仍可正常回收。
-
-运行 [43453944267](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43453944267)
-默认测试 570 通过、8 跳过，真实托盘恢复及二次启动通过，失败推进到 GUI 断开确认。
-本机以不注册 URI 的开发入口定位：同一个原生 OK 按钮从 #32770 对话框与 Chrome_WidgetWin_1 主窗口各枚举一次，RuntimeId 相同，旧选择器误计为 2。
-按 Automation.Compare 去重后，真实确认关闭且服务转为 disconnected；前后原 URI 注册哈希一致。此组件以前置管理 API 建立连接，未验收浏览器 URI，不替代 release 矩阵。
-失败报告新增仅含类别/RuntimeId 的 GUI 结构，GUI 确认保留最后原生错误；UIA Invoke 后异常也视作不确定，停止确认重试及后续托盘 UI 回收。
-证书确认的并发/后续 tick 共用一次性门：成功或结果不明后停止派发，仅等待实际证书操作结果；回归覆盖并发 tick、前置拒绝及 unknown/timeout。
-
-运行 [43464564917](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43464564917)
-默认测试 571 通过、8 跳过，GUI 断开及重新配对已通过，失败推进到 tray exit 的菜单查找。
-退出菜单改为在该 GUI 新鲜枚举的可见窗口子树查找，按 UIA 身份去重，要求非空可视边界；只等待菜单项出现，不重发右键。
-本机私有开发组件已执行真实托盘右键/原生 Exit，随后 GUI 退出、服务位恢复空闲，原 URI 哈希一致；仍不代替两浏览器 release 验收。
-
-运行 [43468315813](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43468315813)
-Chrome 七场景及回收全部通过；Edge 到达初次配对，应用名按钮匹配为 0。
-[Edge 官方教程](https://learn.microsoft.com/en-us/microsoft-edge/extensions-chromium/getting-started/picture-viewer-popup-webpage?tabs=v3)
-记录应用名在对话框、按钮仅为 Open 的布局，但不提供 UIA Name。定位器现统一验证最小原生上下文：应用品牌、当前 HTTPS authority 和唯一 Cancel，
-拒绝网页 Document 祖先/子树与地址栏容器；支持两种 Open 标签，复选框可按策略隐藏且不改状态。确认、消失检测和安全截图共用该定位器。
-复审指出深度上限不能跳过 Document 排除；现必须明确到达原生根才可选择。每个浏览器先在自有 about:blank 构造超过上限的可访问 HTML 伪确认，
-确认其 Document 深度超过原生边界且定位器拒绝，再导航真实 DSH；矩阵报告必须含该拒绝与托盘遮挡两项证据，缺失或深度不足均失败。
-
-运行 [43474602708](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43474602708)
-已核对源码 SHA 为 d4231e0（GitHub ref 元数据同步后手动启动，旧 SHA 任务取消不计）。Chrome 完整矩阵及两项拒绝 guard 通过，Edge 明确匹配来源/Cancel但 app-label-missing。
-新增原生品牌文本回归复现句末句号误拒及点分前缀误认；修复保留句末自然语言标点，并拒绝 not.mcp-proxy、mcp-proxy.foo、mcp-proxy.exe.old 等名称。
-
-运行 [43477202103](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43477202103)
-默认测试 572 通过、8 跳过，Chrome 矩阵完整通过；Edge 页面截图显示 @j-show/dsh-mcp-proxy-ui 激活失败，未到原生协议确认。
-暂未确认产品根因，不改 apply 或放宽就绪断言。新增客户端 exception/console/log 脱敏记录、ui-config HTTP 状态、实际解析的框架包版本/元数据哈希和同源 JS source hash，
-区分 profile/CLI anchor、fixture/repository/external source 与 unresolved；原始日志、查询参数和凭据不上传。脱敏与 config 路径观察回归通过。
+- 真实模型、多设备/并发独立 DSH、跨 Windows 用户/权限、完整传输与故障矩阵、远端反向代理部署以及发布流程仍按 A1—A7 分别验收。
+- [43477202103](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43477202103) 曾出现一次 Edge UI 插件激活失败；本次完整运行未复现，尚未确认根因。已增加脱敏 exception/console/log、ui-config 状态、解析框架版本及同源模块 source hash，不能将诊断增加称为该问题已修复。
+- 首次 [43436591764](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43436591764) 未建立 Chrome 调试入口，同提交第二次进入实际桌面场景。该单次启动异常未确认根因；不通过静默重试或场景跳过掩盖失败。

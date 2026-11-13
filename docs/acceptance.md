@@ -1,6 +1,6 @@
 # 验收记录与待完成事项
 
-记录日期：2026-11-07（Asia/Shanghai）。适用独立项目 `0.1.0`、公共 DSH `0.1.6-alpha.2` 及所附兼容补丁。需求编号见[requirements](requirements.md)，设计见[design](design.md)，启动和配置见[configuration](configuration.md)。本文是证据清单，不把已实现或单元测试通过等同于完整产品验收。
+迁移基线日期：2026-11-07；最新浏览器自动化证据：2026-11-14（Asia/Shanghai）。适用独立项目 `0.1.0`、公共 DSH `0.1.6-alpha.2` 及所附兼容补丁。需求编号见[requirements](requirements.md)，设计见[design](design.md)，启动和配置见[configuration](configuration.md)。本文是证据清单，不把已实现或单元测试通过等同于完整产品验收。
 
 ## 已有证据
 
@@ -8,7 +8,9 @@
 
 Chrome/Edge 与原生 GUI/托盘矩阵按[已批准设计](superpowers/specs/2026-11-13-browser-desktop-e2e-design.md)
 使用 `pnpm test:browser` 单独执行；桌面预检失败、已有 URI handler 安全拒绝或场景跳过均不算通过。
-报告区分两种浏览器的配对、隐藏、托盘恢复、二次启动、重连、退出及回收；结果以对应 CI 为准，
+提交 `ed2e500` 的 [完整 Windows CI](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43482404091)
+已实际通过两种浏览器各七场景及网页伪确认/托盘遮挡拒绝检查，见[固定证据](evidence/browser-desktop-e2e-2026-11-13.md)。
+报告区分配对、隐藏、托盘恢复、二次启动、重连、退出及回收；后续提交仍须核对各自 CI，
 不关闭尚未覆盖的真实模型、跨用户、多设备和 A7 其他场景。
 
 2026-11-13 的 URI 短路径故障定位及修复回归见[原生 URI 修复记录](evidence/native-uri-short-path-2026-11-13.md)。
@@ -29,11 +31,13 @@ Chrome/Edge 与原生 GUI/托盘矩阵按[已批准设计](superpowers/specs/202
 | 普通 Windows 桌面 URI 激活及 Web 关联 | 服务 ready、状态 connected、下游 files 可用；GUI 显示运行中和已连接 | 已覆盖真实用户桌面注册/唤起及一个 DSH 连接，不只是注册表查询或 HTTP 模拟 |
 | 用户此前人工确认 | GUI 自动连接/手动断开、托盘生命周期、退出无二次确认；模型创建并读回文件 | 属于迁移前的需求验证依据，不作为独立产物最新全流程回归通过证据 |
 
-本轮文档工作只运行文档结构、链接、基线完整性和配置示例校验，不需要为文档改动停止服务、切换用户或重新部署。
+迁移文档基线当时只运行结构、链接、基线完整性和配置示例校验；后续实际运行的构建、原生产物和浏览器检查以上方固定 CI 证据为准。
 
 ## 逐项覆盖
 
-### 开源开发支持（2026-11-13）
+### 初轮开源开发验证快照（2026-11-13）
+
+本表保留当时未提交树的本机结果与边界，不代表当前 GitHub CI 状态；提交后的验证见上方最新证据。
 
 | 目标 | 本轮结果 | 剩余边界 |
 | --- | --- | --- |
@@ -61,7 +65,7 @@ Chrome/Edge 与原生 GUI/托盘矩阵按[已批准设计](superpowers/specs/202
 | B5 三种传输 | [local.spec.ts](../packages/mcp-proxy/modules/local/tests/local.spec.ts)、[tasks.spec.ts](../packages/mcp-proxy/modules/local/tests/tasks.spec.ts) | SDK fixture 集成覆盖；三种传输的模型/UI 联合矩阵待补 A1/A7 |
 | B6 工具、结果与稳定别名 | [protocol.spec.ts](../packages/mcp-proxy/modules/protocol/tests/protocol.spec.ts)、[agent.spec.ts](../packages/dsh-plugin/modules/agent/tests/agent.spec.ts)、[tasks.spec.ts](../packages/mcp-proxy/modules/local/tests/tasks.spec.ts) | 完整富结果/模态产品回放待补 A1/A4；边界按需求能力表 |
 | B7 模型直接调用 | [agent.spec.ts](../packages/dsh-plugin/modules/agent/tests/agent.spec.ts) | 自动模型 fixture 覆盖；最新产物真实模型调用待补 A1 |
-| B8 URI 安装及关联 | [native-activation.product.spec.ts](../packages/mcp-proxy/modules/runtime/tests/native-activation.product.spec.ts)、[native-windows.spec.ts](../packages/mcp-proxy/modules/runtime/tests/native-windows.spec.ts) | 普通 Windows 激活已验证；Chrome/Edge 各自完整矩阵待补 A7 |
+| B8 URI 安装及关联 | [test-browser.ts](../scripts/test-browser.ts)、[native-activation.product.spec.ts](../packages/mcp-proxy/modules/runtime/tests/native-activation.product.spec.ts)、[native-windows.spec.ts](../packages/mcp-proxy/modules/runtime/tests/native-windows.spec.ts) | Chrome/Edge 的真实协议确认、handler 转发及 TLS 自动配对已验证；其他安装/部署边界见 A7 |
 | B9 不依赖固定本地 TCP | [activation.spec.ts](../packages/mcp-proxy/modules/protocol/tests/activation.spec.ts)、[association.spec.ts](../packages/dsh-plugin/modules/browser/tests/association.spec.ts) | 已验证实际关联；错误目标/过期等主要为自动测试 |
 | B10 每轮固定发起设备 | [agent.spec.ts](../packages/dsh-plugin/modules/agent/tests/agent.spec.ts)、[prompt.spec.ts](../packages/dsh-plugin/modules/browser/tests/prompt.spec.ts) | 两台真实电脑验收待补 A2 |
 | B11 后续轮次换设备 | [agent.spec.ts](../packages/dsh-plugin/modules/agent/tests/agent.spec.ts) | 后续设备与当前轮次引导有自动覆盖，真实两设备待补 A2 |
@@ -70,20 +74,20 @@ Chrome/Edge 与原生 GUI/托盘矩阵按[已批准设计](superpowers/specs/202
 | B14 本地交付/远端临时 | [agent.spec.ts](../packages/dsh-plugin/modules/agent/tests/agent.spec.ts)、[local-profile.product.spec.ts](../packages/mcp-proxy/modules/runtime/tests/local-profile.product.spec.ts) | 本地文件 product 覆盖；真实模型两类路径待补 A1 |
 | B15 断线不重放 | [runtime.spec.ts](../packages/mcp-proxy/modules/runtime/tests/runtime.spec.ts)、[invocations.spec.ts](../packages/mcp-proxy/modules/protocol/tests/invocations.spec.ts) | 故障 fixture 自动覆盖；实际桌面中断副作用核验待补 A2 |
 | B16 页面关闭不终止 | [elicitation.client.spec.ts](../packages/dsh-plugin/modules/ui/tests/elicitation.client.spec.ts)、[agent.spec.ts](../packages/dsh-plugin/modules/agent/tests/agent.spec.ts) | 页面/服务生命周期有自动覆盖，真实浏览器关页重开待补 A1 |
-| B17 Windows Chrome/Edge | Windows product 测试及普通桌面关联记录 | 不表示 Chrome/Edge × 传输 × 故障矩阵完成，见 A7；macOS/Linux 暂缓 |
+| B17 Windows Chrome/Edge | [test-browser.ts](../scripts/test-browser.ts) 与[双浏览器证据](evidence/browser-desktop-e2e-2026-11-13.json) | 当前七场景均已验证；不表示浏览器 × 传输 × 故障矩阵完成，见 A7；macOS/Linux 暂缓 |
 | B18 sampling | [agent.spec.ts](../packages/dsh-plugin/modules/agent/tests/agent.spec.ts)、[runtime.spec.ts](../packages/mcp-proxy/modules/runtime/tests/runtime.spec.ts) | 文本及取消/失败路径有自动覆盖；图片模态和实际模型请求待补 A1 |
 | B19 elicitation | [elicitation.spec.ts](../packages/dsh-plugin/modules/host/tests/elicitation.spec.ts)、[elicitation.client.spec.ts](../packages/dsh-plugin/modules/ui/tests/elicitation.client.spec.ts) | live 表单/URL 与单次回答有覆盖，历史归约及重启终态待补 A4 |
 | B20 roots | [local.spec.ts](../packages/mcp-proxy/modules/local/tests/local.spec.ts) | 配置/初始化自动覆盖；不承诺动态 roots 通知 |
 | B21 完整插件启用/释放 | [server.spec.ts](../packages/dsh-plugin/tests/server.spec.ts) | Loader 挂载/卸载及激活失败回滚覆盖；真实安装后禁用/卸载待补 A5 |
 | B22 单文件 Electron | [runtime-cache.spec.ts](../packages/mcp-proxy/tests/runtime-cache.spec.ts)、[portable-cwd.spec.ts](../packages/mcp-proxy/tests/portable-cwd.spec.ts)、product 测试 | EXE、缓存和普通桌面运行已有证据；新用户/含空格等完整矩阵待补 A7 |
-| B23 GUI/托盘/直接退出 | [desktop-lifetime.spec.ts](../packages/mcp-proxy/tests/desktop-lifetime.spec.ts)、[desktop-exit.spec.ts](../packages/mcp-proxy/tests/desktop-exit.spec.ts) | 迁移前人工确认，迁移后完整桌面复验待补 A7 |
+| B23 GUI/托盘/直接退出 | [test-browser.ts](../scripts/test-browser.ts)、[desktop-lifetime.spec.ts](../packages/mcp-proxy/tests/desktop-lifetime.spec.ts)、[desktop-exit.spec.ts](../packages/mcp-proxy/tests/desktop-exit.spec.ts) | 当前产物的关闭隐藏、真实托盘恢复、二次启动、原生菜单退出及回收已验证；其余用户/故障环境见 A7 |
 | B24 多 DSH 独立连接 | [managed-runtime.spec.ts](../packages/mcp-proxy/modules/runtime/tests/managed-runtime.spec.ts) | 自动覆盖，两真实独立部署与 EXE 联合待补 A2 |
 | B25 共享 MCP 增删 | [management.spec.ts](../packages/mcp-proxy/modules/local/tests/management.spec.ts) | 增删、失败不提交、实例替换自动覆盖；GUI 双部署联验待补 A2 |
 | B26 取消及影响范围 | [routing.spec.ts](../packages/mcp-proxy/modules/local/tests/routing.spec.ts)、[management.spec.ts](../packages/mcp-proxy/modules/local/tests/management.spec.ts) | 路由/取消 fixture 覆盖；实际副作用和清理待补 A2 |
-| B27 自动配对与断开意图 | [desktop-controller.spec.ts](../packages/mcp-proxy/modules/runtime/tests/desktop-controller.spec.ts)、[pairing.spec.ts](../packages/dsh-plugin/modules/host/tests/pairing.spec.ts) | 实际自动关联有证据；重启/迟到响应故障主要为自动测试 |
+| B27 自动配对与断开意图 | [test-browser.ts](../scripts/test-browser.ts)、[desktop-controller.spec.ts](../packages/mcp-proxy/modules/runtime/tests/desktop-controller.spec.ts)、[pairing.spec.ts](../packages/dsh-plugin/modules/host/tests/pairing.spec.ts) | Chrome/Edge 实际自动配对、GUI 断开及新 URI 重新配对已验证；重启/迟到响应故障主要为自动测试 |
 | B28 来源全程固定 | [multiple-dsh.spec.ts](../packages/mcp-proxy/modules/local/tests/multiple-dsh.spec.ts)、[routing.spec.ts](../packages/mcp-proxy/modules/local/tests/routing.spec.ts) | 重复 ID、回调和乱序自动覆盖；两真实 DSH 待补 A2 |
-| M1 独立项目 | 公共依赖、内部模块打包及产物导入验证 | 构建已脱离消费源码；新 checkout 可复现验证见 A6 |
-| M2 两条构建命令 | `scripts/build.ts`、EXE/归档构建记录 | 产物已生成，未发布到 npm/GitHub |
+| M1 独立项目 | 公共依赖、内部模块打包及产物导入验证 | 干净 checkout 的公共安装、两端构建及完整 Windows CI 已验证；发行范围见 A6 |
+| M2 两条构建命令 | `scripts/build.ts`、EXE/归档构建记录 | 当前 CI 已生成并绑定两端产物，未发布到 npm/GitHub |
 | M3 固定版本最小补丁 | [compatibility.spec.ts](../scripts/compatibility.spec.ts)、安装器实际版本检查 | 白名单修复已验证；完整持久化/SDK 回归见 A4 |
 
 ## 独立复现流程
@@ -138,8 +142,8 @@ release CI 在两端打包后自动调用该入口，并保留 `.artifacts/ci` �
 | A3 | Windows 安全/单实例验收缺口 | 不同普通登录用户、profile 和工作目录并发启动，验证机器排他和 IPC 权限；第二用户不能借用第一用户的控制能力；必要时修复安装/权限实现 |
 | A4 | 持久化及历史实现/验证缺口 | 按[A4.1—A4.6 工作契约](history-recovery-work.md)校验重启、会话重开、fork、未知结果、sampling/elicitation 历史。当前没有专用历史待回答归约器；补齐不可继续的终态展示，不恢复丢失的 live 续接。核验 TS/Python SDK 完整读写及无密钥快照，不能仅依赖事件白名单 |
 | A5 | 安装生命周期验收缺口 | 全新公共 DSH 安装、升级已存在配置、冲突补丁、插件禁用/卸载/重启；核对路由、工具、UI、监听和连接清理，保留必需历史读取能力 |
-| A6 | 独立可复现交付缺口 | 在干净 checkout 仅依赖公共安装完成构建/测试；补 CI 的 Windows 构建与选择性 product 执行、可持久留存的证据及发布流程。当前未发布 npm 包或 GitHub release |
-| A7 | 桌面/部署矩阵缺口 | 新 Windows 用户、含空格目录、低磁盘/损坏缓存、URI 缺失/冲突、Chrome 与 Edge、真实 TLS 反代及托盘全部行为，用最终同一版本产物复验；为 GUI 提交录制真实服务及模型流程的演示证据 |
+| A6 | 发行交付剩余项 | 干净 checkout 公共安装、Windows 构建、原生产物及浏览器 CI 和固定证据已有验证；仍未执行正式签名/发布流程及发布后安装验收。当前未发布 npm 包或 GitHub release，须按用户授权另行处理 |
+| A7 | 桌面/部署矩阵剩余项 | 当前同构建 Chrome/Edge 七场景及回收已有固定 CI 证据；仍需新 Windows 用户/权限、目录/磁盘/缓存异常、URI 冲突、浏览器 × 传输 × 故障、真实远端 TLS 反代及模型流程演示。不得用本轮子矩阵关闭整项 |
 
 设备撤销 GUI、CA 导入向导、MCP 编辑、自动更新、macOS/Linux、resources/prompts 或通用通知代理属于可另行决定的扩展，不混入 B1—B28 的完成条件。已有架构代码不等于这些扩展已经交付。
 

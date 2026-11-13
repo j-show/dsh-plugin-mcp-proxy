@@ -113,8 +113,8 @@ release CI 也运行它；服务位占用时先正常退出自己的开发 Elect
 
 ## 真实浏览器和桌面验收
 
-先执行 `pnpm test:browser --preflight`。必须同时安装普通 Chrome/Edge，有可交互输入桌面和
-Explorer 托盘，机器服务位及 `mcp-proxy://` 注册项均空闲。已有安装时安全拒绝，不自动卸载。
+先执行 `pnpm test:browser --preflight`。必须同时安装普通 Chrome/Edge，Windows 会话 active，输入桌面与进程桌面一致，
+Explorer 托盘可用，机器服务位及用户/系统合并的 `mcp-proxy://` 注册均空闲。已有安装时安全拒绝，不自动卸载。
 完整入口 `pnpm test:browser` 使用本次产物记录、服务端插件归档及独立 profile，临时导入
 测试 CA 并由真实产品注册 URI，逐个浏览器操作协议确认框、配对、窗口与托盘。
 使用现有公开工具链和 UIA/CDP，无额外浏览器框架或宿主 AI 插件依赖。
@@ -126,3 +126,18 @@ Explorer 托盘，机器服务位及 `mcp-proxy://` 注册项均空闲。已有�
 
 Windows 导入或移除根证书可能出现安全确认；测试仅处理本轮 helper 的创建身份与测试 CA
 匹配的窗口。普通原生按钮通过 UIA 执行，托盘指针操作先核对命中对象，遮挡时失败而不误点。
+
+### 浏览器验收实现约束
+
+修改 `scripts/browser-*.ts`、`scripts/test-browser.ts` 或原生 probe 时按本节核对。流程见[设计](superpowers/specs/2026-11-13-browser-desktop-e2e-design.md)，已验证范围见[固定证据](evidence/browser-desktop-e2e-2026-11-13.md)。
+
+- **构建与归属**：校验成功构建记录的 EXE/runtime 哈希和完整清单，服务端归档复制后绑定哈希。私有路径从 checkout 派生，拒绝链接目录、已有 URI owner 和占用服务位，不选择“时间最新”目录或停止未知进程。
+- **进程**：通过有限权限句柄查询映像，避免启动期 MainModule 缺失；动作绑定 PID 与创建时间。SDK 标记可能来自已退出的协商进程，只接受当前自有子树中的存活实例。挂起 fixture 按 CreateProcess 返回的句柄终止/等待子进程，finally 关闭进程、线程及查询句柄。
+- **协议上下文**：Open 应用名或 plain Open/打开必须位于最小原生子树，含品牌、预期 HTTPS authority 和唯一 Cancel。拒绝 Document 祖先/子树、Omnibox；必须在深度上限内明确到达自有窗口根。复选框可隐藏，状态不变；确认、消失检查、截图共用定位器。
+- **输入**：UIA 身份去重只合并同一控件，不合并不同同名按钮。协议确认先等待焦点、前台和边界稳定，尊重 Chromium 输入保护及系统双击间隔，再派发一次输入。禁止提示抑制、证书校验关闭、原生事件回调注入或用管理 API 成功替代真实 UI。
+- **不重放**：仅明确的输入前拒绝可重试，并保留最后原因。UIA Invoke/SendInput 后异常、超时或缺少可信结果均不确定；尝试释放已按下的键/鼠标键，停止后续托盘 UI 回收，转入自有配置/创建身份校验的服务停止和进程回收。证书确认门在成功或不确定后停止派发，只等待真实存储操作结果。
+- **托盘范围**：窗口须属当前 Shell_TrayWnd 进程；现代 overflow ID 优先，兼容本地化标签。通用 XAML 弹层中的目标还需已知通知图标 ID，Name/HelpText 精确匹配品牌。UIA FromPoint 可返回祖先；仅通知图标可在物理 HWND 根匹配、受限祖先链和无交叠可操作控件时接受，派发前重查身份/边界/光标。
+- **菜单与回收**：右键一次后读取 GUI 自有可见窗口中的唯一、非空 Exit MenuItem，等待菜单而不重发右键。退出后检查隐藏通知区，关闭本次检查打开的弹层；核对 GUI/服务/MCP 创建身份已退出、服务位 idle、URI 卸载及新导入 CA 指纹移除后，才删除自有状态。
+- **拒绝回归**：每浏览器在自有 blank tab 构造深层可访问 HTML 伪确认，测量 Document 深度超过原生上限并验证拒绝，再导航真实 DSH。托盘实际点击前用本轮顶层遮挡窗验证拒绝并销毁；矩阵缺少任一 guard 证据即失败。正向场景仍使用真实产品与浏览器操作。
+- **引导与诊断**：正常点击非约束性 Continue 和可选 Configure later，先验证网页点击命中。诊断只保留清洗后的错误、固定阶段/查询外路径/状态码、控件类别和 RuntimeId；记录 profile/CLI 解析的公共框架版本及同源 JS source hash，不将本地依赖版本当作实际加载版本。
+- **隐私**：不上传 profile、身份、私钥、原始服务日志或认证 URL/headers。协议截图只裁剪已验证子树，扫描 Name/Value 敏感内容并排除地址栏；页面截图需通过 token 检查。只能确认本轮 helper 创建身份、映像及测试 CA 文本都匹配的证书警告。
