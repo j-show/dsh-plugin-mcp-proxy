@@ -46,3 +46,7 @@
 运行 [43423186926](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43423186926)
 完成真实 Chrome 协议确认，但自动配对尚未连接。新增固定阶段与状态码诊断，区分原生转发、票据兑换和 WSS；
 不输出 URI、查询参数、请求头或私有日志，仍保留原 TLS 和连接断言。
+
+运行 [43426136991](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43426136991)
+显示 begin 200、finish 409，未出现设备票据兑换，原生阶段为空。单独用完整 8.3 可执行路径复现了日志缺失；
+短路径回归修复前失败，改用完整长路径确定日志目录和文件名，继续定位实际唤起失败。

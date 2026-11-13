@@ -13,3 +13,5 @@ The predecessor name is combined with the normalized current directory, so recov
 also works after predecessor deletion but before its receipt update was committed.
 URI receipts may include an absolute `localAppData` path; the native launcher carries
 it into child startup, while older receipts retain the inherited Windows environment.
+Activation diagnostics use the canonical helper name even when Windows launches its
+8.3 alias, retaining only fixed stage names and never URI contents.

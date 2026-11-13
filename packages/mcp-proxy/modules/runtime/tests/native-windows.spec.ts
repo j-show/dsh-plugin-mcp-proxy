@@ -58,6 +58,14 @@ it.skipIf(process.platform !== 'win32').each(['native', 'short'] as const)('inst
   })
   const filename = await installWindowsUri(spec, helper, 5000, new AbortController().signal)
   expect(await readFile(filename)).toEqual(await readFile(helper))
+  const activationPath = mode === 'short' ? (await promisify(execFile)('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', code],
+    { env: { ...process.env, MCP_PROXY_TEST_LONG_PATH: filename }, windowsHide: true })).stdout.trim() : filename
+  await expect(promisify(execFile)(activationPath, [`mcp-proxy://associate/${'b'.repeat(42)}`],
+    { timeout: 5000, windowsHide: true })).rejects.toMatchObject({ code: 1 })
+  const trace = await readFile(join(dirname(filename), basename(filename, '.exe') + '.activation.log'), 'utf8')
+  expect(trace).toContain('uri-path-length-invalid')
+  expect(trace).toContain('activation-invalid')
+  expect(trace).not.toContain('b'.repeat(42))
   const replacement = Buffer.concat([await readFile(helper), Buffer.from('updated-build')])
   await writeFile(helper, replacement)
   const nextName = `mcp-proxy-${createHash('sha256').update(replacement).digest('hex').slice(0, 12)}.exe`

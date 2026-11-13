@@ -36,9 +36,10 @@ internal static class UriLauncher
     {
         try
         {
-            string directory = AppDomain.CurrentDomain.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar);
+            string executable = LauncherPath(Assembly.GetExecutingAssembly().Location);
+            string directory = Path.GetDirectoryName(executable);
             if (!String.Equals(Path.GetFileName(directory), "mcp-proxy-os", StringComparison.OrdinalIgnoreCase)) return;
-            string filename = Path.Combine(directory, Path.GetFileNameWithoutExtension(Assembly.GetExecutingAssembly().Location) + ".activation.log");
+            string filename = Path.Combine(directory, Path.GetFileNameWithoutExtension(executable) + ".activation.log");
             if (File.Exists(filename) && ((File.GetAttributes(filename) & FileAttributes.ReparsePoint) != 0
                 || new FileInfo(filename).Length >= 65536)) return;
             File.AppendAllText(filename, DateTime.UtcNow.ToString("o") + " " + stage + "\n");
