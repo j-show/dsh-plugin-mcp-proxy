@@ -36,7 +36,7 @@ export async function runBrowserMatrix(repository: string, state: string, helper
   let failure: unknown
   let stage = 'web-install'
   const observed = new Map<number, Identity>()
-  const remember = async (id: number) => { const identity = await nativeProbe<Identity | null>(helper, 'identity', String(id)); if (!identity) throw new Error('Required owned process exited before identity capture'); observed.set(id, identity); return identity }
+  const remember = async (id: number) => { const identity = await nativeProbe<Identity | null>(helper, 'identity', String(id)); if (!identity) throw new Error('Required owned process identity unavailable'); observed.set(id, identity); return identity }
   const stopped = (identity: Identity) => eventually(async () => !await nativeProbe<boolean>(helper, 'alive', String(identity.pid), identity.started), 'owned process exit', 30000)
   const action = async (operation: string, target: Identity) => nativeProbe(helper, operation, String(target.pid), target.started)
   const status = async () => {

@@ -1,7 +1,10 @@
-import { expect, it } from 'vitest'
+import { expect, it, onTestFinished } from 'vitest'
+import { copyFile, mkdtemp, realpath, rm } from 'node:fs/promises'
+import { join } from 'node:path'
+import { tmpdir } from 'node:os'
 import { assertDesktopPreflight, requireBrowserMatrix, ownedCertificate, uniqueTarget, activeMcpIdentities } from './browser-e2e-contract.ts'
 import { prepareDshPage } from './browser-cdp.ts'
-import { confirmNativeProtocol } from './browser-native.ts'
+import { compileDesktopProbe, nativeProbe, confirmNativeProtocol } from './browser-native.ts'
 
 it('refuses existing URI owners and noninteractive desktops before touching user state', () => {
   const ready = { platform: 'win32', interactive: true, tray: true, chrome: true, edge: true, uriOccupied: false }
@@ -53,4 +56,14 @@ it('retries pre-input protocol refusals but never replays uncertain input or an 
     await expect(confirmNativeProtocol(async () => { attempts++; throw new Error(message) })).rejects.toThrow(message)
     expect(attempts).toBe(1)
   }
+})
+it.skipIf(process.platform !== 'win32')('reads a suspended process image before modules load and terminates the native fixture', { timeout: 90000 }, async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'mcp-browser-image-'))
+  onTestFinished(() => rm(directory, { recursive: true, force: true }))
+  const helper = await compileDesktopProbe(directory)
+  const fixture = join(directory, 'mcp-proxy.exe'); await copyFile(helper, fixture)
+  const value = await nativeProbe<{ pid: number; started: string; image: string; mainModuleUnavailable: boolean }>(helper, 'process-image-fixture', fixture)
+  expect(value.mainModuleUnavailable).toBe(true)
+  expect((await realpath(value.image)).toLowerCase()).toBe((await realpath(fixture)).toLowerCase())
+  expect(await nativeProbe(helper, 'alive', String(value.pid), value.started)).toBe(false)
 })

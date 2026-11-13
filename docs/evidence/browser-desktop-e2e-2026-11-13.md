@@ -95,3 +95,7 @@
 根据 [UIA tooltip 契约](https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-supporttooltipcontroltype)，
 托盘现同时核对 Name 和 HelpText 中的精确应用标签；只输出 empty/test-icon/contains-brand/electron/other 分类，不输出原始文本。
 URI 预检改读合并的 ClassesRoot，拒绝用户级或系统级已有 handler；本机已确认仍安全拒绝现有注册。
+
+运行 [43444484478](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43444484478)
+在 GUI 启动枚举遇到 MainModule 尚不可用而空引用，未到达 tooltip 改动。新增挂起进程回归：旧读取方式出现 partial-copy 失败，
+改用 QueryFullProcessImageName 和只读有限权限句柄后通过，同时核对路径、实际终止及 PID 创建身份；所有创建的句柄均在 finally 关闭。

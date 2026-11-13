@@ -48,6 +48,8 @@ Overflow popups are restricted to the taskbar's process, including native XAML p
 Exit verification checks hidden notification icons too and closes any overflow it opens.
 Tray identification accepts the exact app label in UIA Name or tooltip HelpText;
 raw tooltip text is excluded from evidence.
+Native process discovery queries image paths through limited-access handles, including
+before module loading; a suspended-process regression also verifies fixture termination.
 
 Use Node.js 22.19+ or 24+ and pnpm 11.7.0. Dependencies come from the public npm registry; no Harness checkout is required.
 

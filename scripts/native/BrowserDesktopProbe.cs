@@ -22,6 +22,13 @@ class BrowserDesktopProbe {
   [DllImport("kernel32.dll",CharSet=CharSet.Unicode)] static extern bool Process32First(IntPtr snap,ref PE entry);
   [DllImport("kernel32.dll",CharSet=CharSet.Unicode)] static extern bool Process32Next(IntPtr snap,ref PE entry);
   [DllImport("kernel32.dll")] static extern bool CloseHandle(IntPtr handle);
+  [DllImport("kernel32.dll",SetLastError=true)] static extern IntPtr OpenProcess(uint access,bool inherit,int pid);
+  [DllImport("kernel32.dll",CharSet=CharSet.Unicode,SetLastError=true)] static extern bool QueryFullProcessImageName(IntPtr process,uint flags,StringBuilder path,ref uint size);
+  [StructLayout(LayoutKind.Sequential,CharSet=CharSet.Unicode)] struct STARTUPINFO {public uint size;public string reserved,desktop,title;public uint x,y,width,height,xChars,yChars,fill,flags;public ushort show,reservedSize;public IntPtr reservedData,input,output,error;}
+  [StructLayout(LayoutKind.Sequential)] struct PROCESSINFO {public IntPtr process,thread;public uint pid,tid;}
+  [DllImport("kernel32.dll",CharSet=CharSet.Unicode,SetLastError=true)] static extern bool CreateProcess(string application,StringBuilder command,IntPtr processAttributes,IntPtr threadAttributes,bool inherit,uint flags,IntPtr environment,string directory,ref STARTUPINFO startup,out PROCESSINFO process);
+  [DllImport("kernel32.dll")] static extern bool TerminateProcess(IntPtr process,uint code);
+  [DllImport("kernel32.dll")] static extern uint WaitForSingleObject(IntPtr handle,uint milliseconds);
   [DllImport("user32.dll")] static extern IntPtr FindWindow(string c, string n);
   [DllImport("user32.dll")] static extern bool IsWindowVisible(IntPtr w);
   [DllImport("user32.dll")] static extern bool EnumWindows(EnumWindow cb, IntPtr arg);
@@ -60,7 +67,30 @@ class BrowserDesktopProbe {
     var p=Process.GetProcessById(Int32.Parse(a[1]));
     if(p.StartTime.ToUniversalTime().Ticks.ToString()!=a[2])throw new Exception("Process identity changed");return p;
   }
-  static object Info(Process p, IntPtr w) { return new {pid=p.Id,started=p.StartTime.ToUniversalTime().Ticks.ToString(),visible=IsWindowVisible(w),handle=w.ToInt64().ToString(),image=p.MainModule.FileName,owned=true}; }
+  static string ProcessImage(Process p) {
+    var handle=OpenProcess(0x1000,false,p.Id);if(handle==IntPtr.Zero)return null;
+    try{var path=new StringBuilder(32768);uint size=(uint)path.Capacity;return QueryFullProcessImageName(handle,0,path,ref size)?path.ToString():null;}
+    finally{CloseHandle(handle);}
+  }
+  static object Info(Process p, IntPtr w,string image=null) {
+    image=image??ProcessImage(p);if(String.IsNullOrEmpty(image))throw new InvalidOperationException("Process image unavailable");
+    return new {pid=p.Id,started=p.StartTime.ToUniversalTime().Ticks.ToString(),visible=IsWindowVisible(w),handle=w.ToInt64().ToString(),image,owned=true};
+  }
+  static object SuspendedImageFixture(string image) {
+    image=Path.GetFullPath(image);if(Path.GetFileName(image)!="mcp-proxy.exe")throw new Exception("Invalid process-image fixture");
+    var startup=new STARTUPINFO{size=(uint)Marshal.SizeOf(typeof(STARTUPINFO))};PROCESSINFO created;
+    if(!CreateProcess(image,null,IntPtr.Zero,IntPtr.Zero,false,0x08000004,IntPtr.Zero,Path.GetDirectoryName(image),ref startup,out created))throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+    try {
+      // Test-only: a suspended loader has no reliable module enumeration yet.
+      using(var p=Process.GetProcessById((int)created.pid)) {
+        bool missing;try{missing=p.MainModule==null;}catch(System.ComponentModel.Win32Exception e){if(e.NativeErrorCode!=299)throw;missing=true;}
+        return new{pid=p.Id,started=p.StartTime.ToUniversalTime().Ticks.ToString(),mainModuleUnavailable=missing,image=ProcessImage(p)};
+      }
+    } finally {
+      try{if(!TerminateProcess(created.process,0)||WaitForSingleObject(created.process,5000)!=0)throw new Exception("Suspended fixture did not stop");}
+      finally{CloseHandle(created.thread);CloseHandle(created.process);}
+    }
+  }
   static string DesktopName(IntPtr desktop) {uint needed;var b=new StringBuilder(128);return desktop!=IntPtr.Zero&&GetUserObjectInformation(desktop,2,b,(uint)(b.Capacity*2),out needed)?b.ToString():"unavailable";}
   static string SessionState() {
     IntPtr value;uint bytes;
@@ -281,14 +311,15 @@ class BrowserDesktopProbe {
         var acl=new DirectorySecurity();acl.SetAccessRuleProtection(true,false);
         foreach(var sid in new[]{WindowsIdentity.GetCurrent().User,new SecurityIdentifier(WellKnownSidType.LocalSystemSid,null)})acl.AddAccessRule(new FileSystemAccessRule(sid,FileSystemRights.FullControl,InheritanceFlags.ContainerInherit|InheritanceFlags.ObjectInherit,PropagationFlags.None,AccessControlType.Allow));
         Directory.SetAccessControl(a[1],acl);result=new{protectedState=true};
-      } else if(op.StartsWith("ca-"))result=Certificate(op,a[1]);
+      } else if(op=="process-image-fixture")result=SuspendedImageFixture(a[1]);
+      else if(op.StartsWith("ca-"))result=Certificate(op,a[1]);
       else if(op=="alive") {try {var p=Process.GetProcessById(Int32.Parse(a[1]));result=p.StartTime.ToUniversalTime().Ticks.ToString()==a[2];}catch(ArgumentException){result=false;}}
-      else if(op=="identity") {try{var p=Process.GetProcessById(Int32.Parse(a[1]));result=new {pid=p.Id,started=p.StartTime.ToUniversalTime().Ticks.ToString(),image=p.MainModule.FileName};}catch(ArgumentException){result=null;}}
+      else if(op=="identity") {try{var p=Process.GetProcessById(Int32.Parse(a[1]));var image=ProcessImage(p);result=String.IsNullOrEmpty(image)?null:new {pid=p.Id,started=p.StartTime.ToUniversalTime().Ticks.ToString(),image};}catch(ArgumentException){result=null;}}
       else if(op=="tray-present")result=TrayPresent();
       else if(op=="tray-info")result=TrayInfo();
       else if(op=="gui"||op=="scope-processes") {
         string root=Path.GetFullPath(a[1]).TrimEnd('\\')+"\\";var rows=new List<object>();
-        foreach(var p in op=="gui"?Process.GetProcessesByName("mcp-proxy"):Process.GetProcesses())try { if(p.MainModule.FileName.StartsWith(root,StringComparison.OrdinalIgnoreCase)){if(op=="scope-processes")rows.Add(new{pid=p.Id,started=p.StartTime.ToUniversalTime().Ticks.ToString()});else foreach(var w in Windows(p.Id))if(Title(w)=="mcp-proxy")rows.Add(Info(p,w));} }catch(System.ComponentModel.Win32Exception){}catch(InvalidOperationException){}
+        foreach(var p in op=="gui"?Process.GetProcessesByName("mcp-proxy"):Process.GetProcesses())try {var image=ProcessImage(p);if(!String.IsNullOrEmpty(image)&&image.StartsWith(root,StringComparison.OrdinalIgnoreCase)){if(op=="scope-processes")rows.Add(new{pid=p.Id,started=p.StartTime.ToUniversalTime().Ticks.ToString()});else foreach(var w in Windows(p.Id))if(Title(w)=="mcp-proxy")rows.Add(Info(p,w,image));} }catch(System.ComponentModel.Win32Exception){}catch(InvalidOperationException){}
         result=rows;
       } else {
         var p=Owned(a);var windows=Windows(p.Id);var own=windows.Where(w=>Title(w)=="mcp-proxy").ToList();
