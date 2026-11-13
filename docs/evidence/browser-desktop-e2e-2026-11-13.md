@@ -89,3 +89,9 @@
 运行 [43440414249](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43440414249)
 在打包前的 short-path 回归耗尽 20 秒整体时限，托盘改动尚未执行。该用例包含一次编译、两次 PowerShell 冷启动和多次注册事务；
 总预算调整为 90 秒，两个 PowerShell 调用各加 10 秒上限，每次安装/卸载仍为 5 秒，原有实际文件和 owner 断言保留。
+
+运行 [43441508678](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43441508678)
+完成配对/隐藏并实际展开 TopLevelWindowForOverflowXamlIsland，结构中有 NotifyItemIcon 按钮，但 Name 前缀不能识别本应用。
+根据 [UIA tooltip 契约](https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-supporttooltipcontroltype)，
+托盘现同时核对 Name 和 HelpText 中的精确应用标签；只输出 empty/test-icon/contains-brand/electron/other 分类，不输出原始文本。
+URI 预检改读合并的 ClassesRoot，拒绝用户级或系统级已有 handler；本机已确认仍安全拒绝现有注册。

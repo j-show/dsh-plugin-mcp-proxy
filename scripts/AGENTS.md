@@ -18,3 +18,5 @@
 - Tray roots/popups must belong to the verified Shell_TrayWnd process; include owned XAML overflow popups without scanning other applications' popup windows.
 - Generic XAML popups require a known notification-icon ID in addition to the exact app label; ambiguous icons or missing shell surfaces must not count as successful absence.
 - After exit, inspect hidden notification overflow as well as visible icons; close only a popup opened by that verification. Expand once and wait for the surface instead of repeatedly toggling it.
+- Notification tooltip text may be HelpText rather than Name. Match the exact app label in either property, retain native control/root checks, and report only fixed text categories.
+- URI preflight reads merged ClassesRoot so a machine-wide handler cannot be shadowed by a test's user registration.

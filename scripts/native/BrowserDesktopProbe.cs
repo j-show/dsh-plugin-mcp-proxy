@@ -224,12 +224,20 @@ class BrowserDesktopProbe {
     foreach(var w in TrayWindows()) {
       var cls=new StringBuilder(256);GetClassName(w,cls,cls.Capacity);bool generic=cls.ToString()=="Xaml_WindowedPopupClass";
       foreach(AutomationElement e in AutomationElement.FromHandle(w).FindAll(TreeScope.Descendants,new PropertyCondition(AutomationElement.ControlTypeProperty,ControlType.Button))) {
-        var c=e.Current;if(c.IsOffscreen||!(c.Name??"").StartsWith("mcp-proxy",StringComparison.OrdinalIgnoreCase))continue;
+        var c=e.Current;if(c.IsOffscreen||(!TrayLabel(c.Name)&&!TrayLabel(c.HelpText)))continue;
         if(generic&&c.AutomationId!="SystemTrayIcon"&&c.AutomationId!="NotifyItemIcon")continue;
         found.Add(e);
       }
     }
     return found;
+  }
+  static bool TrayLabel(string text) {
+    text=(text??"").Trim();return String.Equals(text,"mcp-proxy",StringComparison.OrdinalIgnoreCase)||String.Equals(text,"mcp-proxy.exe",StringComparison.OrdinalIgnoreCase);
+  }
+  static string TrayTextKind(string text) {
+    if(String.IsNullOrWhiteSpace(text))return "empty";if(TrayLabel(text))return "test-icon";
+    if(text.IndexOf("mcp-proxy",StringComparison.OrdinalIgnoreCase)>=0)return "contains-brand";
+    return text.Trim().Equals("Electron",StringComparison.OrdinalIgnoreCase)?"electron":"other";
   }
   static object TrayInfo() {
     var rows=new List<object>();
@@ -238,7 +246,7 @@ class BrowserDesktopProbe {
       if(c.ControlType!=ControlType.Button&&c.ControlType!=ControlType.Custom&&c.ControlType!=ControlType.ToolBar)continue;
       var id=c.AutomationId??"";if(!System.Text.RegularExpressions.Regex.IsMatch(id,"\\A[A-Za-z0-9_.-]{0,96}\\z")||System.Text.RegularExpressions.Regex.IsMatch(id,"[A-Za-z0-9_-]{43,}"))id="redacted";
       var rootClass=new StringBuilder(256);GetClassName(w,rootClass,rootClass.Capacity);
-      rows.Add(new{windowClass=rootClass.ToString(),type=c.ControlType.ProgrammaticName,automationId=id,kind=(c.Name??"").StartsWith("mcp-proxy",StringComparison.OrdinalIgnoreCase)?"test-icon":"other"});
+      rows.Add(new{windowClass=rootClass.ToString(),type=c.ControlType.ProgrammaticName,automationId=id,nameKind=TrayTextKind(c.Name),helpKind=TrayTextKind(c.HelpText)});
       if(rows.Count>=80)return rows;
     }
     return rows;
@@ -267,7 +275,7 @@ class BrowserDesktopProbe {
       if(op=="preflight") {
         var d=OpenInputDesktop(0,false,0x0001);string input=DesktopName(d),thread=DesktopName(GetThreadDesktop(GetCurrentThreadId()));if(d!=IntPtr.Zero)CloseDesktop(d);
         string session=SessionState();
-        using(var key=Registry.CurrentUser.OpenSubKey("Software\\Classes\\mcp-proxy"))result=new {platform="win32",interactive=Environment.UserInteractive&&Process.GetCurrentProcess().SessionId!=0&&session=="active"&&input!="unavailable"&&input==thread,sessionState=session,inputDesktop=input,processDesktop=thread,tray=FindWindow("Shell_TrayWnd",null)!=IntPtr.Zero,uriOccupied=key!=null};
+        using(var key=Registry.ClassesRoot.OpenSubKey("mcp-proxy"))result=new {platform="win32",interactive=Environment.UserInteractive&&Process.GetCurrentProcess().SessionId!=0&&session=="active"&&input!="unavailable"&&input==thread,sessionState=session,inputDesktop=input,processDesktop=thread,tray=FindWindow("Shell_TrayWnd",null)!=IntPtr.Zero,uriOccupied=key!=null};
       } else if(op=="protect-state") {
         if((File.GetAttributes(a[1])&FileAttributes.ReparsePoint)!=0)throw new Exception("Linked state directory");
         var acl=new DirectorySecurity();acl.SetAccessRuleProtection(true,false);

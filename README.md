@@ -32,7 +32,7 @@ runs this automatically after both builds; see the [acceptance guide](docs/accep
 
 `pnpm test:browser` adds headed Chrome/Edge, real Windows protocol confirmation and
 GUI/tray lifecycle acceptance. It requires an interactive desktop, Explorer tray and
-an unoccupied `mcp-proxy://` registration. `--preflight` checks these without taking
+an unoccupied `mcp-proxy://` registration across user/system classes. `--preflight` checks these without taking
 over an existing installation. Release CI requires both browser matrices, not silent skips.
 Failure evidence includes fixed native activation stages and pairing/upgrade status codes;
 URI tickets, headers and private profile logs remain excluded.
@@ -46,6 +46,8 @@ Windows 11 notification overflow uses its unique native control ID, with localiz
 Windows 10 labels as a fallback; diagnostics contain structure only.
 Overflow popups are restricted to the taskbar's process, including native XAML popups.
 Exit verification checks hidden notification icons too and closes any overflow it opens.
+Tray identification accepts the exact app label in UIA Name or tooltip HelpText;
+raw tooltip text is excluded from evidence.
 
 Use Node.js 22.19+ or 24+ and pnpm 11.7.0. Dependencies come from the public npm registry; no Harness checkout is required.
 
