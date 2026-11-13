@@ -1,4 +1,4 @@
-# CI and local command evidence. No product-service or account-dependent tests run here.
+# CI and local command evidence. Release mode includes the five isolated native product cases.
 param([ValidateSet('core', 'release')][string]$Mode = 'core')
 $ErrorActionPreference = 'Stop'
 $repository = Split-Path $PSScriptRoot -Parent
@@ -33,6 +33,9 @@ try {
     $report.artifacts = @(Get-ChildItem -LiteralPath (Join-Path $repository 'release') -Recurse -File | ForEach-Object {
       @{ path = [System.IO.Path]::GetRelativePath($repository, $_.FullName); bytes = $_.Length; sha256 = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() }
     })
+    $report.productTests = 'required; inspect product-verification.json for outcome'
+    Invoke-Checked 'product' @('test:product')
+    $report.productTests = 'five native product cases passed; zero skips'
   }
 } finally {
   $report | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $evidenceDirectory 'verification.json') -Encoding utf8

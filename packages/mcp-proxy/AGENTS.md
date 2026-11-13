@@ -6,3 +6,4 @@
 - Keep repository-root docs/requirements.md, docs/design.md and docs/acceptance.md current. Do not infer cross-login singleton acceptance from same-user tests.
 - Set both Electron logging variables before portable and URI launches, keeping Chromium diagnostics under application state. Never exempt diagnostics from immutable runtime inventory checks.
 - The development-only entry uses explicit checkout state and source maps without portable cache publication or automatic URI registration. Keep production defaults unchanged; development must still obey the machine singleton.
+- Preserve read-only runtime qualification for native product tests; artifact acceptance must not silently repair or republish a damaged runtime.

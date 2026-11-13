@@ -4,6 +4,8 @@
 
 ## 已有证据
 
+原生产物自动化入口的构建绑定、服务位和清理验证见[自动化记录](evidence/native-product-automation-2026-11-13.md)。
+
 2026-11-13 的 URI 短路径故障定位及修复回归见[原生 URI 修复记录](evidence/native-uri-short-path-2026-11-13.md)。
 旧提交的本机通过记录不覆盖其远端 CI 失败；后续提交须以对应完整 CI 运行结果为准。
 
@@ -96,18 +98,16 @@ pnpm build:mcp-plugin
 
 记录 Node/pnpm/Windows 版本、代码提交（有提交后）、产物 SHA256、实际命令、退出状态和跳过项。不要把声明的命令或先前通过日志当成这次执行。默认 `pnpm test` 不运行需要独占机器服务位的 product 用例。
 
-product 测试只在 Windows 空闲服务位运行；它们使用固定机器控制入口，不能与用户正在运行的连通服务并行。先由所有者正常退出其应用，不自动杀死未知进程。EXE 模式必须同时提供同一构建的 EXE、已通过运行清单校验的 `win-unpacked` 分发目录，以及独立测试数据目录：
+product 测试只在 Windows 空闲服务位运行；它们使用固定机器控制入口，不能与用户正在运行的连通服务并行。先由所有者正常退出其应用，不自动杀死未知进程。统一入口自动读取成功构建生成的 `release/mcp-proxy/product-build.json`，校验该 EXE、同次 `win-unpacked` 清单哈希和完整目录内容，然后创建自己的空测试数据目录：
 
 ```powershell
-$env:MCP_PROXY_PRODUCT_TESTS = '1'
-$env:MCP_PROXY_ELECTRON_EXE = '<本次构建的mcp-proxy.exe绝对路径>'
-$env:MCP_PROXY_ELECTRON_RUNTIME = '<同一构建的distribution/win-unpacked绝对路径>'
-$env:MCP_PROXY_ELECTRON_DATA = '<测试专用空目录绝对路径>'
-pnpm test packages/mcp-proxy/modules/runtime/tests/local-profile.product.spec.ts packages/mcp-proxy/modules/runtime/tests/native-activation.product.spec.ts
-Remove-Item Env:MCP_PROXY_PRODUCT_TESTS,Env:MCP_PROXY_ELECTRON_EXE,Env:MCP_PROXY_ELECTRON_RUNTIME,Env:MCP_PROXY_ELECTRON_DATA
+pnpm build:mcp-proxy
+pnpm test:product
 ```
 
-输入来自本次 `.artifacts/build-proxy-*/electron/distribution/`，需明确选择同一次构建，不能仅取“最新名字”混配其他 EXE。`local-profile.product` 的源码定义了 CLI 和校验输入，未设置 Electron 输入时可测试其他 profile 路径，但不能称为单 EXE 验收。native product 用例只证明原生 helper 的转发，不证明 Chrome/Edge 实际触发了 URI。
+入口不按目录时间或“最新名字”猜测。构建记录是当前 checkout 的验收索引，需保留该次 `.artifacts/build-proxy-*/electron/distribution/`，不是 Windows 用户安装所需文件。记录缺失或产物被替换、损坏时必须重新构建。入口仅对子测试进程设置产品开关及路径，要求 5 项实际通过、零跳过；前后检查服务位，测试中的服务/MCP PID 退出断言保留。成功后删除自有测试数据，失败时保留私有现场并非零退出，绝不上传该目录或结束未知服务。验证证据写入 `.artifacts/ci/product-verification.json` 和 `product-results.json`。
+
+release CI 在两端打包后自动调用该入口，并保留 `.artifacts/ci` 的报告；默认 `pnpm test` 的 5 项产品跳过由此单独执行，3 项 POSIX 跳过仍按 Windows 平台规则保留。native product 用例只证明原生 helper 的转发，不证明 Chrome/Edge 实际触发了 URI，也不替代真实模型、多设备或跨用户验收。
 
 ### 两产物、普通浏览器和模型
 

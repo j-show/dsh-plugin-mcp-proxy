@@ -3,9 +3,17 @@ import { mkdtemp, mkdir, readFile, rm, writeFile, readdir } from 'node:fs/promis
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { expect, it, onTestFinished } from 'vitest'
-import { prepareElectronRuntime } from '../src/runtime-cache.ts'
+import { prepareElectronRuntime, verifyElectronRuntime } from '../src/runtime-cache.ts'
 
 const digest = (value: string) => createHash('sha256').update(value).digest('hex')
+
+it('qualifies an unpacked artifact without publishing a cache and rejects changed content', async () => {
+  const f = await fixture()
+  await verifyElectronRuntime(f.source)
+  expect(await readdir(f.root)).toEqual(['portable'])
+  await writeFile(join(f.source, 'mcp-proxy.exe'), 'changed')
+  await expect(verifyElectronRuntime(f.source)).rejects.toThrow('content differs')
+})
 async function fixture() {
   const root = await mkdtemp(join(tmpdir(), 'mcp electron cache '))
   onTestFinished(() => rm(root, { recursive: true, force: true }))

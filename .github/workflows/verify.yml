@@ -22,7 +22,7 @@ jobs:
           node-version-file: .node-version
       - name: Install public locked dependencies
         run: pnpm install --frozen-lockfile
-      - name: Check and package
+      - name: Check, package and test native products
         shell: pwsh
         run: ./scripts/verify.ps1 -Mode release
       - name: Retain verification and artifacts

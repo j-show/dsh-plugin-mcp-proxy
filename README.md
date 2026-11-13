@@ -25,6 +25,11 @@ After installing dependencies, run `pnpm dev:doctor` and `pnpm dev:init`;
 `pnpm dev:server` and `pnpm dev:desktop` start the native development environment.
 Windows CI checks clean installs, tests and both deliverables without production secrets.
 
+After `pnpm build:mcp-proxy`, run `pnpm test:product` on a Windows machine with an
+unused local service slot. It binds the recorded build's EXE/runtime pair, requires
+all five native product cases to pass, and verifies service/data cleanup. Release CI
+runs this automatically after both builds; see the [acceptance guide](docs/acceptance.md).
+
 Use Node.js 22.19+ or 24+ and pnpm 11.7.0. Dependencies come from the public npm registry; no Harness checkout is required.
 
 ```sh

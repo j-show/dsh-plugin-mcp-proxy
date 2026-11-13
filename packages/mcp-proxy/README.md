@@ -4,6 +4,10 @@ For isolated native source debugging use the [development guide](../../docs/deve
 `pnpm dev:desktop --inspect` builds a development distribution with source maps,
 project-owned state and no automatic URI registration; release builds retain the portable entry.
 
+Release builds emit `release/mcp-proxy/product-build.json` to bind the portable EXE
+to its qualified unpacked runtime. Use `pnpm test:product` for native artifact acceptance;
+the manifest verification is read-only and rejects changed files before execution.
+
 This package owns the Electron GUI and tray. Its private `modules/protocol`, `modules/local` and `modules/runtime` packages own wire exchange, downstream clients and the standalone DSH profile. Build from the repository root with `pnpm build:mcp-proxy`; deliver `release/mcp-proxy/mcp-proxy.exe` only.
 
 See the detailed [configuration and operations](../../docs/configuration.md), [capability limits](../../docs/requirements.md#能力范围) and [acceptance record](../../docs/acceptance.md). These current guides are in Chinese. File operations belong to configured downstream MCPs; this application has no built-in file tools.

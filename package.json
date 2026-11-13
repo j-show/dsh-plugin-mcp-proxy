@@ -26,6 +26,7 @@
     "build": "node --import tsx/esm scripts/build.ts libraries",
     "typecheck": "tsc -b tsconfig.json",
     "test": "node --import tsx/esm scripts/test.ts",
+    "test:product": "node --import tsx/esm scripts/test-product.ts",
     "test:unit": "node --import tsx/esm scripts/test.ts"
   },
   "devDependencies": {

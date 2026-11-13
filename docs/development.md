@@ -106,3 +106,7 @@ DSH 使用其已有的浏览器来源检查与登录界面；回环部署的信�
 ## 独立性与交付检查
 
 CI 从新的 checkout 使用 frozen lockfile 执行构建、类型检查、默认测试和两端打包，记录提交与产物哈希。新机器不复制 node_modules、lib、release、.artifacts 或用户 profile。完整源码必须经过提交和推送后才能被其他人拉取；本地暂存不构成开源交付。
+
+原生产物验收使用 `pnpm test:product`，在 `pnpm build:mcp-proxy` 成功后自动绑定该次构建。
+release CI 也运行它；服务位占用时先正常退出自己的开发 Electron/runtime。
+入口不会停止未知服务，要求全部 5 项实际通过，并记录服务位和测试目录清理结果。

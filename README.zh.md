@@ -23,6 +23,10 @@
 安装依赖后执行 `pnpm dev:doctor`、`pnpm dev:init`；分别使用 `pnpm dev:server`、
 `pnpm dev:desktop` 启动原生开发环境。Windows CI 在无生产密钥的环境验证安装、测试及两端打包。
 
+`pnpm build:mcp-proxy` 后可运行 `pnpm test:product`：自动绑定构建记录中的 EXE/runtime，
+要求 5 项原生产物测试全部通过，并检查服务位及测试数据清理。运行前需正常退出占用本机服务位的应用。
+release CI 在两端打包后自动执行，详见[验收指南](docs/acceptance.md)。
+
 使用 Node.js 22.19+ 或 24+，以及 pnpm 11.7.0。依赖均来自公共 npm 仓库，不需要 Harness 源码目录。
 
 ```sh

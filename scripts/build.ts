@@ -10,6 +10,7 @@ import { packageMcpPlugin } from './package-mcp-plugin.ts'
 import { buildLibraries } from './build-libraries.ts'
 import { packageInstaller } from './package-installer.ts'
 import { packageLocalRuntime } from './package-local-runtime.ts'
+import { writeProductBuild } from './product-build.ts'
 
 const root = resolve(import.meta.dirname, '..')
 const { positionals, values } = parseArgs({ allowPositionals: true, options: {
@@ -60,5 +61,6 @@ if (target === 'plugin') {
   const pending = join(output, `mcp-proxy-${process.pid}.pending`)
   await copyFile(join(work, 'electron/distribution/mcp-proxy.exe'), pending)
   await rename(pending, join(output, 'mcp-proxy.exe'))
+  await writeProductBuild(root, join(output, 'mcp-proxy.exe'), join(work, 'electron/distribution/win-unpacked'), join(work, 'electron/distribution/mcp-proxy.exe'))
   process.stdout.write(`Windows client: ${join(output, 'mcp-proxy.exe')}\n`)
 }

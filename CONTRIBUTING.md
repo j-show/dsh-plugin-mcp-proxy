@@ -14,6 +14,8 @@ do not reference another checkout or copy personal profiles, credentials or cach
    resource ownership. New product scope needs explicit requirements.
 4. Run `pnpm build`, `pnpm typecheck`, `pnpm test` and `pnpm dev:check`. For packaging
    changes also run `pnpm dev:doctor --packaging` and the affected release build.
+   For Windows artifact changes, run `pnpm test:product` after building the EXE;
+   release CI requires all five cases with no skipped product tests and a free service slot.
 5. Update affected README/AGENTS and current design/configuration/acceptance docs.
    Keep docs/history unchanged. Describe behavior, verification and remaining
    product acceptance in the PR. Do not mark skipped tests as passing.

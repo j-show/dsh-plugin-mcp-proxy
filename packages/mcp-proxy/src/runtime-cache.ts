@@ -70,6 +70,16 @@ async function verify(root: string, manifest: RuntimeManifest, bytes: Uint8Array
   }
 }
 
+/** Read-only qualification used before artifact acceptance; does not publish or alter a cache. */
+export async function verifyElectronRuntime(root: string): Promise<void> {
+  await directory(root, filesystem)
+  const metadata = join(root, manifestPath)
+  const stat = await filesystem.lstat(metadata)
+  if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 16777216) throw new Error('Invalid Electron runtime manifest file')
+  const bytes = await filesystem.readFile(metadata)
+  await verify(root, parseRuntimeManifest(bytes), bytes, filesystem)
+}
+
 /**
  * @param root - final unpacked Electron distribution, after binary editing/signing.
  * @returns after writing its immutable file inventory for portable packaging.
