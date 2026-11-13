@@ -4,6 +4,24 @@ import { promisify } from 'node:util'
 import { join, resolve } from 'node:path'
 import { eventually } from './browser-cdp.ts'
 const execute = promisify(execFile)
+function uncertainInput(error: unknown, operation: string): boolean {
+  const message = error instanceof Error ? error.message : ''
+  return !message.startsWith(`Native operation ${operation} failed: Native desktop test: `)
+    || message.includes('input result uncertain') || message.includes('(timeout)')
+}
+/** An uncertain UI dispatch also disables later tray UI cleanup; owned process cleanup remains available. */
+export function nativeActionSession(run: (operation: string, ...args: string[]) => Promise<unknown>) {
+  let uncertain = false
+  const action = async (operation: string, ...args: string[]): Promise<unknown> => {
+    try { return await run(operation, ...args) }
+    catch (error) { if (uncertainInput(error, operation)) uncertain = true; throw error }
+  }
+  return { action, cleanupTray: async (...args: string[]): Promise<boolean> => {
+    if (uncertain) return false
+    await action('tray-exit', ...args)
+    return true
+  } }
+}
 /** Retry only known pre-input refusals; timeouts and uncertain dispatch are never replayed. */
 export async function confirmNativeProtocol(action: () => Promise<unknown>): Promise<void> {
   let failure: unknown = new Error('Native confirmation target unavailable')
@@ -12,9 +30,7 @@ export async function confirmNativeProtocol(action: () => Promise<unknown>): Pro
       try { await action(); return true }
       catch (error) {
         failure = error
-        const message = error instanceof Error ? error.message : ''
-        if (!message.startsWith('Native operation confirm-protocol failed: Native desktop test: ')
-          || message.includes('input result uncertain') || message.includes('(timeout)')) throw error
+        if (uncertainInput(error, 'confirm-protocol')) throw error
         return false
       }
     }, 'real browser protocol confirmation')

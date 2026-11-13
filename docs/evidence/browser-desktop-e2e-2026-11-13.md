@@ -81,7 +81,8 @@
 在窗口激活时重新启用输入保护，且键盘事件也受保护。确认前新增至少一秒、并长于系统双击间隔的焦点/前台/坐标稳定期；
 不关闭保护、不发送第二次同一确认。该原因是否解释 CI 失败仍以新运行结果核实。
 
-同一运行的第二次尝试完成 Chrome 真实 URI handler 转发、TLS 配对、Web/GUI 与 MCP 页面展示及关闭隐藏，
+[43436591764](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43436591764) 首次尝试未建立 Chrome 调试入口，
+第二次尝试完成 Chrome 真实 URI handler 转发、TLS 配对、Web/GUI 与 MCP 页面展示及关闭隐藏，
 失败推进至 tray restore。通知区展开入口现优先匹配唯一 SystemTray.OverflowButton，并兼容 Hidden icon menu 标签；
 失败结构报告只输出控件类型、安全 ID 和固定 test-icon/other 分类，不输出原始 tooltip。
 退出后的图标检查也展开隐藏通知区，核对无匹配图标后关闭本次检查打开的弹层；不把折叠区未显示等同于已清理。
@@ -99,3 +100,11 @@ URI 预检改读合并的 ClassesRoot，拒绝用户级或系统级已有 handle
 运行 [43444484478](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43444484478)
 在 GUI 启动枚举遇到 MainModule 尚不可用而空引用，未到达 tooltip 改动。新增挂起进程回归：旧读取方式出现 partial-copy 失败，
 改用 QueryFullProcessImageName 和只读有限权限句柄后通过，同时核对路径、实际终止及 PID 创建身份；所有创建的句柄均在 finally 关闭。
+
+运行 [43447587172](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43447587172)
+默认测试 569 通过、8 跳过，托盘 tooltip 匹配已成功；实际点击因 UIA 返回通知弹层 Pane 而被旧叶子命中假设拒绝。
+[Microsoft FromPoint 契约](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.automationelement.frompoint?view=netframework-4.8.1)
+允许返回更靠近根的逻辑元素。通知图标现组合物理 Win32 窗口命中、受限祖先链、无交叠可操作控件及派发前重查；
+实际 SendInput 鼠标动作前，先创建本轮顶层遮挡窗口验证拒绝路径并销毁，不使用托盘事件注入。
+独立复审发现失败回收可能重放不确定右键，现用 NativeActionSession 禁止此类后续托盘 UI 回收，转到既有归属校验的服务停止和进程回收；
+回归验证 uncertain、timeout、无原生错误报告时均只派发一次，确认未派发的前置拒绝仍可正常回收。

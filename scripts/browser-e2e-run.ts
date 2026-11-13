@@ -6,7 +6,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { basename, dirname, join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { BrowserCdp, eventually, prepareDshPage } from './browser-cdp.ts'
-import { nativeProbe, confirmNativeProtocol, type NativeWindow } from './browser-native.ts'
+import { nativeProbe, nativeActionSession, confirmNativeProtocol, type NativeWindow } from './browser-native.ts'
 import { uniqueTarget, ownedCertificate, activeMcpIdentities, type DesktopPreflight } from './browser-e2e-contract.ts'
 import { startBrowserWeb, isolatedEnvironment, alive, type WebFixture, type ServerArtifact } from './browser-e2e-environment.ts'
 import { assertProductServiceIdle } from './product-service.ts'
@@ -38,7 +38,8 @@ export async function runBrowserMatrix(repository: string, state: string, helper
   const observed = new Map<number, Identity>()
   const remember = async (id: number) => { const identity = await nativeProbe<Identity | null>(helper, 'identity', String(id)); if (!identity) throw new Error('Required owned process identity unavailable'); observed.set(id, identity); return identity }
   const stopped = (identity: Identity) => eventually(async () => !await nativeProbe<boolean>(helper, 'alive', String(identity.pid), identity.started), 'owned process exit', 30000)
-  const action = async (operation: string, target: Identity) => nativeProbe(helper, operation, String(target.pid), target.started)
+  const nativeActions = nativeActionSession((operation, ...args) => nativeProbe(helper, operation, ...args))
+  const action = async (operation: string, target: Identity) => nativeActions.action(operation, String(target.pid), target.started)
   const status = async () => {
     const reply = await control.requestLocalManagement(address, { kind: 'snapshot' }, 3000, 1048576)
     if (!reply.ok || resolve(reply.snapshot?.settingsFile ?? '').toLowerCase() !== resolve(settings).toLowerCase()) throw new Error('Machine service belongs to another configuration')
@@ -126,6 +127,8 @@ export async function runBrowserMatrix(repository: string, state: string, helper
     if ((await control.requestLocalStatus(address, 1000)).pid !== service.pid) throw new Error('Window close stopped/replaced the service')
     scenarios.hide = true
     stage = 'tray restore'
+    const guard = await nativeProbe<{ occlusionRefused: boolean }>(helper, 'tray-hit-guard', String(gui.pid), gui.started)
+    if (guard.occlusionRefused !== true) throw new Error('Native notification occlusion guard did not execute')
     await action('tray-click', gui)
     await eventually(async () => { const current = await guiState(); return current?.visible ? current : false }, 'real tray restores GUI')
     scenarios.trayRestore = true
@@ -199,7 +202,7 @@ export async function runBrowserMatrix(repository: string, state: string, helper
           }
         } catch { /* Optional sanitized diagnostics must not mask the primary failure or block teardown. */ }
       }
-      if (gui) await cleanup('owned GUI exit', async () => { if (await nativeProbe<boolean>(helper, 'alive', String(gui!.pid), gui!.started)) { await action('tray-exit', gui!); await stopped(gui!) } })
+      if (gui) await cleanup('owned GUI exit', async () => { if (await nativeProbe<boolean>(helper, 'alive', String(gui!.pid), gui!.started)) { if (await nativeActions.cleanupTray(String(gui!.pid), gui!.started)) await stopped(gui!) } })
       if (service) await cleanup('owned runtime stop', async () => { if (await nativeProbe<boolean>(helper, 'alive', String(service!.pid), observed.get(service!.pid)!.started)) { if ((await status()).pid !== service!.pid) throw new Error('owner changed'); await control.requestLocalStop(address, 5000, service!.pid) } })
       if (browserIdentity) await cleanup('owned browser close', async () => { if (await nativeProbe<boolean>(helper, 'alive', String(browserIdentity!.pid), browserIdentity!.started)) { await action('close-browser', browserIdentity!); await stopped(browserIdentity!) } })
       // Failed startup may not have produced a window yet. Only this run's unique

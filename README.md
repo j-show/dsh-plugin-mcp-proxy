@@ -30,26 +30,16 @@ unused local service slot. It binds the recorded build's EXE/runtime pair, requi
 all five native product cases to pass, and verifies service/data cleanup. Release CI
 runs this automatically after both builds; see the [acceptance guide](docs/acceptance.md).
 
-`pnpm test:browser` adds headed Chrome/Edge, real Windows protocol confirmation and
-GUI/tray lifecycle acceptance. It requires an interactive desktop, Explorer tray and
-an unoccupied `mcp-proxy://` registration across user/system classes. `--preflight` checks these without taking
-over an existing installation. Release CI requires both browser matrices, not silent skips.
-Failure evidence includes fixed native activation stages and pairing/upgrade status codes;
-URI tickets, headers and private profile logs remain excluded.
-Protocol confirmation uses real keyboard input after its button's focus, foreground
-and position remain stable through the browser input-protection interval. It requires prompt dismissal and handler
-execution evidence. Tray pointer actions require verified target hits. Preflight checks
-matching input/process desktops; safe failure evidence excludes tickets and private state.
-Preflight also requires an active Windows session. Protocol screenshots crop the
-consent controls and verify that the address bar lies outside the capture.
-Windows 11 notification overflow uses its unique native control ID, with localized
-Windows 10 labels as a fallback; diagnostics contain structure only.
-Overflow popups are restricted to the taskbar's process, including native XAML popups.
-Exit verification checks hidden notification icons too and closes any overflow it opens.
-Tray identification accepts the exact app label in UIA Name or tooltip HelpText;
-raw tooltip text is excluded from evidence.
-Native process discovery queries image paths through limited-access handles, including
-before module loading; a suspended-process regression also verifies fixture termination.
+`pnpm test:browser` runs headed Chrome/Edge, real URI confirmation, TLS pairing and
+GUI/tray lifecycle acceptance against the recorded build. It needs an active Windows
+session, interactive desktop, Explorer tray, both browsers, a free service slot and an
+unoccupied user/system `mcp-proxy://` registration. `--preflight` checks prerequisites
+without taking over an existing installation.
+
+Release CI requires both seven-scenario browser matrices without skips. Disposable
+profiles and test CAs are owned and removed by the run. Reports under `.artifacts/ci`
+exclude tickets, private state and the address bar. See the [acceptance guide](docs/acceptance.md)
+and [implementation evidence](docs/evidence/browser-desktop-e2e-2026-11-13.md) for scope and results.
 
 Use Node.js 22.19+ or 24+ and pnpm 11.7.0. Dependencies come from the public npm registry; no Harness checkout is required.
 

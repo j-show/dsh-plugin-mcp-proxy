@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { assertDesktopPreflight, requireBrowserMatrix, ownedCertificate, uniqueTarget, activeMcpIdentities } from './browser-e2e-contract.ts'
 import { prepareDshPage } from './browser-cdp.ts'
-import { compileDesktopProbe, nativeProbe, confirmNativeProtocol } from './browser-native.ts'
+import { compileDesktopProbe, nativeProbe, nativeActionSession, confirmNativeProtocol } from './browser-native.ts'
 
 it('refuses existing URI owners and noninteractive desktops before touching user state', () => {
   const ready = { platform: 'win32', interactive: true, tray: true, chrome: true, edge: true, uriOccupied: false }
@@ -66,4 +66,22 @@ it.skipIf(process.platform !== 'win32')('reads a suspended process image before 
   expect(value.mainModuleUnavailable).toBe(true)
   expect((await realpath(value.image)).toLowerCase()).toBe((await realpath(fixture)).toLowerCase())
   expect(await nativeProbe(helper, 'alive', String(value.pid), value.started)).toBe(false)
+})
+it('falls back to owned process cleanup without replaying uncertain tray input', async () => {
+  for (const message of ['Native operation tray-exit failed: Native desktop test: Exception: Native input result uncertain; refusing retry',
+    'Native operation tray-exit failed (timeout)', 'Native operation tray-exit failed']) {
+    const calls: string[] = []
+    const session = nativeActionSession(async operation => { calls.push(operation); throw new Error(message) })
+    await expect(session.action('tray-exit', '123', 'owned')).rejects.toThrow(message)
+    expect(await session.cleanupTray('123', 'owned')).toBe(false)
+    expect(calls).toEqual(['tray-exit'])
+  }
+  const calls: string[] = []
+  const session = nativeActionSession(async operation => {
+    calls.push(operation)
+    if (operation === 'tray-click') throw new Error('Native operation tray-click failed: Native desktop test: Exception: Notification pointer refused')
+  })
+  await expect(session.action('tray-click')).rejects.toThrow('refused')
+  expect(await session.cleanupTray('123', 'owned')).toBe(true)
+  expect(calls).toEqual(['tray-click', 'tray-exit'])
 })

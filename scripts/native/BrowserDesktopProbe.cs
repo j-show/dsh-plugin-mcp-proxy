@@ -16,7 +16,8 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 
 class BrowserDesktopProbe {
-  static bool protocolInputAttempted=false;
+  static bool nativeInputAttempted=false;
+  static string nativeInputStage="none";
   [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Unicode)] struct PE {public uint size,usage,pid;public IntPtr heap;public uint module,threads,parent;public int priority;public uint flags;[MarshalAs(UnmanagedType.ByValTStr,SizeConst=260)]public string exe;}
   [DllImport("kernel32.dll")] static extern IntPtr CreateToolhelp32Snapshot(uint flags,uint pid);
   [DllImport("kernel32.dll",CharSet=CharSet.Unicode)] static extern bool Process32First(IntPtr snap,ref PE entry);
@@ -43,6 +44,12 @@ class BrowserDesktopProbe {
   [DllImport("user32.dll")] static extern IntPtr GetThreadDesktop(uint thread);
   [DllImport("user32.dll",CharSet=CharSet.Unicode)] static extern bool GetUserObjectInformation(IntPtr handle,int index,StringBuilder value,uint size,out uint needed);
   [DllImport("user32.dll")] static extern bool SetCursorPos(int x, int y);
+  [StructLayout(LayoutKind.Sequential)] struct POINT {public int x,y;public POINT(int x,int y){this.x=x;this.y=y;}}
+  [DllImport("user32.dll")] static extern IntPtr WindowFromPhysicalPoint(POINT point);
+  [DllImport("user32.dll")] static extern bool SetPhysicalCursorPos(int x,int y);
+  [DllImport("user32.dll")] static extern bool GetPhysicalCursorPos(out POINT point);
+  [DllImport("user32.dll",CharSet=CharSet.Unicode,SetLastError=true)] static extern IntPtr CreateWindowEx(uint extended,string cls,string title,uint style,int x,int y,int width,int height,IntPtr parent,IntPtr menu,IntPtr instance,IntPtr parameter);
+  [DllImport("user32.dll")] static extern bool DestroyWindow(IntPtr window);
   [DllImport("user32.dll")] static extern uint GetDoubleClickTime();
   [DllImport("user32.dll")] static extern void mouse_event(uint flags, uint x, uint y, uint data, UIntPtr extra);
   [StructLayout(LayoutKind.Sequential)] struct KEYBDINPUT {public ushort key,scan;public uint flags,time;public UIntPtr extra;}
@@ -127,7 +134,7 @@ class BrowserDesktopProbe {
         }
         var down=new INPUT{type=1,value=new INPUTUNION{keyboard=new KEYBDINPUT{key=0x20}}};
         var up=new INPUT{type=1,value=new INPUTUNION{keyboard=new KEYBDINPUT{key=0x20,flags=2}}};
-        protocolInputAttempted=true;
+        nativeInputStage="protocol-consent";nativeInputAttempted=true;
         uint sent=SendInput(2,new[]{down,up},Marshal.SizeOf(typeof(INPUT)));
         if(sent!=2) {
           if(sent==1)SendInput(1,new[]{up},Marshal.SizeOf(typeof(INPUT)));
@@ -211,6 +218,71 @@ class BrowserDesktopProbe {
     if(shell==IntPtr.Zero||shellPid==0)throw new Exception("Notification area unavailable");
     var rows=new List<IntPtr>();EnumWindows((w,a)=>{var b=new StringBuilder(256);GetClassName(w,b,b.Capacity);var c=b.ToString();uint pid;GetWindowThreadProcessId(w,out pid);
       if(shellPid!=0&&pid==shellPid&&IsWindowVisible(w)&&(w==shell||c=="Shell_SecondaryTrayWnd"||c=="NotifyIconOverflowWindow"||c.Contains("Overflow")||c=="Xaml_WindowedPopupClass"))rows.Add(w);return true;},IntPtr.Zero);return rows;
+  }
+  static IntPtr NotificationRoot(AutomationElement icon) {
+    var icons=TrayIcons();if(icons.Count!=1||!Automation.Compare(icons[0],icon))throw new Exception("Notification target identity changed");
+    uint pid;GetWindowThreadProcessId(FindWindow("Shell_TrayWnd",null),out pid);var root=TargetWindow(icon,(int)pid);
+    if(!TrayWindows().Contains(root))throw new Exception("Notification root is outside the shell whitelist");return root;
+  }
+  static bool Within(AutomationElement child,AutomationElement ancestor,AutomationElement root) {
+    if(child==null||ancestor==null||root==null)return false;
+    for(int i=0;i<32&&child!=null;i++,child=TreeWalker.RawViewWalker.GetParent(child)) {
+      if(Automation.Compare(child,ancestor))return true;if(Automation.Compare(child,root))break;
+    }
+    return false;
+  }
+  static bool Operable(AutomationElement e) {
+    if(e.Current.IsKeyboardFocusable)return true;object pattern;
+    return e.TryGetCurrentPattern(InvokePattern.Pattern,out pattern)||e.TryGetCurrentPattern(SelectionItemPattern.Pattern,out pattern)
+      ||e.TryGetCurrentPattern(TogglePattern.Pattern,out pattern)||e.TryGetCurrentPattern(ExpandCollapsePattern.Pattern,out pattern)
+      ||e.TryGetCurrentPattern(ValuePattern.Pattern,out pattern)||e.TryGetCurrentPattern(RangeValuePattern.Pattern,out pattern);
+  }
+  static bool NotificationPoint(AutomationElement icon,IntPtr window,System.Windows.Rect bounds,System.Windows.Point point,out string reason) {
+    reason="target changed";var c=icon.Current;
+    if(c.IsOffscreen||!c.IsEnabled||c.BoundingRectangle!=bounds||!bounds.Contains(point))return false;
+    reason="native window is occluded";if(GetAncestor(WindowFromPhysicalPoint(new POINT((int)point.X,(int)point.Y)),2)!=window)return false;
+    var root=AutomationElement.FromHandle(window);var hit=AutomationElement.FromPoint(point);
+    reason="UIA hit is not in the verified notification ancestry: "+HitInfo(hit);
+    if(!Within(icon,root,root)||(!Within(hit,icon,root)&&!Within(icon,hit,root)))return false;
+    // FromPoint may return a logical ancestor. Only the identified notification
+    // subtree may use that contract; another operable peer at the point is ambiguous.
+    foreach(AutomationElement peer in root.FindAll(TreeScope.Descendants,Condition.TrueCondition)) {
+      var p=peer.Current;if(p.IsOffscreen||!p.BoundingRectangle.Contains(point)||Within(icon,peer,root)||Within(peer,icon,root))continue;
+      if(Operable(peer)){reason="another operable control overlaps: "+HitInfo(peer);return false;}
+    }
+    reason="verified";return true;
+  }
+  static void ClickNotification(AutomationElement icon,bool right=false) {
+    var window=NotificationRoot(icon);var bounds=icon.Current.BoundingRectangle;string reason="no interior point";System.Windows.Point? selected=null;
+    foreach(double y in new[]{0.5,0.25,0.75}) {
+      foreach(double x in new[]{0.5,0.25,0.75}) {
+        var point=new System.Windows.Point(Math.Floor(bounds.X+bounds.Width*x),Math.Floor(bounds.Y+bounds.Height*y));
+        if(NotificationPoint(icon,window,bounds,point,out reason)){selected=point;break;}
+      }
+      if(selected.HasValue)break;
+    }
+    if(!selected.HasValue)throw new Exception("Notification pointer refused: "+reason);
+    var value=selected.Value;if(!SetPhysicalCursorPos((int)value.X,(int)value.Y))throw new Exception("Notification cursor positioning failed");
+    POINT cursor;if(!GetPhysicalCursorPos(out cursor)||cursor.x!=(int)value.X||cursor.y!=(int)value.Y)throw new Exception("Notification cursor did not reach its verified point");
+    if(NotificationRoot(icon)!=window||!NotificationPoint(icon,window,bounds,value,out reason))throw new Exception("Notification changed before input: "+reason);
+    if(!GetPhysicalCursorPos(out cursor)||cursor.x!=(int)value.X||cursor.y!=(int)value.Y
+      ||GetAncestor(WindowFromPhysicalPoint(cursor),2)!=window)throw new Exception("Notification cursor/window changed before dispatch");
+    var down=new INPUT{type=0,value=new INPUTUNION{mouse=new MOUSEINPUT{flags=right?8u:2u}}};
+    var up=new INPUT{type=0,value=new INPUTUNION{mouse=new MOUSEINPUT{flags=right?16u:4u}}};
+    nativeInputStage=right?"notification-right":"notification-left";nativeInputAttempted=true;uint sent=SendInput(2,new[]{down,up},Marshal.SizeOf(typeof(INPUT)));
+    if(sent!=2){if(sent==1)SendInput(1,new[]{up},Marshal.SizeOf(typeof(INPUT)));throw new Exception("Native input result uncertain; refusing retry");}
+  }
+  static void NotificationOcclusionGuard(AutomationElement icon) {
+    var window=NotificationRoot(icon);var bounds=icon.Current.BoundingRectangle;
+    var point=new System.Windows.Point(Math.Floor(bounds.X+bounds.Width/2),Math.Floor(bounds.Y+bounds.Height/2));
+    string reason;if(!NotificationPoint(icon,window,bounds,point,out reason))throw new Exception("Unoccluded notification guard point unavailable: "+reason);
+    var blocker=CreateWindowEx(0x08000088,"BUTTON","MCP project pointer guard",0x90000000,(int)point.X-8,(int)point.Y-8,16,16,IntPtr.Zero,IntPtr.Zero,IntPtr.Zero,IntPtr.Zero);
+    if(blocker==IntPtr.Zero)throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+    try {
+      if(GetAncestor(WindowFromPhysicalPoint(new POINT((int)point.X,(int)point.Y)),2)!=blocker)throw new Exception("Test blocker did not cover the verified point");
+      if(NotificationPoint(icon,window,bounds,point,out reason)||reason!="native window is occluded")throw new Exception("Notification guard accepted an occluding foreign window");
+    }
+    finally{if(!DestroyWindow(blocker))throw new Exception("Test pointer blocker did not close");}
   }
   static AutomationElement Tray() {
     var icons=TrayIcons();if(icons.Count>1)throw new Exception("Notification icon is not unique");if(icons.Count==1)return icons[0];
@@ -351,12 +423,13 @@ class BrowserDesktopProbe {
           if(own.Count!=1||!IsWindowVisible(own[0]))throw new Exception("Owned GUI not visible");Capture(own[0],a[3]);result=new{captured=true};
         }
         else if(op=="confirm-disconnect")Click(Button(windows,"^(OK|确定)$",ControlType.Button));
-        else if(op=="tray-click")Click(Tray(),false,true);
+        else if(op=="tray-hit-guard") {NotificationOcclusionGuard(Tray());result=new{occlusionRefused=true};}
+        else if(op=="tray-click")ClickNotification(Tray());
         else if(op=="tray-exit") {
-          Click(Tray(),true);System.Threading.Thread.Sleep(300);
+          ClickNotification(Tray(),true);nativeInputStage="exit-menu-discovery";System.Threading.Thread.Sleep(300);
           var menus=AutomationElement.RootElement.FindAll(TreeScope.Children,new PropertyCondition(AutomationElement.ControlTypeProperty,ControlType.Menu));
           var items=new List<AutomationElement>();foreach(AutomationElement menu in menus)if(menu.Current.ProcessId==p.Id)foreach(AutomationElement e in menu.FindAll(TreeScope.Descendants,new PropertyCondition(AutomationElement.ControlTypeProperty,ControlType.MenuItem)))if(System.Text.RegularExpressions.Regex.IsMatch(e.Current.Name??"","^(Exit|退出)$"))items.Add(e);
-          if(items.Count!=1)throw new Exception("Owned tray Exit menu is not unique");Click(items[0]);
+          if(items.Count!=1)throw new Exception("Owned tray Exit menu is not unique");nativeInputStage="exit-menu-selection";Click(items[0]);
         } else if(op=="window") {if(own.Count!=1)throw new Exception("GUI window is not unique");result=Info(p,own[0]);}
         else if(op=="close-browser") {foreach(var w in windows)PostMessage(w,0x0010,IntPtr.Zero,IntPtr.Zero);}
         else if(op=="kill-owned")p.Kill();
@@ -364,6 +437,6 @@ class BrowserDesktopProbe {
         if(result==null)result=new {ok=true};
       }
       Console.WriteLine(new JavaScriptSerializer().Serialize(result));return 0;
-    }catch(Exception e){Console.Error.WriteLine(protocolInputAttempted?"Native desktop test: Exception: Native protocol input result uncertain; refusing retry":"Native desktop test: "+e.GetType().Name+": "+e.Message);return 1;}
+    }catch(Exception e){Console.Error.WriteLine(nativeInputAttempted?"Native desktop test: Exception: Native input result uncertain; refusing retry; stage="+nativeInputStage+"; type="+e.GetType().Name:"Native desktop test: "+e.GetType().Name+": "+e.Message);return 1;}
   }
 }
