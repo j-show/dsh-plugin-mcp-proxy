@@ -29,6 +29,11 @@ class BrowserDesktopProbe {
   [DllImport("user32.dll", CharSet=CharSet.Unicode)] static extern int GetWindowText(IntPtr w, StringBuilder b, int n);
   [DllImport("user32.dll")] static extern bool PostMessage(IntPtr w, uint m, IntPtr a, IntPtr b);
   [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr w);
+  [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
+  [DllImport("user32.dll")] static extern IntPtr GetAncestor(IntPtr w,uint flags);
+  [DllImport("kernel32.dll")] static extern uint GetCurrentThreadId();
+  [DllImport("user32.dll")] static extern IntPtr GetThreadDesktop(uint thread);
+  [DllImport("user32.dll",CharSet=CharSet.Unicode)] static extern bool GetUserObjectInformation(IntPtr handle,int index,StringBuilder value,uint size,out uint needed);
   [DllImport("user32.dll")] static extern bool SetCursorPos(int x, int y);
   [DllImport("user32.dll")] static extern void mouse_event(uint flags, uint x, uint y, uint data, UIntPtr extra);
   [DllImport("user32.dll")] static extern bool SetProcessDPIAware();
@@ -47,14 +52,30 @@ class BrowserDesktopProbe {
     if(p.StartTime.ToUniversalTime().Ticks.ToString()!=a[2])throw new Exception("Process identity changed");return p;
   }
   static object Info(Process p, IntPtr w) { return new {pid=p.Id,started=p.StartTime.ToUniversalTime().Ticks.ToString(),visible=IsWindowVisible(w),handle=w.ToInt64().ToString(),image=p.MainModule.FileName,owned=true}; }
+  static string DesktopName(IntPtr desktop) {uint needed;var b=new StringBuilder(128);return desktop!=IntPtr.Zero&&GetUserObjectInformation(desktop,2,b,(uint)(b.Capacity*2),out needed)?b.ToString():"unavailable";}
+  static void FocusTarget(AutomationElement e,int pid) {
+    IntPtr window=IntPtr.Zero;var node=e;
+    for(int i=0;i<32&&node!=null;i++,node=TreeWalker.RawViewWalker.GetParent(node))if(node.Current.NativeWindowHandle!=0){window=GetAncestor(new IntPtr(node.Current.NativeWindowHandle),2);break;}
+    uint owner;if(window==IntPtr.Zero||!IsWindowVisible(window))throw new Exception("Target root window is unavailable");
+    GetWindowThreadProcessId(window,out owner);if(owner!=pid)throw new Exception("Target root window belongs to another process");
+    SetForegroundWindow(window);
+    for(int i=0;i<20;i++){if(GetForegroundWindow()==window)return;System.Threading.Thread.Sleep(50);}
+    throw new Exception("Target root window could not become foreground");
+  }
+  static string HitInfo(AutomationElement e) {
+    if(e==null)return "none";
+    var c=e.Current;var cls=System.Text.RegularExpressions.Regex.Replace(c.ClassName??"","[^A-Za-z0-9_.-]","_");
+    return c.ProcessId+"/"+c.ControlType.ProgrammaticName+"/"+cls.Substring(0,Math.Min(64,cls.Length));
+  }
   static void Click(AutomationElement e,bool right=false,bool pointer=false) {
     if(e.Current.IsOffscreen)throw new Exception("Native target is offscreen");
+    if(!e.Current.IsEnabled)throw new Exception("Native target is disabled");
     object invoke;if(!pointer&&!right&&e.TryGetCurrentPattern(InvokePattern.Pattern,out invoke)){((InvokePattern)invoke).Invoke();return;}
     var b=e.Current.BoundingRectangle;if(b.Width<=0||b.Height<=0)throw new Exception("No native target bounds");
-    var hit=AutomationElement.FromPoint(new System.Windows.Point(b.X+b.Width/2,b.Y+b.Height/2));bool target=false;
+    var hit=AutomationElement.FromPoint(new System.Windows.Point(b.X+b.Width/2,b.Y+b.Height/2));var originalHit=hit;bool target=false;
     for(int i=0;i<8&&hit!=null;i++,hit=TreeWalker.RawViewWalker.GetParent(hit))if(Automation.Compare(hit,e)){target=true;break;}
-    if(!target)throw new Exception("Native control is occluded; refusing pointer input");
-    SetCursorPos((int)(b.X+b.Width/2),(int)(b.Y+b.Height/2));
+    if(!target)throw new Exception("Native control is occluded; target="+HitInfo(e)+"; hit="+HitInfo(originalHit));
+    if(!SetCursorPos((int)(b.X+b.Width/2),(int)(b.Y+b.Height/2)))throw new Exception("Native cursor positioning failed");
     mouse_event(right?0x0008u:0x0002u,0,0,0,UIntPtr.Zero);mouse_event(right?0x0010u:0x0004u,0,0,0,UIntPtr.Zero);
   }
   static AutomationElement Button(IEnumerable<IntPtr> windows, string pattern, ControlType type) {
@@ -96,8 +117,8 @@ class BrowserDesktopProbe {
     try {
       object result=null;var op=a[0];
       if(op=="preflight") {
-        var d=OpenInputDesktop(0,false,0x0001);bool input=d!=IntPtr.Zero;if(input)CloseDesktop(d);
-        using(var key=Registry.CurrentUser.OpenSubKey("Software\\Classes\\mcp-proxy"))result=new {platform="win32",interactive=Environment.UserInteractive&&Process.GetCurrentProcess().SessionId!=0&&input,tray=FindWindow("Shell_TrayWnd",null)!=IntPtr.Zero,uriOccupied=key!=null};
+        var d=OpenInputDesktop(0,false,0x0001);string input=DesktopName(d),thread=DesktopName(GetThreadDesktop(GetCurrentThreadId()));if(d!=IntPtr.Zero)CloseDesktop(d);
+        using(var key=Registry.CurrentUser.OpenSubKey("Software\\Classes\\mcp-proxy"))result=new {platform="win32",interactive=Environment.UserInteractive&&Process.GetCurrentProcess().SessionId!=0&&input!="unavailable"&&input==thread,inputDesktop=input,processDesktop=thread,tray=FindWindow("Shell_TrayWnd",null)!=IntPtr.Zero,uriOccupied=key!=null};
       } else if(op=="protect-state") {
         if((File.GetAttributes(a[1])&FileAttributes.ReparsePoint)!=0)throw new Exception("Linked state directory");
         var acl=new DirectorySecurity();acl.SetAccessRuleProtection(true,false);
@@ -123,7 +144,7 @@ class BrowserDesktopProbe {
           result=rows;
         }
         else if(op=="close-window") {if(own.Count!=1)throw new Exception("GUI window is not unique");PostMessage(own[0],0x0010,IntPtr.Zero,IntPtr.Zero);}
-        else if(op=="confirm-protocol") {if(windows.Count==0)throw new Exception("Browser has no native window");SetForegroundWindow(windows[0]);Click(Button(windows,"^(Open|打开).*mcp-proxy",ControlType.Button),false,true);}
+        else if(op=="confirm-protocol") {var target=Button(windows,"^(Open|打开).*mcp-proxy",ControlType.Button);FocusTarget(target,p.Id);Click(target,false,true);}
         else if(op=="protocol-prompt") {try{Button(windows,"^(Open|打开).*mcp-proxy",ControlType.Button);result=true;}catch{result=false;}}
         else if(op=="confirm-ca") {
           var dialogs=new List<IntPtr>();foreach(var w in windows){var names=AutomationElement.FromHandle(w).FindAll(TreeScope.Descendants,Condition.TrueCondition);foreach(AutomationElement e in names)if((e.Current.Name??"").Contains("MCP Proxy Project Development CA")){dialogs.Add(w);break;}}

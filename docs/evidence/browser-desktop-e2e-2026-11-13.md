@@ -57,3 +57,7 @@
 
 运行 [43429347293](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43429347293)
 在真实指针确认阶段失败，尚未执行 handler。保留重试最后一次原生控件错误，避免通用 deadline 掩盖拒绝原因。
+
+运行 [43430317648](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43430317648)
+明确报出 Native control is occluded。确认动作现按唯一按钮所属根窗口聚焦并等待前台稳定；
+预检核对输入桌面与进程桌面，命中诊断限定 PID、控件类型和 class，不记录 Name、Title 或 URL。
