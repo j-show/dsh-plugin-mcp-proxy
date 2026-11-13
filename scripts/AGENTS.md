@@ -10,7 +10,8 @@
 - MCP startup markers may include exited version-negotiation children. Track only creation-fenced live descendants of the owned service; reject live unowned markers and compare stable live identities across second launch.
 - Fresh DSH onboarding must be handled through its real nonbinding Continue and Configure later controls. Verify pointer hit targets before browser clicks so a modal cannot redirect a background action.
 - Failure routing diagnostics must contain only fixed activation stages, whitelisted paths without queries and numeric response codes. Never publish raw URI, headers or server output.
-- Protocol consent uses a hit-checked native pointer action, then requires prompt dismissal and handler execution evidence before checking pairing.
+- Protocol consent uses real keyboard input after verifying the exact button's keyboard focus and owning foreground window, then requires prompt dismissal and handler execution evidence. Never send blind keys or replace consent with an injected callback.
+- Retry only confirmed pre-input failures. Partial input must release any pressed key and fail without replay; helper timeout or missing native diagnostics is also uncertain.
 - Preserve the last fixed native control failure across confirmation retries; a generic retry deadline must not hide the refused action.
 - Focus protocol controls by their verified owning root window, never by top-level enumeration order. Require the input and process desktops to match; hit diagnostics may include only PID/type/class, never element Name/Title.
 - A control's center is not guaranteed clickable. Try the provider point and interior candidates but require the same target/subtree hit. Capture protocol windows only under the existing page token checks and verified process/root ownership.

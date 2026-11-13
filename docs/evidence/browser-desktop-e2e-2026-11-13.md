@@ -65,3 +65,10 @@
 运行 [43431351885](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43431351885)
 前台定位通过，按钮中心命中同浏览器的 Group。指针现尝试系统建议点和目标内部点，仍只接受目标或子元素命中；
 脱敏检查通过时可保留归属已验证的协议窗口截图，以区分坐标与实际遮挡。
+
+运行 [43432822489](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43432822489)
+的协议窗口截图确认 Open mcp-proxy 按钮可见，坐标吻合，但所有内部点的 UIA 命中仍返回 Group。
+协议确认改为真实 SendInput 空格，前置必须同时满足按钮 HasKeyboardFocus、FocusedElement 匹配和所属根窗口在前台；
+后置仍要求弹窗消失、handler 执行和完整 TLS 配对。托盘保留实际指针及命中检查。
+部分 SendInput 插入会释放已按下的空格并终止；派发后的原生异常、helper 超时或无原生错误信息均不重试。
+回归验证前置焦点拒绝可以重试，而不确定输入、超时和无确认退出只调用一次。

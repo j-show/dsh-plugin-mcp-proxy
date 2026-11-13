@@ -16,6 +16,7 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 
 class BrowserDesktopProbe {
+  static bool protocolInputAttempted=false;
   [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Unicode)] struct PE {public uint size,usage,pid;public IntPtr heap;public uint module,threads,parent;public int priority;public uint flags;[MarshalAs(UnmanagedType.ByValTStr,SizeConst=260)]public string exe;}
   [DllImport("kernel32.dll")] static extern IntPtr CreateToolhelp32Snapshot(uint flags,uint pid);
   [DllImport("kernel32.dll",CharSet=CharSet.Unicode)] static extern bool Process32First(IntPtr snap,ref PE entry);
@@ -36,6 +37,11 @@ class BrowserDesktopProbe {
   [DllImport("user32.dll",CharSet=CharSet.Unicode)] static extern bool GetUserObjectInformation(IntPtr handle,int index,StringBuilder value,uint size,out uint needed);
   [DllImport("user32.dll")] static extern bool SetCursorPos(int x, int y);
   [DllImport("user32.dll")] static extern void mouse_event(uint flags, uint x, uint y, uint data, UIntPtr extra);
+  [StructLayout(LayoutKind.Sequential)] struct KEYBDINPUT {public ushort key,scan;public uint flags,time;public UIntPtr extra;}
+  [StructLayout(LayoutKind.Sequential)] struct MOUSEINPUT {public int x,y;public uint data,flags,time;public UIntPtr extra;}
+  [StructLayout(LayoutKind.Explicit)] struct INPUTUNION {[FieldOffset(0)]public KEYBDINPUT keyboard;[FieldOffset(0)]public MOUSEINPUT mouse;}
+  [StructLayout(LayoutKind.Sequential)] struct INPUT {public uint type;public INPUTUNION value;}
+  [DllImport("user32.dll",SetLastError=true)] static extern uint SendInput(uint count,INPUT[] inputs,int size);
   [DllImport("user32.dll")] static extern bool SetProcessDPIAware();
   [StructLayout(LayoutKind.Sequential)]struct RECT {public int left,top,right,bottom;}
   [DllImport("user32.dll")]static extern bool GetWindowRect(IntPtr w,out RECT rect);
@@ -65,6 +71,26 @@ class BrowserDesktopProbe {
     SetForegroundWindow(window);
     for(int i=0;i<20;i++){if(GetForegroundWindow()==window)return;System.Threading.Thread.Sleep(50);}
     throw new Exception("Target root window could not become foreground");
+  }
+  static void ConfirmProtocol(AutomationElement target,int pid) {
+    if(target.Current.IsOffscreen||!target.Current.IsEnabled)throw new Exception("Protocol button is not available");
+    FocusTarget(target,pid);target.SetFocus();
+    for(int i=0;i<20;i++) {
+      if(target.Current.HasKeyboardFocus&&Automation.Compare(AutomationElement.FocusedElement,target)) {
+        if(GetForegroundWindow()!=TargetWindow(target,pid))throw new Exception("Protocol foreground changed before consent");
+        var down=new INPUT{type=1,value=new INPUTUNION{keyboard=new KEYBDINPUT{key=0x20}}};
+        var up=new INPUT{type=1,value=new INPUTUNION{keyboard=new KEYBDINPUT{key=0x20,flags=2}}};
+        protocolInputAttempted=true;
+        uint sent=SendInput(2,new[]{down,up},Marshal.SizeOf(typeof(INPUT)));
+        if(sent!=2) {
+          if(sent==1)SendInput(1,new[]{up},Marshal.SizeOf(typeof(INPUT)));
+          throw new Exception("Native protocol input result uncertain; refusing retry");
+        }
+        return;
+      }
+      System.Threading.Thread.Sleep(50);
+    }
+    throw new Exception("Protocol button did not acquire keyboard focus");
   }
   static string HitInfo(AutomationElement e) {
     if(e==null)return "none";
@@ -168,7 +194,7 @@ class BrowserDesktopProbe {
           result=rows;
         }
         else if(op=="close-window") {if(own.Count!=1)throw new Exception("GUI window is not unique");PostMessage(own[0],0x0010,IntPtr.Zero,IntPtr.Zero);}
-        else if(op=="confirm-protocol") {var target=Button(windows,"^(Open|打开).*mcp-proxy",ControlType.Button);FocusTarget(target,p.Id);Click(target,false,true);}
+        else if(op=="confirm-protocol") {ConfirmProtocol(Button(windows,"^(Open|打开).*mcp-proxy",ControlType.Button),p.Id);}
         else if(op=="protocol-prompt") {try{Button(windows,"^(Open|打开).*mcp-proxy",ControlType.Button);result=true;}catch{result=false;}}
         else if(op=="screenshot-protocol") {var target=Button(windows,"^(Open|打开).*mcp-proxy",ControlType.Button);SafeProtocolCapture(TargetWindow(target,p.Id),a[3]);result=new{captured=true};}
         else if(op=="confirm-ca") {
@@ -199,6 +225,6 @@ class BrowserDesktopProbe {
         if(result==null)result=new {ok=true};
       }
       Console.WriteLine(new JavaScriptSerializer().Serialize(result));return 0;
-    }catch(Exception e){Console.Error.WriteLine("Native desktop test: "+e.GetType().Name+": "+e.Message);return 1;}
+    }catch(Exception e){Console.Error.WriteLine(protocolInputAttempted?"Native desktop test: Exception: Native protocol input result uncertain; refusing retry":"Native desktop test: "+e.GetType().Name+": "+e.Message);return 1;}
   }
 }

@@ -2,7 +2,24 @@
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { join, resolve } from 'node:path'
+import { eventually } from './browser-cdp.ts'
 const execute = promisify(execFile)
+/** Retry only known pre-input refusals; timeouts and uncertain dispatch are never replayed. */
+export async function confirmNativeProtocol(action: () => Promise<unknown>): Promise<void> {
+  let failure: unknown = new Error('Native confirmation target unavailable')
+  try {
+    await eventually(async () => {
+      try { await action(); return true }
+      catch (error) {
+        failure = error
+        const message = error instanceof Error ? error.message : ''
+        if (!message.startsWith('Native operation confirm-protocol failed: Native desktop test: ')
+          || message.includes('input result uncertain') || message.includes('(timeout)')) throw error
+        return false
+      }
+    }, 'real browser protocol confirmation')
+  } catch { throw failure }
+}
 export interface NativeWindow { pid: number; started: string; visible: boolean; image: string; handle: string; owned: boolean }
 export async function compileDesktopProbe(directory: string): Promise<string> {
   const framework = join(process.env.WINDIR ?? '', 'Microsoft.NET/Framework64/v4.0.30319')

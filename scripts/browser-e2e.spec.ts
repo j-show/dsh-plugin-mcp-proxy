@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest'
 import { assertDesktopPreflight, requireBrowserMatrix, ownedCertificate, uniqueTarget, activeMcpIdentities } from './browser-e2e-contract.ts'
 import { prepareDshPage } from './browser-cdp.ts'
+import { confirmNativeProtocol } from './browser-native.ts'
 
 it('refuses existing URI owners and noninteractive desktops before touching user state', () => {
   const ready = { platform: 'win32', interactive: true, tray: true, chrome: true, edge: true, uriOccupied: false }
@@ -41,4 +42,15 @@ it('uses the real notice and optional model controls once before opening setting
   expect(clicks).toHaveLength(2)
   expect(new RegExp(clicks[0]!, 'i').test('Continue')).toBe(true)
   expect(new RegExp(clicks[1]!, 'i').test('Configure later')).toBe(true)
+})
+it('retries pre-input protocol refusals but never replays uncertain input or an unreported helper exit', async () => {
+  let attempts = 0
+  await confirmNativeProtocol(async () => { if (++attempts === 1) throw new Error('Native operation confirm-protocol failed: Native desktop test: Exception: Protocol button did not acquire keyboard focus') })
+  expect(attempts).toBe(2)
+  for (const message of ['Native operation confirm-protocol failed: Native desktop test: Exception: Native protocol input result uncertain; refusing retry',
+    'Native operation confirm-protocol failed (timeout)', 'Native operation confirm-protocol failed']) {
+    attempts = 0
+    await expect(confirmNativeProtocol(async () => { attempts++; throw new Error(message) })).rejects.toThrow(message)
+    expect(attempts).toBe(1)
+  }
 })
