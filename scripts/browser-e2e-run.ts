@@ -167,6 +167,19 @@ export async function runBrowserMatrix(repository: string, state: string, helper
     const errors: string[] = []
     const cleanup = async (label: string, work: () => Promise<unknown>) => { try { await work() } catch { errors.push(label) } }
     if (failure) {
+      try {
+        const snapshot = await status()
+        let nativeStages: string[] = []
+        try {
+          const receipt = JSON.parse(await readFile(join(home, 'profiles/mcp-proxy/mcp-proxy-os/launcher.json'), 'utf8')) as { currentHelper: string }
+          if (/^mcp-proxy-[a-f0-9]{12}\.exe$/.test(receipt.currentHelper)) {
+            nativeStages = (await readFile(join(home, 'profiles/mcp-proxy/mcp-proxy-os', basename(receipt.currentHelper, '.exe') + '.activation.log'), 'utf8'))
+              .trim().split('\n').map(line => line.split(' ').at(-1)!).filter(value => /^[a-zA-Z0-9-]+$/.test(value))
+          }
+        } catch { /* Handler may not have been launched; missing stages are diagnostic evidence. */ }
+        await writeFile(join(repository, `.artifacts/ci/browser-${browser}-routing.json`), JSON.stringify({ stage,
+          servers: snapshot.servers.map(row => ({ state: row.state })), nativeStages, requests: web?.diagnostics() ?? [] }, null, 2))
+      } catch { /* Never mask the primary failure when its owned runtime has already exited. */ }
       if (cdp) {
         try {
           const page = await cdp.evaluate<{ query: string; text: string; controls: string[] }>(`({query:location.search,text:document.body.innerText,controls:[...document.querySelectorAll('button,a,[role="tab"],[role="menuitem"]')].map(e=>e.getAttribute('aria-label')||e.getAttribute('title')||e.textContent?.trim()||'').filter(Boolean).slice(0,80)})`)

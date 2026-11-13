@@ -21,17 +21,19 @@ it.skipIf(process.platform !== 'win32')('creates unique trusted localhost TLS an
   upstream.listen(0, '127.0.0.1'); await once(upstream, 'listening')
   const address = upstream.address()
   if (!address || typeof address === 'string') throw new Error('No upstream port')
-  const proxy = createDevelopmentProxy(await readFile(join(directory, 'server.pfx')), address.port)
+  const observed: Array<{ path: string; status: number }> = []
+  const proxy = createDevelopmentProxy(await readFile(join(directory, 'server.pfx')), address.port, entry => observed.push(entry))
   onTestFinished(async () => { await proxy.close(); await new Promise<void>(resolve => { upstream.close(() => resolve()) }) })
   proxy.server.listen(0, '127.0.0.1'); await once(proxy.server, 'listening')
   const target = proxy.server.address()
   if (!target || typeof target === 'string') throw new Error('No TLS port')
   const value = await new Promise<string>((resolve, reject) => {
-    const call = request({ hostname: '127.0.0.1', port: target.port, path: '/mcp-proxy/pair', method: 'POST', ca,
+    const call = request({ hostname: '127.0.0.1', port: target.port, path: '/mcp-proxy/pair?private=ticket', method: 'POST', ca,
       headers: { host: 'localhost:3443', origin: 'https://localhost:3443', cookie: 'test-only' } }, response => {
       let body = ''; response.on('data', chunk => { body += String(chunk) }); response.on('end', () => resolve(body))
     })
     call.on('error', reject); call.end()
   })
-  expect(JSON.parse(value)).toEqual({ url: '/mcp-proxy/pair', host: 'localhost:3443', origin: 'https://localhost:3443', cookie: 'test-only' })
+  expect(JSON.parse(value)).toEqual({ url: '/mcp-proxy/pair?private=ticket', host: 'localhost:3443', origin: 'https://localhost:3443', cookie: 'test-only' })
+  expect(observed).toEqual([{ path: '/mcp-proxy/pair', status: 200 }])
 })

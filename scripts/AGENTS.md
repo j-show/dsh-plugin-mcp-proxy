@@ -9,3 +9,4 @@
 - Certificate warnings may be confirmed only in the captured test helper process/creation identity with its expected image and test CA text. Use native control patterns or verified pointer hit targets; never click an arbitrary Yes button or an occluding window.
 - MCP startup markers may include exited version-negotiation children. Track only creation-fenced live descendants of the owned service; reject live unowned markers and compare stable live identities across second launch.
 - Fresh DSH onboarding must be handled through its real nonbinding Continue and Configure later controls. Verify pointer hit targets before browser clicks so a modal cannot redirect a background action.
+- Failure routing diagnostics must contain only fixed activation stages, whitelisted paths without queries and numeric response codes. Never publish raw URI, headers or server output.

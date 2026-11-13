@@ -24,7 +24,7 @@ async function port(): Promise<number> {
   const address = server.address(); if (!address || typeof address === 'string') throw new Error('No loopback port')
   await new Promise<void>(resolve => server.close(() => resolve())); return address.port
 }
-export interface WebFixture { origin: string; bootstrap: string; caFile: string; pluginSha256: string; stop(): Promise<void> }
+export interface WebFixture { origin: string; bootstrap: string; caFile: string; pluginSha256: string; diagnostics(): Array<{ path: string; status: number }>; stop(): Promise<void> }
 export interface ServerArtifact { archive: string; sha256: string }
 export async function bindServerArtifact(repository: string, directory: string): Promise<ServerArtifact> {
   const metadata = JSON.parse(await readFile(join(repository, 'release/mcp-plugin/release.json'), 'utf8')) as { archive: string }
@@ -51,7 +51,8 @@ export async function startBrowserWeb(repository: string, directory: string, bou
       await writeFile(join(state, 'server-install.log'), String(error.stdout ?? '') + String(error.stderr ?? '')); throw new Error('Private DSH profile installation failed')
     })
   const backend = await port()
-  const proxy = createDevelopmentProxy(await readFile(join(tls, 'server.pfx')), backend)
+  const requests: Array<{ path: string; status: number }> = []
+  const proxy = createDevelopmentProxy(await readFile(join(tls, 'server.pfx')), backend, entry => { if (requests.length < 256) requests.push(entry) })
   proxy.server.listen(0, '127.0.0.1'); await once(proxy.server, 'listening')
   const address = proxy.server.address(); if (!address || typeof address === 'string') throw new Error('No TLS port')
   const origin = `https://localhost:${address.port}`
@@ -72,6 +73,6 @@ export async function startBrowserWeb(repository: string, directory: string, bou
       if (child.exitCode !== null) throw new Error('Isolated DSH exited before Web readiness')
       return /http:\/\/127\.0\.0\.1:\d+\/\?token=([^\s]+)/.exec(output)?.[1]
     }, 'DSH Web startup', 90000)
-    return { origin, bootstrap: `${origin}/?token=${token}`, caFile: join(tls, 'ca.pem'), pluginSha256, stop }
+    return { origin, bootstrap: `${origin}/?token=${token}`, caFile: join(tls, 'ca.pem'), pluginSha256, diagnostics: () => [...requests], stop }
   } catch (error) { await stop(); throw error }
 }

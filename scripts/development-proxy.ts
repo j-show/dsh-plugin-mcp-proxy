@@ -5,13 +5,17 @@ import { connect } from 'node:net'
 import type { Duplex } from 'node:stream'
 
 /** Preserve Host/Origin/cookies; DSH owns all authentication and route checks. */
-export function createDevelopmentProxy(pfx: Buffer, upstreamPort: number): { server: Server; close(): Promise<void> } {
+export function createDevelopmentProxy(pfx: Buffer, upstreamPort: number, observe?: (entry: { path: string; status: number }) => void): { server: Server; close(): Promise<void> } {
   if (!Number.isInteger(upstreamPort) || upstreamPort < 1 || upstreamPort > 65535) throw new Error('Invalid upstream port')
   const sockets = new Set<Duplex>()
   const server = createServer({ pfx, maxHeaderSize: 16384 }, (incoming, outgoing) => {
     if (!incoming.url?.startsWith('/') || incoming.url.startsWith('//')) { outgoing.writeHead(400).end(); return }
     const upstream = requestHttp({ hostname: '127.0.0.1', port: upstreamPort, path: incoming.url, method: incoming.method,
-      headers: incoming.headers, timeout: 60000 }, response => { outgoing.writeHead(response.statusCode ?? 502, response.headers); response.pipe(outgoing) })
+      headers: incoming.headers, timeout: 60000 }, response => {
+        const path = incoming.url!.split('?')[0]!
+        if (['/mcp-proxy/pair', '/api/mcp-proxy/begin', '/api/mcp-proxy/finish', '/api/mcp-proxy/status'].includes(path)) observe?.({ path, status: response.statusCode ?? 502 })
+        outgoing.writeHead(response.statusCode ?? 502, response.headers); response.pipe(outgoing)
+      })
     upstream.on('timeout', () => { upstream.destroy(new Error('upstream timeout')) })
     upstream.on('error', () => { if (!outgoing.headersSent) outgoing.writeHead(502); outgoing.end('Development DSH unavailable') })
     incoming.on('aborted', () => { upstream.destroy() })
@@ -22,6 +26,12 @@ export function createDevelopmentProxy(pfx: Buffer, upstreamPort: number): { ser
   server.on('upgrade', (request, downstream, head) => {
     if (!request.url?.startsWith('/') || request.url.startsWith('//')) { downstream.destroy(); return }
     const upstream = connect(upstreamPort, '127.0.0.1')
+    let first = ''
+    const handshake = (bytes: Buffer) => {
+      first += bytes.toString('ascii').slice(0, 128)
+      if (first.includes('\r\n')) { upstream.off('data', handshake); observe?.({ path: '/mcp-proxy/connect', status: Number(/^HTTP\/1\.[01] (\d{3})/.exec(first)?.[1] ?? 0) }) }
+    }
+    upstream.on('data', handshake)
     sockets.add(upstream)
     upstream.once('close', () => { sockets.delete(upstream); downstream.destroy() })
     downstream.once('close', () => { upstream.destroy() })

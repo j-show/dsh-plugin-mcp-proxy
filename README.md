@@ -34,6 +34,8 @@ runs this automatically after both builds; see the [acceptance guide](docs/accep
 GUI/tray lifecycle acceptance. It requires an interactive desktop, Explorer tray and
 an unoccupied `mcp-proxy://` registration. `--preflight` checks these without taking
 over an existing installation. Release CI requires both browser matrices, not silent skips.
+Failure evidence includes fixed native activation stages and pairing/upgrade status codes;
+URI tickets, headers and private profile logs remain excluded.
 
 Use Node.js 22.19+ or 24+ and pnpm 11.7.0. Dependencies come from the public npm registry; no Harness checkout is required.
 

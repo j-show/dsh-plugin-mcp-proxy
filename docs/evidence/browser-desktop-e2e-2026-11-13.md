@@ -42,3 +42,7 @@
 到达 Chrome 设置导航。脱敏控件与截图显示新 profile 的 Internal Testing Notice 遮挡背景设置按钮。
 新增正常引导：实际点击非约束性声明 Continue，若需要则通过 Configure later 延后模型配置；
 每次浏览器点击增加命中检查，不能把后台按钮坐标当作前台可用控件。引导回归要求等待弹窗消失且不重复提交。
+
+运行 [43423186926](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43423186926)
+完成真实 Chrome 协议确认，但自动配对尚未连接。新增固定阶段与状态码诊断，区分原生转发、票据兑换和 WSS；
+不输出 URI、查询参数、请求头或私有日志，仍保留原 TLS 和连接断言。
