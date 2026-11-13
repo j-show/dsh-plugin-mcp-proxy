@@ -40,6 +40,7 @@ Release CI requires both seven-scenario browser matrices without skips. Disposab
 profiles and test CAs are owned and removed by the run. Reports under `.artifacts/ci`
 exclude tickets, private state and the address bar. See the [acceptance guide](docs/acceptance.md)
 and [implementation evidence](docs/evidence/browser-desktop-e2e-2026-11-13.md) for scope and results.
+Failure reports preserve native dialog structure and the last safe control error.
 
 Use Node.js 22.19+ or 24+ and pnpm 11.7.0. Dependencies come from the public npm registry; no Harness checkout is required.
 

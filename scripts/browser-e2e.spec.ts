@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { assertDesktopPreflight, requireBrowserMatrix, ownedCertificate, uniqueTarget, activeMcpIdentities } from './browser-e2e-contract.ts'
 import { prepareDshPage } from './browser-cdp.ts'
-import { compileDesktopProbe, nativeProbe, nativeActionSession, confirmNativeProtocol } from './browser-native.ts'
+import { compileDesktopProbe, nativeProbe, nativeActionSession, nativeConfirmationPoll, confirmNativeAction, confirmNativeProtocol } from './browser-native.ts'
 
 it('refuses existing URI owners and noninteractive desktops before touching user state', () => {
   const ready = { platform: 'win32', interactive: true, tray: true, chrome: true, edge: true, uriOccupied: false }
@@ -50,11 +50,16 @@ it('retries pre-input protocol refusals but never replays uncertain input or an 
   let attempts = 0
   await confirmNativeProtocol(async () => { if (++attempts === 1) throw new Error('Native operation confirm-protocol failed: Native desktop test: Exception: Protocol button did not acquire keyboard focus') })
   expect(attempts).toBe(2)
-  for (const message of ['Native operation confirm-protocol failed: Native desktop test: Exception: Native protocol input result uncertain; refusing retry',
-    'Native operation confirm-protocol failed (timeout)', 'Native operation confirm-protocol failed']) {
-    attempts = 0
-    await expect(confirmNativeProtocol(async () => { attempts++; throw new Error(message) })).rejects.toThrow(message)
-    expect(attempts).toBe(1)
+  attempts = 0
+  await confirmNativeAction('confirm-disconnect', async () => { if (++attempts === 1) throw new Error('Native operation confirm-disconnect failed: Native desktop test: Exception: Expected one matching native control; found 0') })
+  expect(attempts).toBe(2)
+  for (const operation of ['confirm-protocol', 'confirm-disconnect']) {
+    for (const message of [`Native operation ${operation} failed: Native desktop test: Exception: Native input result uncertain; refusing retry`,
+      `Native operation ${operation} failed (timeout)`, `Native operation ${operation} failed`]) {
+      attempts = 0
+      await expect(confirmNativeAction(operation, async () => { attempts++; throw new Error(message) })).rejects.toThrow(message)
+      expect(attempts).toBe(1)
+    }
   }
 })
 it.skipIf(process.platform !== 'win32')('reads a suspended process image before modules load and terminates the native fixture', { timeout: 90000 }, async () => {
@@ -84,4 +89,23 @@ it('falls back to owned process cleanup without replaying uncertain tray input',
   await expect(session.action('tray-click')).rejects.toThrow('refused')
   expect(await session.cleanupTray('123', 'owned')).toBe(true)
   expect(calls).toEqual(['tray-click', 'tray-exit'])
+})
+it('dispatches certificate confirmation once across overlapping and later polling ticks', async () => {
+  let calls = 0, release!: () => void
+  const pending = new Promise<void>(resolve => { release = resolve })
+  const poll = nativeConfirmationPoll('confirm-ca', async () => { calls++; await pending; return true })
+  const first = poll(); await poll(); expect(calls).toBe(1)
+  release(); await first; await poll(); expect(calls).toBe(1)
+  calls = 0
+  const refused = nativeConfirmationPoll('confirm-ca', async () => {
+    if (++calls === 1) throw new Error('Native operation confirm-ca failed: Native desktop test: Exception: Owned warning not found')
+    return true
+  })
+  await refused(); await refused(); await refused(); expect(calls).toBe(2)
+  for (const message of ['Native operation confirm-ca failed: Native desktop test: Exception: Native input result uncertain',
+    'Native operation confirm-ca failed (timeout)', 'Native operation confirm-ca failed']) {
+    calls = 0
+    const unknown = nativeConfirmationPoll('confirm-ca', async () => { calls++; throw new Error(message) })
+    await unknown(); await unknown(); expect(calls).toBe(1)
+  }
 })

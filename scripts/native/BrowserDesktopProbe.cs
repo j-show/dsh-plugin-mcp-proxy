@@ -190,7 +190,9 @@ class BrowserDesktopProbe {
   static void Click(AutomationElement e,bool right=false,bool pointer=false) {
     if(e.Current.IsOffscreen)throw new Exception("Native target is offscreen");
     if(!e.Current.IsEnabled)throw new Exception("Native target is disabled");
-    object invoke;if(!pointer&&!right&&e.TryGetCurrentPattern(InvokePattern.Pattern,out invoke)){((InvokePattern)invoke).Invoke();return;}
+    object invoke;if(!pointer&&!right&&e.TryGetCurrentPattern(InvokePattern.Pattern,out invoke)){
+      if(nativeInputStage=="none")nativeInputStage="uia-invoke";nativeInputAttempted=true;((InvokePattern)invoke).Invoke();return;
+    }
     var b=e.Current.BoundingRectangle;if(b.Width<=0||b.Height<=0)throw new Exception("No native target bounds");
     var points=new List<System.Windows.Point>();System.Windows.Point suggested;
     if(e.TryGetClickablePoint(out suggested)&&b.Contains(suggested))points.Add(suggested);
@@ -209,7 +211,8 @@ class BrowserDesktopProbe {
     var found=new List<AutomationElement>();
     foreach(var w in windows) {
       var elements=AutomationElement.FromHandle(w).FindAll(TreeScope.Descendants,new PropertyCondition(AutomationElement.ControlTypeProperty,type));
-      foreach(AutomationElement e in elements)if(!e.Current.IsOffscreen&&System.Text.RegularExpressions.Regex.IsMatch(e.Current.Name??"",pattern,System.Text.RegularExpressions.RegexOptions.IgnoreCase))found.Add(e);
+      foreach(AutomationElement e in elements)if(!e.Current.IsOffscreen&&System.Text.RegularExpressions.Regex.IsMatch(e.Current.Name??"",pattern,System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+        &&!found.Any(previous=>Automation.Compare(previous,e)))found.Add(e);
     }
     if(found.Count!=1)throw new Exception("Expected one matching native control; found "+found.Count);return found[0];
   }
@@ -353,6 +356,24 @@ class BrowserDesktopProbe {
     }
     return rows;
   }
+  static object GuiDialogInfo(IEnumerable<IntPtr> windows) {
+    var rows=new List<object>();
+    foreach(var w in windows) {
+      var cls=new StringBuilder(256);GetClassName(w,cls,cls.Capacity);var buttons=new List<object>();
+      try {
+        foreach(AutomationElement e in AutomationElement.FromHandle(w).FindAll(TreeScope.Descendants,new PropertyCondition(AutomationElement.ControlTypeProperty,ControlType.Button))) {
+          var c=e.Current;var label=(c.Name??"").Trim().Replace("&","");
+          string kind=System.Text.RegularExpressions.Regex.IsMatch(label,"^(OK|确定)$",System.Text.RegularExpressions.RegexOptions.IgnoreCase)?"ok":
+            System.Text.RegularExpressions.Regex.IsMatch(label,"^(Yes|是)$",System.Text.RegularExpressions.RegexOptions.IgnoreCase)?"yes":
+            System.Text.RegularExpressions.Regex.IsMatch(label,"^(Cancel|取消)$",System.Text.RegularExpressions.RegexOptions.IgnoreCase)?"cancel":
+            System.Text.RegularExpressions.Regex.IsMatch(label,"^(Disconnect|断开)$",System.Text.RegularExpressions.RegexOptions.IgnoreCase)?"disconnect":"other";
+          buttons.Add(new{kind,enabled=c.IsEnabled,offscreen=c.IsOffscreen,runtimeId=e.GetRuntimeId()});
+        }
+      }catch(ElementNotAvailableException){}
+      rows.Add(new{windowClass=cls.ToString(),visible=IsWindowVisible(w),buttons});
+    }
+    return rows;
+  }
   static object Certificate(string op,string value) {
     using(var store=new X509Store(StoreName.Root,StoreLocation.CurrentUser)) {
       store.Open(OpenFlags.ReadWrite);
@@ -422,7 +443,8 @@ class BrowserDesktopProbe {
         else if(op=="screenshot") {
           if(own.Count!=1||!IsWindowVisible(own[0]))throw new Exception("Owned GUI not visible");Capture(own[0],a[3]);result=new{captured=true};
         }
-        else if(op=="confirm-disconnect")Click(Button(windows,"^(OK|确定)$",ControlType.Button));
+        else if(op=="confirm-disconnect") {var target=Button(windows,"^(OK|确定)$",ControlType.Button);nativeInputStage="disconnect-consent";Click(target);}
+        else if(op=="gui-dialog-info")result=GuiDialogInfo(windows);
         else if(op=="tray-hit-guard") {NotificationOcclusionGuard(Tray());result=new{occlusionRefused=true};}
         else if(op=="tray-click")ClickNotification(Tray());
         else if(op=="tray-exit") {

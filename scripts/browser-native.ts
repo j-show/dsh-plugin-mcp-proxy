@@ -9,6 +9,17 @@ function uncertainInput(error: unknown, operation: string): boolean {
   return !message.startsWith(`Native operation ${operation} failed: Native desktop test: `)
     || message.includes('input result uncertain') || message.includes('(timeout)')
 }
+/** Poll only while no confirmation has been dispatched; concurrent ticks share the same gate. */
+export function nativeConfirmationPoll(operation: string, attempt: () => Promise<boolean>): () => Promise<void> {
+  let busy = false, finished = false
+  return async () => {
+    if (busy || finished) return
+    busy = true
+    try { finished = await attempt() }
+    catch (error) { if (uncertainInput(error, operation)) finished = true }
+    finally { busy = false }
+  }
+}
 /** An uncertain UI dispatch also disables later tray UI cleanup; owned process cleanup remains available. */
 export function nativeActionSession(run: (operation: string, ...args: string[]) => Promise<unknown>) {
   let uncertain = false
@@ -24,16 +35,20 @@ export function nativeActionSession(run: (operation: string, ...args: string[]) 
 }
 /** Retry only known pre-input refusals; timeouts and uncertain dispatch are never replayed. */
 export async function confirmNativeProtocol(action: () => Promise<unknown>): Promise<void> {
+  return confirmNativeAction('confirm-protocol', action)
+}
+/** Preserve native failure details for every retried confirmation, including GUI dialogs. */
+export async function confirmNativeAction(operation: string, action: () => Promise<unknown>): Promise<void> {
   let failure: unknown = new Error('Native confirmation target unavailable')
   try {
     await eventually(async () => {
       try { await action(); return true }
       catch (error) {
         failure = error
-        if (uncertainInput(error, 'confirm-protocol')) throw error
+        if (uncertainInput(error, operation)) throw error
         return false
       }
-    }, 'real browser protocol confirmation')
+    }, 'native confirmation ' + operation)
   } catch { throw failure }
 }
 export interface NativeWindow { pid: number; started: string; visible: boolean; image: string; handle: string; owned: boolean }
@@ -48,24 +63,21 @@ export async function compileDesktopProbe(directory: string): Promise<string> {
 }
 export async function nativeProbe<T>(helper: string, operation: string, ...args: string[]): Promise<T> {
   let confirmation: ReturnType<typeof setInterval> | undefined
-  let busy = false
   try {
     const certificateOperation = operation === 'ca-add' || operation === 'ca-remove'
     const pending = execute(helper, [operation, ...args], { windowsHide: true, timeout: certificateOperation ? 45000 : 20000, maxBuffer: 1048576 })
     const identity = certificateOperation && pending.child.pid
       ? nativeProbe<{ pid: number; started: string; image: string }>(helper, 'identity', String(pending.child.pid)).catch(() => undefined)
       : Promise.resolve(undefined)
-    if (certificateOperation) confirmation = setInterval(() => {
-      if (busy || pending.child.exitCode !== null) return
-      busy = true
-      void (async () => {
-        try {
-          const target = await identity
-          if (target && pending.child.exitCode === null && resolve(target.image).toLowerCase() === resolve(helper).toLowerCase()) await nativeProbe(helper, 'confirm-ca', String(target.pid), target.started)
-        } catch { /* A warning may not be shown; the actual import result remains authoritative. */ }
-        finally { busy = false }
-      })()
-    }, 750)
+    if (certificateOperation) {
+      const poll = nativeConfirmationPoll('confirm-ca', async () => {
+        const target = await identity
+        if (!target || pending.child.exitCode !== null || resolve(target.image).toLowerCase() !== resolve(helper).toLowerCase()) return false
+        await nativeProbe(helper, 'confirm-ca', String(target.pid), target.started)
+        return true
+      })
+      confirmation = setInterval(() => { if (pending.child.exitCode === null) void poll() }, 750)
+    }
     const result = await pending
     return JSON.parse(result.stdout) as T
   } catch (error) {

@@ -23,3 +23,5 @@
 - Notification tooltip text may be HelpText rather than Name. Match the exact app label in either property, retain native control/root checks, and report only fixed text categories.
 - URI preflight reads merged ClassesRoot so a machine-wide handler cannot be shadowed by a test's user registration.
 - Query process images through limited-access kernel handles; MainModule can be absent during startup. The suspended-process regression must terminate/wait its own child by the captured creation handle and close every handle before reporting.
+- Deduplicate matching controls by UIA identity before requiring uniqueness across owned top-level windows. A modal control can appear through its own and its owner's trees; distinct same-name controls must still be rejected.
+- GUI confirmations share the pre-input-only retry policy and preserve the last native refusal. Treat exceptions after UIA Invoke as uncertain too; certificate polling stops after a successful or uncertain invoke and only awaits the original certificate operation.

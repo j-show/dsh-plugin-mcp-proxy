@@ -108,3 +108,10 @@ URI 预检改读合并的 ClassesRoot，拒绝用户级或系统级已有 handle
 实际 SendInput 鼠标动作前，先创建本轮顶层遮挡窗口验证拒绝路径并销毁，不使用托盘事件注入。
 独立复审发现失败回收可能重放不确定右键，现用 NativeActionSession 禁止此类后续托盘 UI 回收，转到既有归属校验的服务停止和进程回收；
 回归验证 uncertain、timeout、无原生错误报告时均只派发一次，确认未派发的前置拒绝仍可正常回收。
+
+运行 [43453944267](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43453944267)
+默认测试 570 通过、8 跳过，真实托盘恢复及二次启动通过，失败推进到 GUI 断开确认。
+本机以不注册 URI 的开发入口定位：同一个原生 OK 按钮从 #32770 对话框与 Chrome_WidgetWin_1 主窗口各枚举一次，RuntimeId 相同，旧选择器误计为 2。
+按 Automation.Compare 去重后，真实确认关闭且服务转为 disconnected；前后原 URI 注册哈希一致。此组件以前置管理 API 建立连接，未验收浏览器 URI，不替代 release 矩阵。
+失败报告新增仅含类别/RuntimeId 的 GUI 结构，GUI 确认保留最后原生错误；UIA Invoke 后异常也视作不确定，停止确认重试及后续托盘 UI 回收。
+证书确认的并发/后续 tick 共用一次性门：成功或结果不明后停止派发，仅等待实际证书操作结果；回归覆盖并发 tick、前置拒绝及 unknown/timeout。

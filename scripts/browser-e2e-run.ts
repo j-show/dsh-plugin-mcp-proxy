@@ -6,7 +6,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { basename, dirname, join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { BrowserCdp, eventually, prepareDshPage } from './browser-cdp.ts'
-import { nativeProbe, nativeActionSession, confirmNativeProtocol, type NativeWindow } from './browser-native.ts'
+import { nativeProbe, nativeActionSession, confirmNativeAction, confirmNativeProtocol, type NativeWindow } from './browser-native.ts'
 import { uniqueTarget, ownedCertificate, activeMcpIdentities, type DesktopPreflight } from './browser-e2e-contract.ts'
 import { startBrowserWeb, isolatedEnvironment, alive, type WebFixture, type ServerArtifact } from './browser-e2e-environment.ts'
 import { assertProductServiceIdle } from './product-service.ts'
@@ -143,7 +143,7 @@ export async function runBrowserMatrix(repository: string, state: string, helper
     scenarios.secondLaunch = true
     stage = 'disconnect and reconnect'
     await action('disconnect', gui)
-    await eventually(async () => { try { await action('confirm-disconnect', gui!); return true } catch { return false } }, 'GUI disconnect confirmation')
+    await confirmNativeAction('confirm-disconnect', () => action('confirm-disconnect', gui!))
     await eventually(async () => (await status()).servers.every(row => row.state === 'disconnected'), 'GUI disconnect')
     await connect(); scenarios.reconnect = true
     await liveMcps()
@@ -172,6 +172,10 @@ export async function runBrowserMatrix(repository: string, state: string, helper
     const errors: string[] = []
     const cleanup = async (label: string, work: () => Promise<unknown>) => { try { await work() } catch { errors.push(label) } }
     if (failure) {
+      if (gui) {
+        try { await writeFile(join(repository, `.artifacts/ci/browser-${browser}-gui.json`), JSON.stringify(await nativeProbe(helper, 'gui-dialog-info', String(gui.pid), gui.started), null, 2)) }
+        catch { /* The owned GUI may already have exited; never inspect another application. */ }
+      }
       try { await writeFile(join(repository, `.artifacts/ci/browser-${browser}-tray.json`), JSON.stringify(await nativeProbe(helper, 'tray-info'), null, 2)) }
       catch { /* Tray diagnostics are structural only and never block owned cleanup. */ }
       try {
