@@ -18,6 +18,7 @@ it.skipIf(process.platform !== 'win32')('creates unique trusted localhost TLS an
   const upstream = createServer((incoming, outgoing) => {
     outgoing.end(JSON.stringify({ url: incoming.url, host: incoming.headers.host, origin: incoming.headers.origin, cookie: incoming.headers.cookie }))
   })
+  upstream.on('upgrade', (_request, socket) => { socket.end('HTTP/1.1 101 Switching Protocols\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n\r\n') })
   upstream.listen(0, '127.0.0.1'); await once(upstream, 'listening')
   const address = upstream.address()
   if (!address || typeof address === 'string') throw new Error('No upstream port')
@@ -36,4 +37,11 @@ it.skipIf(process.platform !== 'win32')('creates unique trusted localhost TLS an
   })
   expect(JSON.parse(value)).toEqual({ url: '/mcp-proxy/pair?private=ticket', host: 'localhost:3443', origin: 'https://localhost:3443', cookie: 'test-only' })
   expect(observed).toEqual([{ path: '/mcp-proxy/pair', status: 200 }])
+  for (const path of ['/api/live?private=browser', '/mcp-proxy/connect?private=device']) {
+    await new Promise<void>((resolve, reject) => {
+      const call = request({ hostname: '127.0.0.1', port: target.port, path, ca, headers: { Connection: 'Upgrade', Upgrade: 'websocket' } })
+      call.once('upgrade', (_response, socket) => { socket.destroy(); resolve() }); call.once('error', reject); call.end()
+    })
+  }
+  expect(observed).toEqual([{ path: '/mcp-proxy/pair', status: 200 }, { path: '/mcp-proxy/connect', status: 101 }])
 })

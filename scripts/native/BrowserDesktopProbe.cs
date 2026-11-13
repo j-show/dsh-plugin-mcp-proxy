@@ -123,7 +123,8 @@ class BrowserDesktopProbe {
           result=rows;
         }
         else if(op=="close-window") {if(own.Count!=1)throw new Exception("GUI window is not unique");PostMessage(own[0],0x0010,IntPtr.Zero,IntPtr.Zero);}
-        else if(op=="confirm-protocol") {if(windows.Count==0)throw new Exception("Browser has no native window");SetForegroundWindow(windows[0]);Click(Button(windows,"^(Open|打开).*mcp-proxy",ControlType.Button));}
+        else if(op=="confirm-protocol") {if(windows.Count==0)throw new Exception("Browser has no native window");SetForegroundWindow(windows[0]);Click(Button(windows,"^(Open|打开).*mcp-proxy",ControlType.Button),false,true);}
+        else if(op=="protocol-prompt") {try{Button(windows,"^(Open|打开).*mcp-proxy",ControlType.Button);result=true;}catch{result=false;}}
         else if(op=="confirm-ca") {
           var dialogs=new List<IntPtr>();foreach(var w in windows){var names=AutomationElement.FromHandle(w).FindAll(TreeScope.Descendants,Condition.TrueCondition);foreach(AutomationElement e in names)if((e.Current.Name??"").Contains("MCP Proxy Project Development CA")){dialogs.Add(w);break;}}
           if(dialogs.Count!=1)throw new Exception("Owned test CA warning not found");SetForegroundWindow(dialogs[0]);Click(Button(dialogs,"^(Yes|是|是\\(Y\\)|是\\(&Y\\))$",ControlType.Button));

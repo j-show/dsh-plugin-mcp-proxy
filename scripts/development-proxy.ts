@@ -29,7 +29,10 @@ export function createDevelopmentProxy(pfx: Buffer, upstreamPort: number, observ
     let first = ''
     const handshake = (bytes: Buffer) => {
       first += bytes.toString('ascii').slice(0, 128)
-      if (first.includes('\r\n')) { upstream.off('data', handshake); observe?.({ path: '/mcp-proxy/connect', status: Number(/^HTTP\/1\.[01] (\d{3})/.exec(first)?.[1] ?? 0) }) }
+      if (first.includes('\r\n')) {
+        upstream.off('data', handshake)
+        if (request.url?.split('?')[0] === '/mcp-proxy/connect') observe?.({ path: '/mcp-proxy/connect', status: Number(/^HTTP\/1\.[01] (\d{3})/.exec(first)?.[1] ?? 0) })
+      }
     }
     upstream.on('data', handshake)
     sockets.add(upstream)
