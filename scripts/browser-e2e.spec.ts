@@ -1,5 +1,5 @@
 import { expect, it, onTestFinished } from 'vitest'
-import { copyFile, mkdtemp, realpath, rm } from 'node:fs/promises'
+import { copyFile, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { assertDesktopPreflight, requireBrowserMatrix, ownedCertificate, uniqueTarget, activeMcpIdentities } from './browser-e2e-contract.ts'
@@ -111,4 +111,17 @@ it('dispatches certificate confirmation once across overlapping and later pollin
     const unknown = nativeConfirmationPoll('confirm-ca', async () => { calls++; throw new Error(message) })
     await unknown(); await unknown(); expect(calls).toBe(1)
   }
+})
+it.skipIf(process.platform !== 'win32')('recognizes protocol app names in sentences without accepting lookalike names', { timeout: 90000 }, async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'mcp-browser-brand-'))
+  onTestFinished(() => rm(directory, { recursive: true, force: true }))
+  const helper = await compileDesktopProbe(directory), input = join(directory, 'messages.json')
+  const cases: Array<[string, boolean]> = [
+    ['Open mcp-proxy?', true], ['This site is trying to open mcp-proxy.', true], ['This site is trying to open mcp-proxy.exe.', true],
+    ['“mcp-proxy”', true], ['打开 mcp-proxy。', true], ['mcp-proxy. Another sentence.', true],
+    ['not-mcp-proxy', false], ['not.mcp-proxy', false], ['prefixmcp-proxy', false], ['mcp-proxy-evil', false],
+    ['mcp-proxy_foo', false], ['mcp-proxy.foo', false], ['mcp-proxy.exe.old', false], ['mcp-proxy..bad', false],
+  ]
+  await writeFile(input, JSON.stringify(cases.map(([text]) => text)))
+  expect(await nativeProbe(helper, 'protocol-brand-fixture', input)).toEqual(cases.map(([, expected]) => expected))
 })

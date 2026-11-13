@@ -128,3 +128,7 @@ Chrome 七场景及回收全部通过；Edge 到达初次配对，应用名按�
 拒绝网页 Document 祖先/子树与地址栏容器；支持两种 Open 标签，复选框可按策略隐藏且不改状态。确认、消失检测和安全截图共用该定位器。
 复审指出深度上限不能跳过 Document 排除；现必须明确到达原生根才可选择。每个浏览器先在自有 about:blank 构造超过上限的可访问 HTML 伪确认，
 确认其 Document 深度超过原生边界且定位器拒绝，再导航真实 DSH；矩阵报告必须含该拒绝与托盘遮挡两项证据，缺失或深度不足均失败。
+
+运行 [43474602708](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43474602708)
+已核对源码 SHA 为 d4231e0（GitHub ref 元数据同步后手动启动，旧 SHA 任务取消不计）。Chrome 完整矩阵及两项拒绝 guard 通过，Edge 明确匹配来源/Cancel但 app-label-missing。
+新增原生品牌文本回归复现句末句号误拒及点分前缀误认；修复保留句末自然语言标点，并拒绝 not.mcp-proxy、mcp-proxy.foo、mcp-proxy.exe.old 等名称。

@@ -17,6 +17,7 @@ using System.Security.Principal;
 
 class BrowserDesktopProbe {
   const int ProtocolAncestorLimit=32;
+  static readonly System.Text.RegularExpressions.Regex ProtocolBrand=new System.Text.RegularExpressions.Regex("(?<![A-Za-z0-9_.-])mcp-proxy(?:[.]exe)?(?![A-Za-z0-9_-]|[.](?!\\s|$))",System.Text.RegularExpressions.RegexOptions.IgnoreCase);
   static bool nativeInputAttempted=false;
   static string nativeInputStage="none";
   [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Unicode)] struct PE {public uint size,usage,pid;public IntPtr heap;public uint module,threads,parent;public int priority;public uint flags;[MarshalAs(UnmanagedType.ByValTStr,SizeConst=260)]public string exe;}
@@ -183,7 +184,6 @@ class BrowserDesktopProbe {
     }
     if(!rooted){reason="native-root-not-reached";return null;}
     var node=TreeWalker.RawViewWalker.GetParent(button);
-    var brand=new System.Text.RegularExpressions.Regex("(?<![A-Za-z0-9_-])mcp-proxy(?:[.]exe)?(?![A-Za-z0-9_.-])",System.Text.RegularExpressions.RegexOptions.IgnoreCase);
     var origin=new System.Text.RegularExpressions.Regex("(?<![A-Za-z0-9_.:@-])"+System.Text.RegularExpressions.Regex.Escape(authority)+"(?![A-Za-z0-9_.:@-])",System.Text.RegularExpressions.RegexOptions.IgnoreCase);
     for(int i=0;i<ProtocolAncestorLimit&&node!=null;i++,node=TreeWalker.RawViewWalker.GetParent(node)) {
       if(node.Current.ControlType==ControlType.Document||Automation.Compare(node,AutomationElement.RootElement))return null;
@@ -193,7 +193,7 @@ class BrowserDesktopProbe {
         // Neither webpage text nor the address bar may authorize a native Open.
         if(c.ControlType==ControlType.Document||(c.ClassName??"").IndexOf("Omnibox",StringComparison.OrdinalIgnoreCase)>=0)return null;
         if(c.IsOffscreen)continue;string name=c.Name??"";
-        hasBrand|=brand.IsMatch(name);hasOrigin|=origin.IsMatch(name);
+        hasBrand|=ProtocolBrand.IsMatch(name);hasOrigin|=origin.IsMatch(name);
         if(c.ControlType==ControlType.Button&&System.Text.RegularExpressions.Regex.IsMatch(name,"^(Cancel|取消)$",System.Text.RegularExpressions.RegexOptions.IgnoreCase)
           &&!cancels.Any(previous=>Automation.Compare(previous,item)))cancels.Add(item);
       }
@@ -476,6 +476,10 @@ class BrowserDesktopProbe {
         foreach(var sid in new[]{WindowsIdentity.GetCurrent().User,new SecurityIdentifier(WellKnownSidType.LocalSystemSid,null)})acl.AddAccessRule(new FileSystemAccessRule(sid,FileSystemRights.FullControl,InheritanceFlags.ContainerInherit|InheritanceFlags.ObjectInherit,PropagationFlags.None,AccessControlType.Allow));
         Directory.SetAccessControl(a[1],acl);result=new{protectedState=true};
       } else if(op=="process-image-fixture")result=SuspendedImageFixture(a[1]);
+      else if(op=="protocol-brand-fixture") {
+        if(new FileInfo(a[1]).Length>4096)throw new Exception("Protocol text fixture too large");
+        result=new JavaScriptSerializer().Deserialize<string[]>(File.ReadAllText(a[1])).Select(text=>ProtocolBrand.IsMatch(text)).ToArray();
+      }
       else if(op.StartsWith("ca-"))result=Certificate(op,a[1]);
       else if(op=="alive") {try {var p=Process.GetProcessById(Int32.Parse(a[1]));result=p.StartTime.ToUniversalTime().Ticks.ToString()==a[2];}catch(ArgumentException){result=false;}}
       else if(op=="identity") {try{var p=Process.GetProcessById(Int32.Parse(a[1]));var image=ProcessImage(p);result=String.IsNullOrEmpty(image)?null:new {pid=p.Id,started=p.StartTime.ToUniversalTime().Ticks.ToString(),image};}catch(ArgumentException){result=null;}}

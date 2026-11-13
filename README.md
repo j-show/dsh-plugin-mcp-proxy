@@ -42,7 +42,7 @@ exclude tickets, private state and the address bar. See the [acceptance guide](d
 and [implementation evidence](docs/evidence/browser-desktop-e2e-2026-11-13.md) for scope and results.
 Failure reports preserve native dialog structure and the last safe control error.
 Exit checks cover the actual tray menu and termination of the GUI, service and owned children.
-Protocol prompts are identified by native app/origin context across browser-specific button labels.
+Protocol prompts use native app/origin context across browser-specific labels and sentence punctuation.
 
 Use Node.js 22.19+ or 24+ and pnpm 11.7.0. Dependencies come from the public npm registry; no Harness checkout is required.
 
