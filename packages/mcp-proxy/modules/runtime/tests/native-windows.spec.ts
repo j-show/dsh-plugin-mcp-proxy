@@ -39,13 +39,15 @@ it.skipIf(process.platform !== 'win32').each([
     expect(events).not.toContain('a'.repeat(43))
   })
 
-it.skipIf(process.platform !== 'win32').each(['native', 'short'] as const)('installs and upgrades an owned launcher through %s paths', { timeout: 20000 }, async (mode, context) => {
+// Compilation, two cold PowerShell hosts and multiple bounded registry transactions
+// need an aggregate budget; each installer transaction still retains its 5s limit.
+it.skipIf(process.platform !== 'win32').each(['native', 'short'] as const)('installs and upgrades an owned launcher through %s paths', { timeout: 90000 }, async (mode, context) => {
   const created = await mkdtemp(join(tmpdir(), 'mcp-proxy-install-long-directory-'))
   onTestFinished(() => rm(created, { recursive: true, force: true }))
   const canonical = await realpath(created)
   const code = "Add-Type -TypeDefinition 'using System.Text; using System.Runtime.InteropServices; public static class ShortPath { [DllImport(\"kernel32.dll\", CharSet=CharSet.Unicode)] public static extern uint GetShortPathName(string p, StringBuilder b, int n); }'; $b = [Text.StringBuilder]::new(32768); if ([ShortPath]::GetShortPathName($env:MCP_PROXY_TEST_LONG_PATH,$b,$b.Capacity) -eq 0) { exit 1 }; [Console]::Write($b.ToString())"
   const short = mode === 'short' ? (await promisify(execFile)('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', code],
-    { env: { ...process.env, MCP_PROXY_TEST_LONG_PATH: canonical }, windowsHide: true })).stdout.trim() : canonical
+    { env: { ...process.env, MCP_PROXY_TEST_LONG_PATH: canonical }, windowsHide: true, timeout: 10000 })).stdout.trim() : canonical
   if (mode === 'short' && short === canonical) { context.skip(); return } // Volume has 8.3 aliases disabled.
   const root = mode === 'short' ? short : created
   const helper = await compileWindowsUriHelper(join(root, 'build'), 10000)
@@ -59,7 +61,7 @@ it.skipIf(process.platform !== 'win32').each(['native', 'short'] as const)('inst
   const filename = await installWindowsUri(spec, helper, 5000, new AbortController().signal)
   expect(await readFile(filename)).toEqual(await readFile(helper))
   const activationPath = mode === 'short' ? (await promisify(execFile)('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', code],
-    { env: { ...process.env, MCP_PROXY_TEST_LONG_PATH: filename }, windowsHide: true })).stdout.trim() : filename
+    { env: { ...process.env, MCP_PROXY_TEST_LONG_PATH: filename }, windowsHide: true, timeout: 10000 })).stdout.trim() : filename
   await expect(promisify(execFile)(activationPath, [`mcp-proxy://associate/${'b'.repeat(42)}`],
     { timeout: 5000, windowsHide: true })).rejects.toMatchObject({ code: 1 })
   const trace = await readFile(join(dirname(filename), basename(filename, '.exe') + '.activation.log'), 'utf8')

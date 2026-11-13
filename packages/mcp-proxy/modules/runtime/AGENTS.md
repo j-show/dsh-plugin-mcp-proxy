@@ -7,3 +7,4 @@
 - URI registration must work with Windows 8.3 aliases without relaxing owner or exact-command checks. Retain native short-path upgrade/uninstall regressions; skip only the alias-specific variant when the test volume has no 8.3 aliases.
 - Keep app-data launch context in trusted receipt metadata, never in browser activation parameters; test both Node and Electron launcher modes.
 - Normalize the full executable path before locating activation diagnostics; short aliases must retain the same fixed-name, URI-free trace.
+- Bound PowerShell probes explicitly and size multi-step native test budgets for compilation and all transactions. Preserve each install/uninstall operation deadline and all ownership, recovery and cleanup assertions.

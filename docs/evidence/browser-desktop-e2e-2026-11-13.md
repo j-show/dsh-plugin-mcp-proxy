@@ -85,3 +85,7 @@
 失败推进至 tray restore。通知区展开入口现优先匹配唯一 SystemTray.OverflowButton，并兼容 Hidden icon menu 标签；
 失败结构报告只输出控件类型、安全 ID 和固定 test-icon/other 分类，不输出原始 tooltip。
 退出后的图标检查也展开隐藏通知区，核对无匹配图标后关闭本次检查打开的弹层；不把折叠区未显示等同于已清理。
+
+运行 [43440414249](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43440414249)
+在打包前的 short-path 回归耗尽 20 秒整体时限，托盘改动尚未执行。该用例包含一次编译、两次 PowerShell 冷启动和多次注册事务；
+总预算调整为 90 秒，两个 PowerShell 调用各加 10 秒上限，每次安装/卸载仍为 5 秒，原有实际文件和 owner 断言保留。
