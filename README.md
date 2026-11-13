@@ -38,6 +38,7 @@ Failure evidence includes fixed native activation stages and pairing/upgrade sta
 URI tickets, headers and private profile logs remain excluded.
 Protocol confirmation uses a hit-checked native pointer click and requires both the
 prompt to close and the installed handler to leave execution evidence.
+Native confirmation failures retain the final control error for diagnosis.
 
 Use Node.js 22.19+ or 24+ and pnpm 11.7.0. Dependencies come from the public npm registry; no Harness checkout is required.
 

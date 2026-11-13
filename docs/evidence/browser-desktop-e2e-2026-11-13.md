@@ -54,3 +54,6 @@
 运行 [43427569643](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43427569643)
 仍无原生阶段和票据兑换。协议确认改为命中校验后的真实鼠标点击，并增加弹窗消失和 handler 执行证据断言。
 修正升级诊断只观察 MCP 路径，避免把 Web 自身的 WebSocket 误记为设备通道；回归覆盖不同升级路径与查询参数脱敏。
+
+运行 [43429347293](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43429347293)
+在真实指针确认阶段失败，尚未执行 handler。保留重试最后一次原生控件错误，避免通用 deadline 掩盖拒绝原因。

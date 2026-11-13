@@ -100,7 +100,10 @@ export async function runBrowserMatrix(repository: string, state: string, helper
     const connect = async () => {
       await cdp!.send('Page.bringToFront')
       await cdp!.clickText('^(Connect this computer|Reconnect this computer|连接这台电脑|重新连接这台电脑)$')
-      await eventually(async () => { try { await action('confirm-protocol', browserIdentity!); return true } catch { return false } }, 'real browser protocol confirmation')
+      let confirmationFailure = 'Native confirmation target unavailable'
+      try {
+        await eventually(async () => { try { await action('confirm-protocol', browserIdentity!); return true } catch (error) { confirmationFailure = error instanceof Error ? error.message : confirmationFailure; return false } }, 'real browser protocol confirmation')
+      } catch { throw new Error(confirmationFailure) }
       await eventually(async () => !await nativeProbe<boolean>(helper, 'protocol-prompt', String(browserIdentity!.pid), browserIdentity!.started), 'protocol confirmation closes')
       const trace = join(home, 'profiles/mcp-proxy/mcp-proxy-os', basename(receipt.currentHelper, '.exe') + '.activation.log')
       await eventually(async () => { try { return (await readFile(trace, 'utf8')).trim().length > 0 } catch { return false } }, 'native OS handler execution')

@@ -11,3 +11,4 @@
 - Fresh DSH onboarding must be handled through its real nonbinding Continue and Configure later controls. Verify pointer hit targets before browser clicks so a modal cannot redirect a background action.
 - Failure routing diagnostics must contain only fixed activation stages, whitelisted paths without queries and numeric response codes. Never publish raw URI, headers or server output.
 - Protocol consent uses a hit-checked native pointer action, then requires prompt dismissal and handler execution evidence before checking pairing.
+- Preserve the last fixed native control failure across confirmation retries; a generic retry deadline must not hide the refused action.
