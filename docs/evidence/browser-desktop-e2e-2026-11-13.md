@@ -21,7 +21,8 @@
 只操作独立 profile、当前测试的 URI owner、刚导入的 CA 指纹、创建时间匹配的 PID 和唯一私有目录。
 浏览器协议确认、窗口关闭和托盘动作使用真实输入，不模拟 Tray 事件。未知 owner、缺失桌面或失败清理均使验收非零退出。
 
-截图只包含新测试 GUI 或经过 token 检查的页面视口；不上传地址栏、原始登录 URL、浏览器 profile、身份、CA 私钥或原始服务器日志。
+截图只包含新测试 GUI、经过 token 检查的页面视口或协议控件区域；协议证据裁剪 Open/Cancel 与复选框所在子树，
+拒绝完整浏览器根窗口，并扫描 Name/Value，不上传地址栏、原始登录 URL、浏览器 profile、身份、CA 私钥或原始服务器日志。
 
 完整矩阵的最终结论以本次提交对应的实际 GitHub Actions 运行及报告为准。当前本地拒绝、单元测试或服务端 smoke 不能替代该结果。
 
@@ -72,3 +73,10 @@
 后置仍要求弹窗消失、handler 执行和完整 TLS 配对。托盘保留实际指针及命中检查。
 部分 SendInput 插入会释放已按下的空格并终止；派发后的原生异常、helper 超时或无原生错误信息均不重试。
 回归验证前置焦点拒绝可以重试，而不确定输入、超时和无确认退出只调用一次。
+
+运行 [43434652629](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43434652629)
+键盘焦点与 SendInput 两事件插入检查通过，但协议提示仍未关闭。预检新增 WTS active 会话核对，
+以验证 hosted runner 是否实际处于可交互会话；不将同名桌面或成功插入输入等同于真实接收输入。
+协议截图表明 Open 按钮已实际取得焦点。[Chromium 当前实现](https://github.com/chromium/chromium/blob/main/chrome/browser/ui/views/external_protocol_dialog.cc)
+在窗口激活时重新启用输入保护，且键盘事件也受保护。确认前新增至少一秒、并长于系统双击间隔的焦点/前台/坐标稳定期；
+不关闭保护、不发送第二次同一确认。该原因是否解释 CI 失败仍以新运行结果核实。

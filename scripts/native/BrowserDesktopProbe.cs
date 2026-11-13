@@ -36,6 +36,7 @@ class BrowserDesktopProbe {
   [DllImport("user32.dll")] static extern IntPtr GetThreadDesktop(uint thread);
   [DllImport("user32.dll",CharSet=CharSet.Unicode)] static extern bool GetUserObjectInformation(IntPtr handle,int index,StringBuilder value,uint size,out uint needed);
   [DllImport("user32.dll")] static extern bool SetCursorPos(int x, int y);
+  [DllImport("user32.dll")] static extern uint GetDoubleClickTime();
   [DllImport("user32.dll")] static extern void mouse_event(uint flags, uint x, uint y, uint data, UIntPtr extra);
   [StructLayout(LayoutKind.Sequential)] struct KEYBDINPUT {public ushort key,scan;public uint flags,time;public UIntPtr extra;}
   [StructLayout(LayoutKind.Sequential)] struct MOUSEINPUT {public int x,y;public uint data,flags,time;public UIntPtr extra;}
@@ -48,6 +49,8 @@ class BrowserDesktopProbe {
   [DllImport("user32.dll")]static extern bool PrintWindow(IntPtr w,IntPtr dc,uint flags);
   [DllImport("user32.dll")] static extern IntPtr OpenInputDesktop(uint flags, bool inherit, uint access);
   [DllImport("user32.dll")] static extern bool CloseDesktop(IntPtr desktop);
+  [DllImport("wtsapi32.dll",SetLastError=true)] static extern bool WTSQuerySessionInformation(IntPtr server,int session,int info,out IntPtr value,out uint bytes);
+  [DllImport("wtsapi32.dll")] static extern void WTSFreeMemory(IntPtr value);
   [DllImport("user32.dll", CharSet=CharSet.Unicode)] static extern int GetClassName(IntPtr w, StringBuilder b, int n);
   static string Title(IntPtr w) { var b=new StringBuilder(1024); GetWindowText(w,b,b.Capacity); return b.ToString(); }
   static List<IntPtr> Windows(int pid) {
@@ -59,6 +62,12 @@ class BrowserDesktopProbe {
   }
   static object Info(Process p, IntPtr w) { return new {pid=p.Id,started=p.StartTime.ToUniversalTime().Ticks.ToString(),visible=IsWindowVisible(w),handle=w.ToInt64().ToString(),image=p.MainModule.FileName,owned=true}; }
   static string DesktopName(IntPtr desktop) {uint needed;var b=new StringBuilder(128);return desktop!=IntPtr.Zero&&GetUserObjectInformation(desktop,2,b,(uint)(b.Capacity*2),out needed)?b.ToString():"unavailable";}
+  static string SessionState() {
+    IntPtr value;uint bytes;
+    if(!WTSQuerySessionInformation(IntPtr.Zero,Process.GetCurrentProcess().SessionId,8,out value,out bytes))return "unavailable";
+    try {if(bytes<4)return "unavailable";int state=Marshal.ReadInt32(value);return state==0?"active":state==4?"disconnected":"state-"+state;}
+    finally{WTSFreeMemory(value);}
+  }
   static IntPtr TargetWindow(AutomationElement e,int pid) {
     IntPtr window=IntPtr.Zero;var node=e;
     for(int i=0;i<32&&node!=null;i++,node=TreeWalker.RawViewWalker.GetParent(node))if(node.Current.NativeWindowHandle!=0){window=GetAncestor(new IntPtr(node.Current.NativeWindowHandle),2);break;}
@@ -77,7 +86,15 @@ class BrowserDesktopProbe {
     FocusTarget(target,pid);target.SetFocus();
     for(int i=0;i<20;i++) {
       if(target.Current.HasKeyboardFocus&&Automation.Compare(AutomationElement.FocusedElement,target)) {
-        if(GetForegroundWindow()!=TargetWindow(target,pid))throw new Exception("Protocol foreground changed before consent");
+        var window=TargetWindow(target,pid);var bounds=target.Current.BoundingRectangle;
+        // Chromium re-arms dialog input protection on activation. Respect its quiet
+        // interval instead of sending an immediately ignored consent or disabling it.
+        var stable=Stopwatch.StartNew();long quiet=Math.Max(1000L,(long)GetDoubleClickTime()+100);
+        while(stable.ElapsedMilliseconds<quiet) {
+          System.Threading.Thread.Sleep(50);
+          if(GetForegroundWindow()!=window||!target.Current.HasKeyboardFocus||!Automation.Compare(AutomationElement.FocusedElement,target)
+            ||target.Current.BoundingRectangle!=bounds||!target.Current.IsEnabled||target.Current.IsOffscreen)throw new Exception("Protocol focus or bounds changed before consent");
+        }
         var down=new INPUT{type=1,value=new INPUTUNION{keyboard=new KEYBDINPUT{key=0x20}}};
         var up=new INPUT{type=1,value=new INPUTUNION{keyboard=new KEYBDINPUT{key=0x20,flags=2}}};
         protocolInputAttempted=true;
@@ -97,18 +114,41 @@ class BrowserDesktopProbe {
     var c=e.Current;var cls=System.Text.RegularExpressions.Regex.Replace(c.ClassName??"","[^A-Za-z0-9_.-]","_");
     return c.ProcessId+"/"+c.ControlType.ProgrammaticName+"/"+cls.Substring(0,Math.Min(64,cls.Length));
   }
-  static void Capture(IntPtr window,string filename) {
+  static void Capture(IntPtr window,string filename,System.Windows.Rect? region=null) {
     RECT rect;if(!GetWindowRect(window,out rect))throw new Exception("No owned window bounds");
-    using(var image=new Bitmap(rect.right-rect.left,rect.bottom-rect.top))using(var g=Graphics.FromImage(image)){var dc=g.GetHdc();try{if(!PrintWindow(window,dc,2))throw new Exception("Window capture failed");}finally{g.ReleaseHdc(dc);}image.Save(filename,ImageFormat.Png);}
+    using(var image=new Bitmap(rect.right-rect.left,rect.bottom-rect.top))using(var g=Graphics.FromImage(image)){
+      var dc=g.GetHdc();try{if(!PrintWindow(window,dc,2))throw new Exception("Window capture failed");}finally{g.ReleaseHdc(dc);}
+      if(region.HasValue) {
+        var b=region.Value;int left=(int)Math.Ceiling(b.Left),top=(int)Math.Ceiling(b.Top);
+        var crop=new Rectangle(left-rect.left,top-rect.top,(int)Math.Floor(b.Right)-left,(int)Math.Floor(b.Bottom)-top);
+        if(crop.Width<=0||crop.Height<=0||!new Rectangle(0,0,image.Width,image.Height).Contains(crop))throw new Exception("Protocol crop is outside its owned window");
+        using(var part=image.Clone(crop,image.PixelFormat))part.Save(filename,ImageFormat.Png);
+      }else image.Save(filename,ImageFormat.Png);
+    }
   }
-  static void SafeProtocolCapture(IntPtr window,string filename) {
-    var nodes=AutomationElement.FromHandle(window).FindAll(TreeScope.Subtree,Condition.TrueCondition);
-    foreach(AutomationElement node in nodes) {
-      string text=node.Current.Name??"";object pattern;
-      if(node.TryGetCurrentPattern(ValuePattern.Pattern,out pattern))text+=" "+((ValuePattern)pattern).Current.Value;
+  static void SafeProtocolCapture(AutomationElement target,int pid,string filename) {
+    var window=TargetWindow(target,pid);var node=TreeWalker.RawViewWalker.GetParent(target);AutomationElement dialog=null;
+    // Capture the smallest protocol subtree containing both consent buttons and its
+    // "always allow" checkbox. Never include browser chrome or an entire browser root.
+    for(int i=0;i<32&&node!=null;i++,node=TreeWalker.RawViewWalker.GetParent(node)) {
+      var checks=node.FindAll(TreeScope.Descendants,new PropertyCondition(AutomationElement.ControlTypeProperty,ControlType.CheckBox));
+      if(checks.Count==0)continue;
+      var buttons=node.FindAll(TreeScope.Descendants,new PropertyCondition(AutomationElement.ControlTypeProperty,ControlType.Button));
+      if(buttons.Cast<AutomationElement>().Any(e=>!e.Current.IsOffscreen&&System.Text.RegularExpressions.Regex.IsMatch(e.Current.Name??"","^(Cancel|取消)$",System.Text.RegularExpressions.RegexOptions.IgnoreCase))){dialog=node;break;}
+    }
+    if(dialog==null)throw new Exception("Protocol-only screenshot region unavailable");
+    RECT root;if(!GetWindowRect(window,out root))throw new Exception("No owned protocol window bounds");var bounds=dialog.Current.BoundingRectangle;
+    if(bounds.Width>=root.right-root.left||bounds.Height>=root.bottom-root.top)throw new Exception("Refusing entire browser screenshot");
+    var edits=AutomationElement.FromHandle(window).FindAll(TreeScope.Descendants,new PropertyCondition(AutomationElement.ControlTypeProperty,ControlType.Edit));
+    var addressBars=edits.Cast<AutomationElement>().Where(e=>(e.Current.ClassName??"").IndexOf("Omnibox",StringComparison.OrdinalIgnoreCase)>=0).ToList();
+    if(addressBars.Count==0||addressBars.Any(e=>bounds.IntersectsWith(e.Current.BoundingRectangle)))throw new Exception("Address bar exclusion could not be verified");
+    var nodes=dialog.FindAll(TreeScope.Subtree,Condition.TrueCondition);
+    foreach(AutomationElement item in nodes) {
+      string text=item.Current.Name??"";object pattern;
+      if(item.TryGetCurrentPattern(ValuePattern.Pattern,out pattern))text+=" "+((ValuePattern)pattern).Current.Value;
       if(System.Text.RegularExpressions.Regex.IsMatch(text,"token=|mcp-proxy://associate/|BEGIN .*PRIVATE KEY|[A-Za-z0-9_-]{43,}",System.Text.RegularExpressions.RegexOptions.IgnoreCase))throw new Exception("Protocol window contains sensitive text; capture refused");
     }
-    Capture(window,filename);
+    Capture(window,filename,bounds);
   }
   static void Click(AutomationElement e,bool right=false,bool pointer=false) {
     if(e.Current.IsOffscreen)throw new Exception("Native target is offscreen");
@@ -168,7 +208,8 @@ class BrowserDesktopProbe {
       object result=null;var op=a[0];
       if(op=="preflight") {
         var d=OpenInputDesktop(0,false,0x0001);string input=DesktopName(d),thread=DesktopName(GetThreadDesktop(GetCurrentThreadId()));if(d!=IntPtr.Zero)CloseDesktop(d);
-        using(var key=Registry.CurrentUser.OpenSubKey("Software\\Classes\\mcp-proxy"))result=new {platform="win32",interactive=Environment.UserInteractive&&Process.GetCurrentProcess().SessionId!=0&&input!="unavailable"&&input==thread,inputDesktop=input,processDesktop=thread,tray=FindWindow("Shell_TrayWnd",null)!=IntPtr.Zero,uriOccupied=key!=null};
+        string session=SessionState();
+        using(var key=Registry.CurrentUser.OpenSubKey("Software\\Classes\\mcp-proxy"))result=new {platform="win32",interactive=Environment.UserInteractive&&Process.GetCurrentProcess().SessionId!=0&&session=="active"&&input!="unavailable"&&input==thread,sessionState=session,inputDesktop=input,processDesktop=thread,tray=FindWindow("Shell_TrayWnd",null)!=IntPtr.Zero,uriOccupied=key!=null};
       } else if(op=="protect-state") {
         if((File.GetAttributes(a[1])&FileAttributes.ReparsePoint)!=0)throw new Exception("Linked state directory");
         var acl=new DirectorySecurity();acl.SetAccessRuleProtection(true,false);
@@ -196,7 +237,7 @@ class BrowserDesktopProbe {
         else if(op=="close-window") {if(own.Count!=1)throw new Exception("GUI window is not unique");PostMessage(own[0],0x0010,IntPtr.Zero,IntPtr.Zero);}
         else if(op=="confirm-protocol") {ConfirmProtocol(Button(windows,"^(Open|打开).*mcp-proxy",ControlType.Button),p.Id);}
         else if(op=="protocol-prompt") {try{Button(windows,"^(Open|打开).*mcp-proxy",ControlType.Button);result=true;}catch{result=false;}}
-        else if(op=="screenshot-protocol") {var target=Button(windows,"^(Open|打开).*mcp-proxy",ControlType.Button);SafeProtocolCapture(TargetWindow(target,p.Id),a[3]);result=new{captured=true};}
+        else if(op=="screenshot-protocol") {SafeProtocolCapture(Button(windows,"^(Open|打开).*mcp-proxy",ControlType.Button),p.Id,a[3]);result=new{captured=true};}
         else if(op=="confirm-ca") {
           var dialogs=new List<IntPtr>();foreach(var w in windows){var names=AutomationElement.FromHandle(w).FindAll(TreeScope.Descendants,Condition.TrueCondition);foreach(AutomationElement e in names)if((e.Current.Name??"").Contains("MCP Proxy Project Development CA")){dialogs.Add(w);break;}}
           if(dialogs.Count!=1)throw new Exception("Owned test CA warning not found");SetForegroundWindow(dialogs[0]);Click(Button(dialogs,"^(Yes|是|是\\(Y\\)|是\\(&Y\\))$",ControlType.Button));

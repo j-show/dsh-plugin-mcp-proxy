@@ -36,10 +36,12 @@ an unoccupied `mcp-proxy://` registration. `--preflight` checks these without ta
 over an existing installation. Release CI requires both browser matrices, not silent skips.
 Failure evidence includes fixed native activation stages and pairing/upgrade status codes;
 URI tickets, headers and private profile logs remain excluded.
-Protocol confirmation uses real keyboard input only after verifying its button's
-keyboard focus and owning foreground window. It requires prompt dismissal and handler
+Protocol confirmation uses real keyboard input after its button's focus, foreground
+and position remain stable through the browser input-protection interval. It requires prompt dismissal and handler
 execution evidence. Tray pointer actions require verified target hits. Preflight checks
 matching input/process desktops; safe failure evidence excludes tickets and private state.
+Preflight also requires an active Windows session. Protocol screenshots crop the
+consent controls and verify that the address bar lies outside the capture.
 
 Use Node.js 22.19+ or 24+ and pnpm 11.7.0. Dependencies come from the public npm registry; no Harness checkout is required.
 
