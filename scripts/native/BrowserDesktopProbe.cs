@@ -207,14 +207,30 @@ class BrowserDesktopProbe {
     if(!SetCursorPos((int)selected.Value.X,(int)selected.Value.Y))throw new Exception("Native cursor positioning failed");
     mouse_event(right?0x0008u:0x0002u,0,0,0,UIntPtr.Zero);mouse_event(right?0x0010u:0x0004u,0,0,0,UIntPtr.Zero);
   }
-  static AutomationElement Button(IEnumerable<IntPtr> windows, string pattern, ControlType type) {
+  sealed class NativeTargetCountException:Exception {
+    public readonly int Count;
+    public NativeTargetCountException(int count):base("Expected one matching native control; found "+count){Count=count;}
+  }
+  static AutomationElement Button(IEnumerable<IntPtr> windows, string pattern, ControlType type,bool requireBounds=false) {
     var found=new List<AutomationElement>();
     foreach(var w in windows) {
-      var elements=AutomationElement.FromHandle(w).FindAll(TreeScope.Descendants,new PropertyCondition(AutomationElement.ControlTypeProperty,type));
+      var root=AutomationElement.FromHandle(w);if(root==null)continue;
+      var elements=root.FindAll(TreeScope.Descendants,new PropertyCondition(AutomationElement.ControlTypeProperty,type));
       foreach(AutomationElement e in elements)if(!e.Current.IsOffscreen&&System.Text.RegularExpressions.Regex.IsMatch(e.Current.Name??"",pattern,System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+        &&(!requireBounds||(e.Current.BoundingRectangle.Width>0&&e.Current.BoundingRectangle.Height>0))
         &&!found.Any(previous=>Automation.Compare(previous,e)))found.Add(e);
     }
-    if(found.Count!=1)throw new Exception("Expected one matching native control; found "+found.Count);return found[0];
+    if(found.Count!=1)throw new NativeTargetCountException(found.Count);return found[0];
+  }
+  static AutomationElement ExitMenu(int pid) {
+    var timer=Stopwatch.StartNew();Exception last=null;
+    while(timer.ElapsedMilliseconds<5000) {
+      try{return Button(Windows(pid).Where(IsWindowVisible),"^(Exit|退出)$",ControlType.MenuItem,true);}
+      catch(ElementNotAvailableException e){last=e;}
+      catch(NativeTargetCountException e){if(e.Count!=0)throw;last=e;}
+      System.Threading.Thread.Sleep(50);
+    }
+    throw new Exception("Owned tray Exit menu unavailable",last);
   }
   static List<IntPtr> TrayWindows() {
     var shell=FindWindow("Shell_TrayWnd",null);uint shellPid;GetWindowThreadProcessId(shell,out shellPid);
@@ -361,13 +377,14 @@ class BrowserDesktopProbe {
     foreach(var w in windows) {
       var cls=new StringBuilder(256);GetClassName(w,cls,cls.Capacity);var buttons=new List<object>();
       try {
-        foreach(AutomationElement e in AutomationElement.FromHandle(w).FindAll(TreeScope.Descendants,new PropertyCondition(AutomationElement.ControlTypeProperty,ControlType.Button))) {
+        foreach(AutomationElement e in AutomationElement.FromHandle(w).FindAll(TreeScope.Descendants,new OrCondition(new PropertyCondition(AutomationElement.ControlTypeProperty,ControlType.Button),new PropertyCondition(AutomationElement.ControlTypeProperty,ControlType.MenuItem)))) {
           var c=e.Current;var label=(c.Name??"").Trim().Replace("&","");
           string kind=System.Text.RegularExpressions.Regex.IsMatch(label,"^(OK|确定)$",System.Text.RegularExpressions.RegexOptions.IgnoreCase)?"ok":
             System.Text.RegularExpressions.Regex.IsMatch(label,"^(Yes|是)$",System.Text.RegularExpressions.RegexOptions.IgnoreCase)?"yes":
             System.Text.RegularExpressions.Regex.IsMatch(label,"^(Cancel|取消)$",System.Text.RegularExpressions.RegexOptions.IgnoreCase)?"cancel":
-            System.Text.RegularExpressions.Regex.IsMatch(label,"^(Disconnect|断开)$",System.Text.RegularExpressions.RegexOptions.IgnoreCase)?"disconnect":"other";
-          buttons.Add(new{kind,enabled=c.IsEnabled,offscreen=c.IsOffscreen,runtimeId=e.GetRuntimeId()});
+            System.Text.RegularExpressions.Regex.IsMatch(label,"^(Disconnect|断开)$",System.Text.RegularExpressions.RegexOptions.IgnoreCase)?"disconnect":
+            System.Text.RegularExpressions.Regex.IsMatch(label,"^(Exit|退出)$",System.Text.RegularExpressions.RegexOptions.IgnoreCase)?"exit":"other";
+          buttons.Add(new{kind,type=c.ControlType.ProgrammaticName,enabled=c.IsEnabled,offscreen=c.IsOffscreen,runtimeId=e.GetRuntimeId()});
         }
       }catch(ElementNotAvailableException){}
       rows.Add(new{windowClass=cls.ToString(),visible=IsWindowVisible(w),buttons});
@@ -448,10 +465,8 @@ class BrowserDesktopProbe {
         else if(op=="tray-hit-guard") {NotificationOcclusionGuard(Tray());result=new{occlusionRefused=true};}
         else if(op=="tray-click")ClickNotification(Tray());
         else if(op=="tray-exit") {
-          ClickNotification(Tray(),true);nativeInputStage="exit-menu-discovery";System.Threading.Thread.Sleep(300);
-          var menus=AutomationElement.RootElement.FindAll(TreeScope.Children,new PropertyCondition(AutomationElement.ControlTypeProperty,ControlType.Menu));
-          var items=new List<AutomationElement>();foreach(AutomationElement menu in menus)if(menu.Current.ProcessId==p.Id)foreach(AutomationElement e in menu.FindAll(TreeScope.Descendants,new PropertyCondition(AutomationElement.ControlTypeProperty,ControlType.MenuItem)))if(System.Text.RegularExpressions.Regex.IsMatch(e.Current.Name??"","^(Exit|退出)$"))items.Add(e);
-          if(items.Count!=1)throw new Exception("Owned tray Exit menu is not unique");nativeInputStage="exit-menu-selection";Click(items[0]);
+          ClickNotification(Tray(),true);nativeInputStage="exit-menu-discovery";
+          var item=ExitMenu(p.Id);nativeInputStage="exit-menu-selection";Click(item);
         } else if(op=="window") {if(own.Count!=1)throw new Exception("GUI window is not unique");result=Info(p,own[0]);}
         else if(op=="close-browser") {foreach(var w in windows)PostMessage(w,0x0010,IntPtr.Zero,IntPtr.Zero);}
         else if(op=="kill-owned")p.Kill();

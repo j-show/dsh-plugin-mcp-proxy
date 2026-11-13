@@ -115,3 +115,8 @@ URI 预检改读合并的 ClassesRoot，拒绝用户级或系统级已有 handle
 按 Automation.Compare 去重后，真实确认关闭且服务转为 disconnected；前后原 URI 注册哈希一致。此组件以前置管理 API 建立连接，未验收浏览器 URI，不替代 release 矩阵。
 失败报告新增仅含类别/RuntimeId 的 GUI 结构，GUI 确认保留最后原生错误；UIA Invoke 后异常也视作不确定，停止确认重试及后续托盘 UI 回收。
 证书确认的并发/后续 tick 共用一次性门：成功或结果不明后停止派发，仅等待实际证书操作结果；回归覆盖并发 tick、前置拒绝及 unknown/timeout。
+
+运行 [43464564917](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43464564917)
+默认测试 571 通过、8 跳过，GUI 断开及重新配对已通过，失败推进到 tray exit 的菜单查找。
+退出菜单改为在该 GUI 新鲜枚举的可见窗口子树查找，按 UIA 身份去重，要求非空可视边界；只等待菜单项出现，不重发右键。
+本机私有开发组件已执行真实托盘右键/原生 Exit，随后 GUI 退出、服务位恢复空闲，原 URI 哈希一致；仍不代替两浏览器 release 验收。
