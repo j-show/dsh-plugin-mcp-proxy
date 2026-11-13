@@ -61,3 +61,7 @@
 运行 [43430317648](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43430317648)
 明确报出 Native control is occluded。确认动作现按唯一按钮所属根窗口聚焦并等待前台稳定；
 预检核对输入桌面与进程桌面，命中诊断限定 PID、控件类型和 class，不记录 Name、Title 或 URL。
+
+运行 [43431351885](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43431351885)
+前台定位通过，按钮中心命中同浏览器的 Group。指针现尝试系统建议点和目标内部点，仍只接受目标或子元素命中；
+脱敏检查通过时可保留归属已验证的协议窗口截图，以区分坐标与实际遮挡。

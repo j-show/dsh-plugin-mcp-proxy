@@ -40,6 +40,8 @@ Protocol confirmation uses a hit-checked native pointer click and requires both 
 prompt to close and the installed handler to leave execution evidence.
 Native confirmation targets its actual owning window, waits for foreground focus,
 and retains the final control error. Preflight requires matching input/process desktops.
+Native pointer actions select a verified hit point inside the target bounds. Safe
+failure evidence may include the owned protocol window after page token checks.
 
 Use Node.js 22.19+ or 24+ and pnpm 11.7.0. Dependencies come from the public npm registry; no Harness checkout is required.
 

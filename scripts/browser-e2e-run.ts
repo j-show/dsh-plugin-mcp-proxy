@@ -193,6 +193,10 @@ export async function runBrowserMatrix(repository: string, state: string, helper
           if (!/token=/i.test(page.query) && !/mcp-proxy:\/\/associate\/|BEGIN .*PRIVATE KEY|[A-Za-z0-9_-]{43,}/.test(page.text)) {
             const image = await cdp.send('Page.captureScreenshot', { format: 'png' }) as { data: string }
             await writeFile(join(repository, `.artifacts/ci/browser-${browser}-failure.png`), Buffer.from(image.data, 'base64'))
+            if (browserIdentity) {
+              try { await nativeProbe(helper, 'screenshot-protocol', String(browserIdentity.pid), browserIdentity.started, join(repository, `.artifacts/ci/browser-${browser}-protocol.png`)) }
+              catch { /* The protocol prompt may already have closed; never capture another window. */ }
+            }
           }
         } catch { /* Optional sanitized diagnostics must not mask the primary failure or block teardown. */ }
       }

@@ -53,11 +53,15 @@ class BrowserDesktopProbe {
   }
   static object Info(Process p, IntPtr w) { return new {pid=p.Id,started=p.StartTime.ToUniversalTime().Ticks.ToString(),visible=IsWindowVisible(w),handle=w.ToInt64().ToString(),image=p.MainModule.FileName,owned=true}; }
   static string DesktopName(IntPtr desktop) {uint needed;var b=new StringBuilder(128);return desktop!=IntPtr.Zero&&GetUserObjectInformation(desktop,2,b,(uint)(b.Capacity*2),out needed)?b.ToString():"unavailable";}
-  static void FocusTarget(AutomationElement e,int pid) {
+  static IntPtr TargetWindow(AutomationElement e,int pid) {
     IntPtr window=IntPtr.Zero;var node=e;
     for(int i=0;i<32&&node!=null;i++,node=TreeWalker.RawViewWalker.GetParent(node))if(node.Current.NativeWindowHandle!=0){window=GetAncestor(new IntPtr(node.Current.NativeWindowHandle),2);break;}
     uint owner;if(window==IntPtr.Zero||!IsWindowVisible(window))throw new Exception("Target root window is unavailable");
     GetWindowThreadProcessId(window,out owner);if(owner!=pid)throw new Exception("Target root window belongs to another process");
+    return window;
+  }
+  static void FocusTarget(AutomationElement e,int pid) {
+    var window=TargetWindow(e,pid);
     SetForegroundWindow(window);
     for(int i=0;i<20;i++){if(GetForegroundWindow()==window)return;System.Threading.Thread.Sleep(50);}
     throw new Exception("Target root window could not become foreground");
@@ -67,15 +71,35 @@ class BrowserDesktopProbe {
     var c=e.Current;var cls=System.Text.RegularExpressions.Regex.Replace(c.ClassName??"","[^A-Za-z0-9_.-]","_");
     return c.ProcessId+"/"+c.ControlType.ProgrammaticName+"/"+cls.Substring(0,Math.Min(64,cls.Length));
   }
+  static void Capture(IntPtr window,string filename) {
+    RECT rect;if(!GetWindowRect(window,out rect))throw new Exception("No owned window bounds");
+    using(var image=new Bitmap(rect.right-rect.left,rect.bottom-rect.top))using(var g=Graphics.FromImage(image)){var dc=g.GetHdc();try{if(!PrintWindow(window,dc,2))throw new Exception("Window capture failed");}finally{g.ReleaseHdc(dc);}image.Save(filename,ImageFormat.Png);}
+  }
+  static void SafeProtocolCapture(IntPtr window,string filename) {
+    var nodes=AutomationElement.FromHandle(window).FindAll(TreeScope.Subtree,Condition.TrueCondition);
+    foreach(AutomationElement node in nodes) {
+      string text=node.Current.Name??"";object pattern;
+      if(node.TryGetCurrentPattern(ValuePattern.Pattern,out pattern))text+=" "+((ValuePattern)pattern).Current.Value;
+      if(System.Text.RegularExpressions.Regex.IsMatch(text,"token=|mcp-proxy://associate/|BEGIN .*PRIVATE KEY|[A-Za-z0-9_-]{43,}",System.Text.RegularExpressions.RegexOptions.IgnoreCase))throw new Exception("Protocol window contains sensitive text; capture refused");
+    }
+    Capture(window,filename);
+  }
   static void Click(AutomationElement e,bool right=false,bool pointer=false) {
     if(e.Current.IsOffscreen)throw new Exception("Native target is offscreen");
     if(!e.Current.IsEnabled)throw new Exception("Native target is disabled");
     object invoke;if(!pointer&&!right&&e.TryGetCurrentPattern(InvokePattern.Pattern,out invoke)){((InvokePattern)invoke).Invoke();return;}
     var b=e.Current.BoundingRectangle;if(b.Width<=0||b.Height<=0)throw new Exception("No native target bounds");
-    var hit=AutomationElement.FromPoint(new System.Windows.Point(b.X+b.Width/2,b.Y+b.Height/2));var originalHit=hit;bool target=false;
-    for(int i=0;i<8&&hit!=null;i++,hit=TreeWalker.RawViewWalker.GetParent(hit))if(Automation.Compare(hit,e)){target=true;break;}
-    if(!target)throw new Exception("Native control is occluded; target="+HitInfo(e)+"; hit="+HitInfo(originalHit));
-    if(!SetCursorPos((int)(b.X+b.Width/2),(int)(b.Y+b.Height/2)))throw new Exception("Native cursor positioning failed");
+    var points=new List<System.Windows.Point>();System.Windows.Point suggested;
+    if(e.TryGetClickablePoint(out suggested)&&b.Contains(suggested))points.Add(suggested);
+    foreach(double y in new[]{0.5,0.25,0.75})foreach(double x in new[]{0.5,0.25,0.75})points.Add(new System.Windows.Point(b.X+b.Width*x,b.Y+b.Height*y));
+    System.Windows.Point? selected=null;AutomationElement originalHit=null;
+    foreach(var point in points) {
+      var hit=AutomationElement.FromPoint(point);originalHit=hit;
+      for(int i=0;i<32&&hit!=null;i++,hit=TreeWalker.RawViewWalker.GetParent(hit))if(Automation.Compare(hit,e)){selected=point;break;}
+      if(selected.HasValue)break;
+    }
+    if(!selected.HasValue)throw new Exception("Native control is occluded; target="+HitInfo(e)+"; hit="+HitInfo(originalHit)+"; bounds="+b.X+","+b.Y+","+b.Width+","+b.Height);
+    if(!SetCursorPos((int)selected.Value.X,(int)selected.Value.Y))throw new Exception("Native cursor positioning failed");
     mouse_event(right?0x0008u:0x0002u,0,0,0,UIntPtr.Zero);mouse_event(right?0x0010u:0x0004u,0,0,0,UIntPtr.Zero);
   }
   static AutomationElement Button(IEnumerable<IntPtr> windows, string pattern, ControlType type) {
@@ -146,6 +170,7 @@ class BrowserDesktopProbe {
         else if(op=="close-window") {if(own.Count!=1)throw new Exception("GUI window is not unique");PostMessage(own[0],0x0010,IntPtr.Zero,IntPtr.Zero);}
         else if(op=="confirm-protocol") {var target=Button(windows,"^(Open|打开).*mcp-proxy",ControlType.Button);FocusTarget(target,p.Id);Click(target,false,true);}
         else if(op=="protocol-prompt") {try{Button(windows,"^(Open|打开).*mcp-proxy",ControlType.Button);result=true;}catch{result=false;}}
+        else if(op=="screenshot-protocol") {var target=Button(windows,"^(Open|打开).*mcp-proxy",ControlType.Button);SafeProtocolCapture(TargetWindow(target,p.Id),a[3]);result=new{captured=true};}
         else if(op=="confirm-ca") {
           var dialogs=new List<IntPtr>();foreach(var w in windows){var names=AutomationElement.FromHandle(w).FindAll(TreeScope.Descendants,Condition.TrueCondition);foreach(AutomationElement e in names)if((e.Current.Name??"").Contains("MCP Proxy Project Development CA")){dialogs.Add(w);break;}}
           if(dialogs.Count!=1)throw new Exception("Owned test CA warning not found");SetForegroundWindow(dialogs[0]);Click(Button(dialogs,"^(Yes|是|是\\(Y\\)|是\\(&Y\\))$",ControlType.Button));
@@ -158,8 +183,7 @@ class BrowserDesktopProbe {
           result=new {originVisible=names.Any(n=>n.Contains(a[3])),serviceVisible=names.Any(n=>n=="files"),connectedVisible=names.Any(n=>n=="Connected"||n=="已连接")};
         }
         else if(op=="screenshot") {
-          if(own.Count!=1||!IsWindowVisible(own[0]))throw new Exception("Owned GUI not visible");RECT rect;if(!GetWindowRect(own[0],out rect))throw new Exception("No GUI bounds");
-          using(var image=new Bitmap(rect.right-rect.left,rect.bottom-rect.top))using(var g=Graphics.FromImage(image)){var dc=g.GetHdc();try{if(!PrintWindow(own[0],dc,2))throw new Exception("Window capture failed");}finally{g.ReleaseHdc(dc);}image.Save(a[3],ImageFormat.Png);}result=new{captured=true};
+          if(own.Count!=1||!IsWindowVisible(own[0]))throw new Exception("Owned GUI not visible");Capture(own[0],a[3]);result=new{captured=true};
         }
         else if(op=="confirm-disconnect")Click(Button(windows,"^(OK|确定)$",ControlType.Button));
         else if(op=="tray-click")Click(Tray(),false,true);

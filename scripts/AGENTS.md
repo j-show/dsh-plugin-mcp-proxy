@@ -13,3 +13,4 @@
 - Protocol consent uses a hit-checked native pointer action, then requires prompt dismissal and handler execution evidence before checking pairing.
 - Preserve the last fixed native control failure across confirmation retries; a generic retry deadline must not hide the refused action.
 - Focus protocol controls by their verified owning root window, never by top-level enumeration order. Require the input and process desktops to match; hit diagnostics may include only PID/type/class, never element Name/Title.
+- A control's center is not guaranteed clickable. Try the provider point and interior candidates but require the same target/subtree hit. Capture protocol windows only under the existing page token checks and verified process/root ownership.
