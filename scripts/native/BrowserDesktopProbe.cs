@@ -177,13 +177,71 @@ class BrowserDesktopProbe {
     if(found.Count!=1)throw new Exception("Expected one matching native control; found "+found.Count);return found[0];
   }
   static List<IntPtr> TrayWindows() {
-    var rows=new List<IntPtr>();EnumWindows((w,a)=>{var b=new StringBuilder(256);GetClassName(w,b,b.Capacity);var c=b.ToString();if(IsWindowVisible(w)&&(c=="Shell_TrayWnd"||c=="NotifyIconOverflowWindow"||c.Contains("Overflow")))rows.Add(w);return true;},IntPtr.Zero);return rows;
+    var shell=FindWindow("Shell_TrayWnd",null);uint shellPid;GetWindowThreadProcessId(shell,out shellPid);
+    if(shell==IntPtr.Zero||shellPid==0)throw new Exception("Notification area unavailable");
+    var rows=new List<IntPtr>();EnumWindows((w,a)=>{var b=new StringBuilder(256);GetClassName(w,b,b.Capacity);var c=b.ToString();uint pid;GetWindowThreadProcessId(w,out pid);
+      if(shellPid!=0&&pid==shellPid&&IsWindowVisible(w)&&(w==shell||c=="Shell_SecondaryTrayWnd"||c=="NotifyIconOverflowWindow"||c.Contains("Overflow")||c=="Xaml_WindowedPopupClass"))rows.Add(w);return true;},IntPtr.Zero);return rows;
   }
   static AutomationElement Tray() {
-    try{return Button(TrayWindows(),"^mcp-proxy",ControlType.Button);}catch {
-      var chevron=Button(TrayWindows(),"hidden icons|显示隐藏|隐藏的图标",ControlType.Button);Click(chevron);System.Threading.Thread.Sleep(300);
-      return Button(TrayWindows(),"^mcp-proxy",ControlType.Button);
+    var icons=TrayIcons();if(icons.Count>1)throw new Exception("Notification icon is not unique");if(icons.Count==1)return icons[0];
+    if(!OverflowVisible()) {var chevron=OverflowOpener();if(chevron==null)throw new Exception("Notification overflow opener unavailable");ExpandOverflow(chevron);}
+    for(int i=0;i<40;i++) {icons=TrayIcons();if(icons.Count>1)throw new Exception("Notification icon is not unique");if(icons.Count==1)return icons[0];System.Threading.Thread.Sleep(50);}
+    throw new Exception("Notification overflow opened but test icon unavailable");
+  }
+  static AutomationElement OverflowOpener() {
+    var modern=new List<AutomationElement>();var legacy=new List<AutomationElement>();
+    foreach(var w in TrayWindows())foreach(AutomationElement e in AutomationElement.FromHandle(w).FindAll(TreeScope.Descendants,new PropertyCondition(AutomationElement.ControlTypeProperty,ControlType.Button))) {
+      var c=e.Current;if(c.IsOffscreen)continue;
+      if(c.AutomationId=="SystemTray.OverflowButton")modern.Add(e);
+      else if(System.Text.RegularExpressions.Regex.IsMatch(c.Name??"","hidden icons|hidden icon menu|显示隐藏|隐藏的图标|隐藏图标菜单",System.Text.RegularExpressions.RegexOptions.IgnoreCase))legacy.Add(e);
     }
+    var found=modern.Count>0?modern:legacy;if(found.Count>1)throw new Exception("Notification overflow control is not unique");return found.Count==0?null:found[0];
+  }
+  static bool OverflowVisible() {
+    foreach(var w in TrayWindows()) {
+      var cls=new StringBuilder(256);GetClassName(w,cls,cls.Capacity);
+      if(cls.ToString().Contains("Overflow"))return true;
+      if(cls.ToString()=="Xaml_WindowedPopupClass")foreach(AutomationElement e in AutomationElement.FromHandle(w).FindAll(TreeScope.Descendants,new PropertyCondition(AutomationElement.ControlTypeProperty,ControlType.Button)))if(!e.Current.IsOffscreen&&(e.Current.AutomationId=="SystemTrayIcon"||e.Current.AutomationId=="NotifyItemIcon"))return true;
+    }
+    return false;
+  }
+  static void ExpandOverflow(AutomationElement opener) {
+    Click(opener);for(int i=0;i<40;i++){if(OverflowVisible())return;System.Threading.Thread.Sleep(50);}throw new Exception("Notification overflow did not become visible");
+  }
+  static bool TrayPresent() {
+    if(TrayIcons().Count>0)return true;
+    if(OverflowVisible())return false;
+    var opener=OverflowOpener();if(opener==null)return false;
+    try{ExpandOverflow(opener);return TrayIcons().Count>0;}
+    finally {
+      if(OverflowVisible())Click(opener);
+      for(int i=0;i<40&&OverflowVisible();i++)System.Threading.Thread.Sleep(50);
+      if(OverflowVisible())throw new Exception("Test-opened notification overflow remained visible");
+    }
+  }
+  static List<AutomationElement> TrayIcons() {
+    var found=new List<AutomationElement>();
+    foreach(var w in TrayWindows()) {
+      var cls=new StringBuilder(256);GetClassName(w,cls,cls.Capacity);bool generic=cls.ToString()=="Xaml_WindowedPopupClass";
+      foreach(AutomationElement e in AutomationElement.FromHandle(w).FindAll(TreeScope.Descendants,new PropertyCondition(AutomationElement.ControlTypeProperty,ControlType.Button))) {
+        var c=e.Current;if(c.IsOffscreen||!(c.Name??"").StartsWith("mcp-proxy",StringComparison.OrdinalIgnoreCase))continue;
+        if(generic&&c.AutomationId!="SystemTrayIcon"&&c.AutomationId!="NotifyItemIcon")continue;
+        found.Add(e);
+      }
+    }
+    return found;
+  }
+  static object TrayInfo() {
+    var rows=new List<object>();
+    foreach(var w in TrayWindows())foreach(AutomationElement e in AutomationElement.FromHandle(w).FindAll(TreeScope.Descendants,Condition.TrueCondition)) {
+      var c=e.Current;if(c.IsOffscreen)continue;
+      if(c.ControlType!=ControlType.Button&&c.ControlType!=ControlType.Custom&&c.ControlType!=ControlType.ToolBar)continue;
+      var id=c.AutomationId??"";if(!System.Text.RegularExpressions.Regex.IsMatch(id,"\\A[A-Za-z0-9_.-]{0,96}\\z")||System.Text.RegularExpressions.Regex.IsMatch(id,"[A-Za-z0-9_-]{43,}"))id="redacted";
+      var rootClass=new StringBuilder(256);GetClassName(w,rootClass,rootClass.Capacity);
+      rows.Add(new{windowClass=rootClass.ToString(),type=c.ControlType.ProgrammaticName,automationId=id,kind=(c.Name??"").StartsWith("mcp-proxy",StringComparison.OrdinalIgnoreCase)?"test-icon":"other"});
+      if(rows.Count>=80)return rows;
+    }
+    return rows;
   }
   static object Certificate(string op,string value) {
     using(var store=new X509Store(StoreName.Root,StoreLocation.CurrentUser)) {
@@ -218,7 +276,8 @@ class BrowserDesktopProbe {
       } else if(op.StartsWith("ca-"))result=Certificate(op,a[1]);
       else if(op=="alive") {try {var p=Process.GetProcessById(Int32.Parse(a[1]));result=p.StartTime.ToUniversalTime().Ticks.ToString()==a[2];}catch(ArgumentException){result=false;}}
       else if(op=="identity") {try{var p=Process.GetProcessById(Int32.Parse(a[1]));result=new {pid=p.Id,started=p.StartTime.ToUniversalTime().Ticks.ToString(),image=p.MainModule.FileName};}catch(ArgumentException){result=null;}}
-      else if(op=="tray-present") {try{Button(TrayWindows(),"^mcp-proxy",ControlType.Button);result=true;}catch{result=false;}}
+      else if(op=="tray-present")result=TrayPresent();
+      else if(op=="tray-info")result=TrayInfo();
       else if(op=="gui"||op=="scope-processes") {
         string root=Path.GetFullPath(a[1]).TrimEnd('\\')+"\\";var rows=new List<object>();
         foreach(var p in op=="gui"?Process.GetProcessesByName("mcp-proxy"):Process.GetProcesses())try { if(p.MainModule.FileName.StartsWith(root,StringComparison.OrdinalIgnoreCase)){if(op=="scope-processes")rows.Add(new{pid=p.Id,started=p.StartTime.ToUniversalTime().Ticks.ToString()});else foreach(var w in Windows(p.Id))if(Title(w)=="mcp-proxy")rows.Add(Info(p,w));} }catch(System.ComponentModel.Win32Exception){}catch(InvalidOperationException){}

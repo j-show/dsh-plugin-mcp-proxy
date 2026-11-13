@@ -80,3 +80,8 @@
 协议截图表明 Open 按钮已实际取得焦点。[Chromium 当前实现](https://github.com/chromium/chromium/blob/main/chrome/browser/ui/views/external_protocol_dialog.cc)
 在窗口激活时重新启用输入保护，且键盘事件也受保护。确认前新增至少一秒、并长于系统双击间隔的焦点/前台/坐标稳定期；
 不关闭保护、不发送第二次同一确认。该原因是否解释 CI 失败仍以新运行结果核实。
+
+同一运行的第二次尝试完成 Chrome 真实 URI handler 转发、TLS 配对、Web/GUI 与 MCP 页面展示及关闭隐藏，
+失败推进至 tray restore。通知区展开入口现优先匹配唯一 SystemTray.OverflowButton，并兼容 Hidden icon menu 标签；
+失败结构报告只输出控件类型、安全 ID 和固定 test-icon/other 分类，不输出原始 tooltip。
+退出后的图标检查也展开隐藏通知区，核对无匹配图标后关闭本次检查打开的弹层；不把折叠区未显示等同于已清理。

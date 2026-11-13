@@ -14,3 +14,7 @@
 - Pointer actions may try the provider point and interior candidates, but must hit the target or its subtree. A center point or matching process alone is insufficient.
 - Routing diagnostics contain only fixed activation stages, whitelisted query-free paths and status codes; native hit diagnostics use PID/type/class, never Name/Title. Do not publish raw URI, headers or server output.
 - Protocol screenshots require page token checks, verified process/root ownership and the consent subtree (Open/Cancel/checkbox). Scan Name/Value for secrets, refuse a full browser root, and verify the crop excludes the Omnibox/address bar.
+- Resolve modern notification overflow by its unique SystemTray.OverflowButton ID before localized legacy labels. Tray diagnostics contain only control types, safe IDs and fixed role labels; never raw tooltips.
+- Tray roots/popups must belong to the verified Shell_TrayWnd process; include owned XAML overflow popups without scanning other applications' popup windows.
+- Generic XAML popups require a known notification-icon ID in addition to the exact app label; ambiguous icons or missing shell surfaces must not count as successful absence.
+- After exit, inspect hidden notification overflow as well as visible icons; close only a popup opened by that verification. Expand once and wait for the surface instead of repeatedly toggling it.

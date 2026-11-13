@@ -42,6 +42,10 @@ execution evidence. Tray pointer actions require verified target hits. Preflight
 matching input/process desktops; safe failure evidence excludes tickets and private state.
 Preflight also requires an active Windows session. Protocol screenshots crop the
 consent controls and verify that the address bar lies outside the capture.
+Windows 11 notification overflow uses its unique native control ID, with localized
+Windows 10 labels as a fallback; diagnostics contain structure only.
+Overflow popups are restricted to the taskbar's process, including native XAML popups.
+Exit verification checks hidden notification icons too and closes any overflow it opens.
 
 Use Node.js 22.19+ or 24+ and pnpm 11.7.0. Dependencies come from the public npm registry; no Harness checkout is required.
 

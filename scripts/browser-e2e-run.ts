@@ -169,6 +169,8 @@ export async function runBrowserMatrix(repository: string, state: string, helper
     const errors: string[] = []
     const cleanup = async (label: string, work: () => Promise<unknown>) => { try { await work() } catch { errors.push(label) } }
     if (failure) {
+      try { await writeFile(join(repository, `.artifacts/ci/browser-${browser}-tray.json`), JSON.stringify(await nativeProbe(helper, 'tray-info'), null, 2)) }
+      catch { /* Tray diagnostics are structural only and never block owned cleanup. */ }
       try {
         const snapshot = await status()
         let nativeStages: string[] = []
@@ -180,7 +182,7 @@ export async function runBrowserMatrix(repository: string, state: string, helper
           }
         } catch { /* Handler may not have been launched; missing stages are diagnostic evidence. */ }
         await writeFile(join(repository, `.artifacts/ci/browser-${browser}-routing.json`), JSON.stringify({ stage,
-          servers: snapshot.servers.map(row => ({ state: row.state })), nativeStages, requests: web?.diagnostics() ?? [] }, null, 2))
+          scenarios: { ...scenarios }, servers: snapshot.servers.map(row => ({ state: row.state })), nativeStages, requests: web?.diagnostics() ?? [] }, null, 2))
       } catch { /* Never mask the primary failure when its owned runtime has already exited. */ }
       if (cdp) {
         try {
