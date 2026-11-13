@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { basename, dirname, join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { BrowserCdp, eventually } from './browser-cdp.ts'
+import { BrowserCdp, eventually, prepareDshPage } from './browser-cdp.ts'
 import { nativeProbe, type NativeWindow } from './browser-native.ts'
 import { uniqueTarget, ownedCertificate, activeMcpIdentities, type DesktopPreflight } from './browser-e2e-contract.ts'
 import { startBrowserWeb, isolatedEnvironment, alive, type WebFixture, type ServerArtifact } from './browser-e2e-environment.ts'
@@ -94,6 +94,7 @@ export async function runBrowserMatrix(repository: string, state: string, helper
     await cdp.send('Page.bringToFront')
     await eventually(() => cdp!.evaluate<boolean>('document.readyState === "complete"'), 'DSH document')
     stage = 'settings navigation'
+    await prepareDshPage(cdp)
     await cdp.clickText('^(Settings|设置)$')
     await cdp.clickText('^(This computer|本机连接)$')
     const connect = async () => {

@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest'
 import { assertDesktopPreflight, requireBrowserMatrix, ownedCertificate, uniqueTarget, activeMcpIdentities } from './browser-e2e-contract.ts'
+import { prepareDshPage } from './browser-cdp.ts'
 
 it('refuses existing URI owners and noninteractive desktops before touching user state', () => {
   const ready = { platform: 'win32', interactive: true, tray: true, chrome: true, edge: true, uriOccupied: false }
@@ -32,4 +33,12 @@ it('ignores already-exited negotiation children but refuses live unowned markers
   expect(activeMcpIdentities([1, 2, 2], [owned], () => false)).toEqual([owned])
   expect(() => activeMcpIdentities([1, 2], [owned], pid => pid === 1)).toThrow('Cannot attribute')
   expect(() => activeMcpIdentities([1], [], () => false)).toThrow('No live')
+})
+it('uses the real notice and optional model controls once before opening settings', async () => {
+  const pages = [{ notice: true }, { notice: true }, { model: true }, { model: true }, { ready: true }]
+  const clicks: string[] = []
+  await prepareDshPage({ evaluate: async <T>() => pages.shift() as T, clickText: async pattern => { clicks.push(pattern) } })
+  expect(clicks).toHaveLength(2)
+  expect(new RegExp(clicks[0]!, 'i').test('Continue')).toBe(true)
+  expect(new RegExp(clicks[1]!, 'i').test('Configure later')).toBe(true)
 })
