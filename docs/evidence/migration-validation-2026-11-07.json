@@ -1,0 +1,61 @@
+{
+  "recordedOn": "2026-11-07",
+  "timezone": "Asia/Shanghai",
+  "projectVersion": "0.1.0",
+  "supportedDshVersion": "0.1.6-alpha.2",
+  "sourceRevision": null,
+  "sourceRevisionNote": "Migration source was not committed; hashes identify recorded artifacts only. Logs and summaries are evidence records, not a clean-checkout attestation.",
+  "executions": [
+    {
+      "command": "pnpm test",
+      "result": "64 passed files, 2 skipped; 541 passed tests, 8 skipped",
+      "sourceLogSha256": "33f8c80f3b7e8a53acbcc369edff06e9eb150fd0f4da98c813ef405f265ee27d",
+      "summaryKind": "Imported historical execution summary; not rerun for documentation"
+    },
+    {
+      "command": "MCP_PROXY_PRODUCT_TESTS=1 with qualified Electron inputs; pnpm test packages/mcp-proxy/modules/runtime/tests/local-profile.product.spec.ts packages/mcp-proxy/modules/runtime/tests/native-activation.product.spec.ts",
+      "result": "2 passed files; 5 passed tests",
+      "sourceLogSha256": "03d29e210086700b6966d5da1cadcad4d444f3b15fa94a42feb8e2aa3b12bafc",
+      "summaryKind": "Imported historical execution summary; not rerun for documentation"
+    },
+    {
+      "command": "pnpm typecheck",
+      "result": "exit 0",
+      "sourceLogSha256": "87d81a4a4469fd04fff6ec54bc49cf2bf0d55e9c014edcc126d328078fa10d80",
+      "summaryKind": "Imported historical execution summary; not rerun for documentation"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "release/mcp-proxy/mcp-proxy.exe",
+      "bytes": 167214881,
+      "sha256": "3a2e1783f4e66c33eddc45daca44a770e51404a99d3ea2e855867cf603c512ba"
+    },
+    {
+      "path": "release/mcp-proxy/j-show-mcp-proxy-runtime-0.1.0.tgz",
+      "bytes": 78691,
+      "sha256": "ff42853244e15e38a443fc5466691d4c56656be99a087fe64f91abfab932f68b"
+    },
+    {
+      "path": "release/mcp-plugin/j-show-dsh-plugin-mcp-proxy-0.1.0.tgz",
+      "bytes": 69720,
+      "sha256": "22b9df5d37213c6da94d37b8fcba5e6918622e654858d30d2128c8bfcc75f8b4"
+    }
+  ],
+  "windowsDesktopObservation": {
+    "serviceReady": true,
+    "associationState": "connected",
+    "services": [
+      "files"
+    ],
+    "guiServiceRunning": true,
+    "scope": "One ordinary Windows user and one DSH deployment; not the complete browser/platform matrix"
+  },
+  "limitations": [
+    "No new real-model joint round recorded after extraction",
+    "Cross-login Windows singleton and control access not accepted",
+    "Five opt-in product cases passed separately; eight default skips are not claimed as passing",
+    "No full SDK/history/snapshot acceptance",
+    "No publication performed"
+  ]
+}

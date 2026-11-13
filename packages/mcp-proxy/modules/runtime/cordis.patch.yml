@@ -1,0 +1,14 @@
+- insert:
+    - id: mcp-proxy-startup
+      name: '@j-show/mcp-proxy-runtime/startup'
+    - id: mcp-proxy-credentials
+      name: '@deepseek-ai/dsh-credentials-local'
+      inject: [mcpProxyStartup]
+      config:
+        path: !!js ctx.mcpProxyStartup.identityFile
+        watch: false
+    - id: mcp-proxy-runtime
+      name: '@j-show/mcp-proxy-runtime'
+      inject: [mcpProxyStartup]
+      config:
+        settingsFile: !!js ctx.mcpProxyStartup.settingsFile

@@ -1,0 +1,50 @@
+{
+  "name": "@j-show/mcp-proxy-local",
+  "description": "Local MCP clients and execution for the MCP proxy",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "Apache-2.0 AND MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/j-show/dsh-plugin-mcp-proxy.git",
+    "directory": "packages/mcp-proxy/modules/local"
+  },
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    "./management": {
+      "types": "./lib/types/management.d.ts",
+      "default": "./lib/management.js"
+    },
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/*.js",
+    "lib/types/**/*.d.ts",
+    "LICENSE-MIT-UPSTREAM",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "4.0.2"
+  },
+  "dependencies": {
+    "@deepseek-ai/dsh-brand": "0.1.6-alpha.2",
+    "@j-show/mcp-proxy-protocol": "workspace:*",
+    "@deepseek-ai/dsh-subprocess": "0.1.6-alpha.2",
+    "@modelcontextprotocol/client": "2.0.0",
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.2",
+    "@modelcontextprotocol/server": "2.0.0",
+    "@modelcontextprotocol/node": "2.0.0",
+    "ws": "^8.21.0",
+    "@types/ws": "^8.18.1"
+  },
+  "private": true
+}

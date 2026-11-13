@@ -1,0 +1,32 @@
+{
+  "importedOn": "2026-11-07",
+  "baseline": "TK-20261102-local-mcp-access",
+  "transformations": [
+    "Add historical status notice",
+    "Render old relative source links as historical path text",
+    "Use repository-local links for product guides",
+    "Normalize UTF-8 without BOM and LF"
+  ],
+  "files": [
+    {
+      "file": "requirement.md",
+      "sourceSha256": "6bbdec07004dcdd14cbf9071c380547d56fbc3f319026a0d15ae0e94ca38c621",
+      "importedSha256": "92767fbebb232fb0d5a1113294e8d90c766c3781e9c8251b037f9f39aba89795"
+    },
+    {
+      "file": "requirement.zh.md",
+      "sourceSha256": "762c72163dd41a3b2063b8aa16c5af6190c54835dc82d00566b559552b50d3ef",
+      "importedSha256": "98d22a70c01c736b4d67ea1a61f32613a680f66ea85625c240c530ccfc726d3b"
+    },
+    {
+      "file": "proposal.md",
+      "sourceSha256": "d0ad1a7a4fc1042b4f4729f96ef9ad1bf3f700d8de28c39904c47908dabbb085",
+      "importedSha256": "52abfea14f58fb82cb861595e905ae235e4f09df3281f051d9022f65c3dd3adc"
+    },
+    {
+      "file": "proposal.zh.md",
+      "sourceSha256": "8c62c863eaad4aad0c29eaf6262a130df9b131d966c72f847aa9bd6863602b13",
+      "importedSha256": "73f5185389b89a71878e6d721e1441105a51f1a7ed64d3bed05f80b8cb901236"
+    }
+  ]
+}

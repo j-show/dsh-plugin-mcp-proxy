@@ -1,0 +1,36 @@
+{
+  "extends": "./tsconfig.base.json",
+  "files": [],
+  "references": [
+    {
+      "path": "packages/mcp-proxy"
+    },
+    {
+      "path": "packages/mcp-proxy/modules/protocol"
+    },
+    {
+      "path": "packages/mcp-proxy/modules/local"
+    },
+    {
+      "path": "packages/mcp-proxy/modules/runtime"
+    },
+    {
+      "path": "packages/dsh-plugin"
+    },
+    {
+      "path": "packages/dsh-plugin/modules/host"
+    },
+    {
+      "path": "packages/dsh-plugin/modules/agent"
+    },
+    {
+      "path": "packages/dsh-plugin/modules/browser"
+    },
+    {
+      "path": "packages/dsh-plugin/modules/ui"
+    },
+    {
+      "path": "scripts"
+    }
+  ]
+}

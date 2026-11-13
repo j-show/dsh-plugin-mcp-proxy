@@ -1,0 +1,93 @@
+{
+  "compilerOptions": {
+    "target": "ES2024",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": [
+      "ES2024",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "jsx": "react-jsx",
+    "resolveJsonModule": true,
+    "declaration": true,
+    "composite": true,
+    "paths": {
+      "@j-show/mcp-proxy": [
+        "./packages/mcp-proxy/src/index.ts"
+      ],
+      "@j-show/mcp-proxy/*": [
+        "./packages/mcp-proxy/src/*"
+      ],
+      "@j-show/mcp-proxy-protocol": [
+        "./packages/mcp-proxy/modules/protocol/src/index.ts"
+      ],
+      "@j-show/mcp-proxy-protocol/*": [
+        "./packages/mcp-proxy/modules/protocol/src/*"
+      ],
+      "@j-show/mcp-proxy-local": [
+        "./packages/mcp-proxy/modules/local/src/index.ts"
+      ],
+      "@j-show/mcp-proxy-local/*": [
+        "./packages/mcp-proxy/modules/local/src/*"
+      ],
+      "@j-show/mcp-proxy-runtime": [
+        "./packages/mcp-proxy/modules/runtime/src/index.ts"
+      ],
+      "@j-show/mcp-proxy-runtime/*": [
+        "./packages/mcp-proxy/modules/runtime/src/*"
+      ],
+      "@j-show/dsh-plugin-mcp-proxy": [
+        "./packages/dsh-plugin/src/index.ts"
+      ],
+      "@j-show/dsh-plugin-mcp-proxy/*": [
+        "./packages/dsh-plugin/src/*"
+      ],
+      "@j-show/dsh-mcp-proxy-host": [
+        "./packages/dsh-plugin/modules/host/src/index.ts"
+      ],
+      "@j-show/dsh-mcp-proxy-host/*": [
+        "./packages/dsh-plugin/modules/host/src/*"
+      ],
+      "@j-show/dsh-mcp-proxy-agent": [
+        "./packages/dsh-plugin/modules/agent/src/index.ts"
+      ],
+      "@j-show/dsh-mcp-proxy-agent/*": [
+        "./packages/dsh-plugin/modules/agent/src/*"
+      ],
+      "@j-show/dsh-mcp-proxy-browser": [
+        "./packages/dsh-plugin/modules/browser/src/index.ts"
+      ],
+      "@j-show/dsh-mcp-proxy-browser/*": [
+        "./packages/dsh-plugin/modules/browser/src/*"
+      ],
+      "@j-show/dsh-mcp-proxy-ui": [
+        "./packages/dsh-plugin/modules/ui/src/index.ts"
+      ],
+      "@j-show/dsh-mcp-proxy-ui/*": [
+        "./packages/dsh-plugin/modules/ui/src/*"
+      ],
+      "@j-show/mcp-proxy-runtime/desktop": [
+        "./packages/mcp-proxy/modules/runtime/src/desktop.ts"
+      ],
+      "@j-show/mcp-proxy-runtime/startup": [
+        "./packages/mcp-proxy/modules/runtime/src/startup.ts"
+      ],
+      "@j-show/mcp-proxy-protocol/activation": [
+        "./packages/mcp-proxy/modules/protocol/src/activation.ts"
+      ],
+      "@j-show/mcp-proxy-local/management": [
+        "./packages/mcp-proxy/modules/local/src/management.ts"
+      ]
+    },
+    "types": [
+      "node",
+      "react"
+    ]
+  }
+}

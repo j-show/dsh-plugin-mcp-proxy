@@ -1,0 +1,9 @@
+{
+  "server": {
+    "origin": "https://agent.example.com",
+    "credentialRef": "MCP_PROXY_TOKEN"
+  },
+  "directory": "./workspace",
+  "identityFile": "./state/identity.yaml",
+  "services": []
+}

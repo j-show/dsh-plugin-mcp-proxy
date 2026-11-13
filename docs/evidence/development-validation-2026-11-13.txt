@@ -1,0 +1,57 @@
+2026-11-13 Windows native development verification (sanitized transcript)
+Uncommitted working-tree code; not an attestation of remote HEAD.
+Source code fingerprint: 871f3fb5022c2dbbf3e16d8472bb2f3053387df1a26c9fe9b2df895ebc705e3c
+Frozen install: exit 0; independent node_modules; normal public pnpm store reused.
+
+pnpm dev:doctor --packaging: exit 0; log SHA256 4e27ae457be3239245b0b83e84272926178349ac1fccfeed4cbb9251b244d1b5
+pnpm dev:init: exit 0; log SHA256 b8a2cac625064c81545134908f5b0933a22f90f46c1571fa71b21945e0c063cf
+pnpm build: exit 0; log SHA256 8a650cc855d275856419bc4b0a3781f57b98c935cb779565d75dd65ab57ef230
+pnpm typecheck: exit 0; log SHA256 87d81a4a4469fd04fff6ec54bc49cf2bf0d55e9c014edcc126d328078fa10d80
+pnpm test: exit 0; log SHA256 66f0bb8e975f495404d421bf1212b35f9aee1e197894fa208c915684babe2af7
+pnpm dev:check: exit 0; log SHA256 ab779461e76f3ccc90f9c37b2e66d48db21e57f0ceb82b8a90da71741328a6e6
+pnpm build:mcp-proxy --skip-build: exit 0; log SHA256 de6239016bcefd0c4e831954128870f504f85b325c1f25b03188c499b273f56a
+pnpm build:mcp-plugin --skip-build: exit 0; log SHA256 5f4527760436cbb620add693d3d7f1147a6d0725304a05a85fe99e73459a5ba4
+
+pnpm test: 69 files passed / 2 skipped; 551 tests passed / 8 skipped.
+pnpm dev:check: 7 files passed / 58 tests passed.
+Native HTTPS: bootstrap 303; authenticated home 200; unauthenticated home 401.
+Actual association: begin 200; CLI exit 0; finish 200; status 200 connected.
+Electron owned runtime ready with files MCP; graceful exit 0 released machine service slot.
+Mapped TypeScript source breakpoints hit: desktop-main.ts:48, browser/src/index.ts:236.
+Web/runtime graceful exit 0; temporary build drive released.
+
+Release artifacts:
+release/mcp-plugin/dsh-session-0.1.6-alpha.2.patch: 212 bytes; SHA256 10fde8aba0f255fb3159b6a9b1eeb2264ef4cf853136175d3cff2b38c400be56
+release/mcp-plugin/install.mjs: 350907 bytes; SHA256 8479016fed6573e8b5b982373c33f6044ee6b5bedc5f340297ef14775c4ac136
+release/mcp-plugin/j-show-dsh-plugin-mcp-proxy-0.1.0.tgz: 69854 bytes; SHA256 62c6fe1ef03b4cc69a01408cba89ef0149d41498ef635ba3a3be71bf4dc93525
+release/mcp-plugin/LICENSE: 11558 bytes; SHA256 1eb85fc97224598dad1852b5d6483bbcf0aa8608790dcc657a5a2a761ae9c8c6
+release/mcp-plugin/LICENSE-MIT-UPSTREAM: 1065 bytes; SHA256 ebb4f09972aee8608be255debaf78451a68e95c290f55c240dec2ecfa16ea6be
+release/mcp-plugin/README.md: 443 bytes; SHA256 b0393b09c5c21da064a42588e9f74ffee5139339ce515435f0d83c933dcb7722
+release/mcp-plugin/release.json: 98 bytes; SHA256 28fe8428fe3a5d5971c5f5b0581f3bf64f06a00660d36f22bb44fdd134d557dd
+release/mcp-plugin/THIRD_PARTY_NOTICES.md: 290 bytes; SHA256 e4dee780c097f74c790c048481b6f78033d14bd3db583d5fcd6240cd388a42cc
+release/mcp-plugin/licenses/@sec-ant__readable-stream@0.4.1/LICENSE: 1068 bytes; SHA256 7e32638e170fa7342000a703a8ed950e05095b2f73fc689992a82776a3c3bd3c
+release/mcp-plugin/licenses/@sindresorhus__merge-streams@4.0.0/license: 1117 bytes; SHA256 5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3
+release/mcp-plugin/licenses/argparse@2.0.1/LICENSE: 12775 bytes; SHA256 de4d1f2d2ad5ad0cfd1657a106476b31cb5db5ef9d1ff842b237c0c81f0c8a23
+release/mcp-plugin/licenses/execa@10.2.1/license: 1117 bytes; SHA256 5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3
+release/mcp-plugin/licenses/figures@6.1.0/license: 1117 bytes; SHA256 5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3
+release/mcp-plugin/licenses/get-stream@9.0.1/license: 1117 bytes; SHA256 5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3
+release/mcp-plugin/licenses/human-signals@8.0.1/LICENSE: 11357 bytes; SHA256 f4ff0f211345d2496a6e9dc56d6f13f4ee52c0223ab718bfe7ebc77945af3942
+release/mcp-plugin/licenses/is-plain-obj@4.1.0/license: 1117 bytes; SHA256 5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3
+release/mcp-plugin/licenses/is-stream@4.0.1/license: 1117 bytes; SHA256 5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3
+release/mcp-plugin/licenses/is-unicode-supported@2.1.0/license: 1117 bytes; SHA256 5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3
+release/mcp-plugin/licenses/js-yaml@4.3.2/LICENSE: 1084 bytes; SHA256 a07bc24468b9654ce76a547d47a2db282d07733b715db4c73a98bd63961f9550
+release/mcp-plugin/licenses/npm-run-path@6.0.0/license: 1117 bytes; SHA256 5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3
+release/mcp-plugin/licenses/parse-ms@4.0.0/license: 1117 bytes; SHA256 5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3
+release/mcp-plugin/licenses/path-key@4.0.0/license: 1117 bytes; SHA256 5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3
+release/mcp-plugin/licenses/pretty-ms@9.3.1/license: 1117 bytes; SHA256 5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3
+release/mcp-plugin/licenses/signal-exit@4.1.0/LICENSE.txt: 790 bytes; SHA256 b173e19b9a78df305577ace0e52ef45a4bcc915ea28b47b256dc3b68dcb1f7e7
+release/mcp-plugin/licenses/strip-final-newline@4.0.0/license: 1117 bytes; SHA256 5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3
+release/mcp-plugin/licenses/unicorn-magic@0.3.0/license: 1117 bytes; SHA256 5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3
+release/mcp-plugin/licenses/which-command@0.1.0/license: 1117 bytes; SHA256 5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3
+release/mcp-plugin/licenses/yoctocolors@2.2.0/license: 1117 bytes; SHA256 5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3
+release/mcp-proxy/j-show-mcp-proxy-runtime-0.1.0.tgz: 79096 bytes; SHA256 bebb24dff43066d409ef036c1dca7311e2b5f4b4e9fdb61371b9fdb74bcee645
+release/mcp-proxy/mcp-proxy.exe: 167219736 bytes; SHA256 20407a3f2857b6204058d91cbd9b4464ae506daa5024f1fdab64045199d8c57f
+
+Product tests remain opt-in; no real-model/cross-user/two-device/full-browser acceptance claimed.
+At verification time: GitHub workflow configured; no remote workflow dispatch, commit, push or publication performed.
+Upstream missing source-map warning retained; no vendor edits.

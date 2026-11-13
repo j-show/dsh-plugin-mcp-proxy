@@ -1,0 +1,957 @@
+{
+  "algorithm": "SHA256 of sorted JSON rows {file,sha256}; source text normalized CRLF to LF; files enumerated below; docs excluded to avoid circular evidence hashes",
+  "files": [
+    {
+      "file": ".gitattributes",
+      "sha256": "761b9b1e8434bfe35ff11f0baa6149be0947f1e0ecbbf7e59703e707304a6746"
+    },
+    {
+      "file": ".github/workflows/verify.yml",
+      "sha256": "f74a4d5f2865fe9f2d75860693a82a37d07628856e996b709ee3239b54bfcb33"
+    },
+    {
+      "file": ".gitignore",
+      "sha256": "bfdd7ba9d01e5aa2045914d46b47c3dce326024360cd61bce33710fb34425ea4"
+    },
+    {
+      "file": ".node-version",
+      "sha256": "73fb1b615e2043a933be1c0895cde4358036acc28d785692509b822aa53c761f"
+    },
+    {
+      "file": ".npmrc",
+      "sha256": "3a951f66e7e0f3e2dd1832473a871357c4a507b51100636b73bcf6ff0dd78b6c"
+    },
+    {
+      "file": "package.json",
+      "sha256": "9941f439ac0257e80a626ae5ad48dbb37f1219ffbf5729376109c411a5426b4b"
+    },
+    {
+      "file": "packages/dsh-plugin/cordis.patch.yml",
+      "sha256": "8e5cdbd7b84c9884a8b17e4413f1197eaea04a57acbf9702ab6fba08d987342e"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/agent/package.json",
+      "sha256": "a115dc54ad9a0c8cfcdc62987d8855f720ad766fcd9bb4b5e4dc63ac66f0ad96"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/agent/src/elicitation.ts",
+      "sha256": "970162fbffc18a2f03006dbfac5f550b8792ee323a876819a094157792b50e0f"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/agent/src/index.ts",
+      "sha256": "9d972064b6b38ce0e4b29d739b9afb158567780430f6db7a7f5c4759226e4d46"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/agent/src/sampling.ts",
+      "sha256": "fd12065b37bdfe04113ce40e8014555b9f7abcc43cc4a140b8b763669f66f80e"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/agent/src/types.ts",
+      "sha256": "b10d2626615e1f6ca8e56ccad9f460ca1a2dccc7d76ea00a7225dabd26d6ffce"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/agent/tests/agent.spec.ts",
+      "sha256": "b216645de904a2de24e0a62f142c25b87ba1e361e0a8956417be85b140c6dfaa"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/agent/tsconfig.json",
+      "sha256": "75de6eb5dd9e609933432786843eba9ab55029cbb4abdba46d9c26bd60c2e724"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/browser/package.json",
+      "sha256": "641b107e44b436e4f97d5c4bc33b78329a6d1e1dd1dc6761c5e89e8bb63f6a8e"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/browser/src/http-bridge.ts",
+      "sha256": "47964de32073e3653f99f74acd43a4bdc06703a0e6263409774052b639e912b6"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/browser/src/index.ts",
+      "sha256": "2c3bd718296d38d3f62647c5d3b826acb27681f72fbe9fafdac4280965229982"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/browser/src/prompt.ts",
+      "sha256": "99eb7748434a4493f74f517a3ed7370e5997148731d4c653bbaa5cf503f1c619"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/browser/tests/association.spec.ts",
+      "sha256": "fb507e155e1619db14624c4380eeb865c4fc262b264899ad98c8d02cd32207a0"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/browser/tests/prompt.spec.ts",
+      "sha256": "8c42f20a9776f37326cde08daa1772ef166dceb302ba5c7e17eaf83e2d259b19"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/browser/tsconfig.json",
+      "sha256": "735e88018af4f83eff9c3bd925e99a80cdbae801fe78a8685eb9899798f61058"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/host/package.json",
+      "sha256": "64717ff8102e03d03fc669f375f64e48f82f181a2beb3f6ae349f58477a7df3c"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/host/src/admissions.ts",
+      "sha256": "51b16e0f4319c5a4c89718250406650d71496064b272c9ca922dab54503013a1"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/host/src/devices.ts",
+      "sha256": "f2276dfdb64e592cfbbae637fa915da4e3c58b00fd4c1ce491074a870d00934d"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/host/src/elicitation.ts",
+      "sha256": "4cc5f610b83e977e03f1a34e69c5e47f67d7ebed1f709f66e3ed255c1e219df7"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/host/src/index.ts",
+      "sha256": "3bff9678be2ad27936d6fa9dfb70b9c7a33d4b032b30bab4a6a30d4938621a4f"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/host/src/pairing.ts",
+      "sha256": "1f2a08e84b7eae4337afffba327dcf9ba8b83e6bb7fecd3758b63f4d480c3d55"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/host/tests/admissions.spec.ts",
+      "sha256": "85b371d43b61fcce3a160cbb3711e657c9b4b72693a32896134e639a4a6935f9"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/host/tests/device-admission.spec.ts",
+      "sha256": "a98b754c909a40a98cf862ddd10776a5c16b5fde41dd4c245dd0a56b3ffe5e34"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/host/tests/devices.spec.ts",
+      "sha256": "2efc3e6c52f32965d716c1c83611b09b30746b649f359e29551b585894ed72d9"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/host/tests/elicitation.spec.ts",
+      "sha256": "a9ffd97b6af4aaa3942a4435324425e82ed70bcdc7437799b4b39d995f8088f8"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/host/tests/helpers/composition.ts",
+      "sha256": "eebd46feb76651b06ce85f13ada38675536fa507a4bc94c3a65467acd254e194"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/host/tests/host.spec.ts",
+      "sha256": "64eacfb8bb494fe19aed36a27eed687b8cca932de0e0771e814af8b4c61b4ce6"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/host/tests/pairing.spec.ts",
+      "sha256": "a54cb3f6dd00ae7d2e10deac93c9073bde850d0f962b570a085a6737bcc39e14"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/host/tsconfig.json",
+      "sha256": "aa401638785435f1b0ead4d163701bd6c9df5f54fae1272bb71a0b24122beda3"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/package.json",
+      "sha256": "6d6aa4ff0b1bb25e5f1c800caedfaab3158da65e243ce567e51b628444feae7f"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/src/client/ConnectionSection.tsx",
+      "sha256": "c3b42eacb2333abb27120ff6352fc9a185d9a1b22dcbd3d9502ea25b0901341a"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/src/client/ElicitationDock.tsx",
+      "sha256": "1cbd6ba8c1c45f2b6a4a3dc96f11cc7055ee35d9b97cb70821939c392d75ebcb"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/src/client/config.ts",
+      "sha256": "bb651fb0906dd77222b9600ef22d444ad0fe7e1719865cf5a49f4f958c5f5914"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/src/client/controller.ts",
+      "sha256": "d58154167bbb96ab443c4193ccbd1c5052699a53491064dbd25e88fd63658229"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/src/client/elicitation-controller.ts",
+      "sha256": "72d29cb2e31c6ec531d00d20f57725e5c2bdfb048d3158671164033ba485aa84"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/src/client/elicitation-fields.ts",
+      "sha256": "8a67814a0647e5323a5096d509d88930d738c48a74d96be93674985ef302033c"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/src/client/index.ts",
+      "sha256": "db6cb11d53bed5154368a09b46fc9edb42353ed7e7bd966a251635a230dd1284"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/src/client/locales.ts",
+      "sha256": "b887ff18f86e0a4afb7a971ef07e4f547362f5d36d5b33fcf6af04afa90ca23a"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/src/client/post.ts",
+      "sha256": "49852c7d34e4abe346a25f7f8bfddc4c0fa4b6adde6453d0c4fd9d6d505c69b1"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/src/client/response.ts",
+      "sha256": "6e415e49d3b228a62ab243a9c05dbe5de98a4657a1c1b112ea7e29754c70f6ac"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/src/config.ts",
+      "sha256": "f0f51f9206cd444403e82ad715586d348179f0fddc062d22b68ed3a690b9648d"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/src/css-modules.d.ts",
+      "sha256": "ebaabedf791f531984717a82f3f61f629858a2329f64871ddd86777e469668fe"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/src/index.ts",
+      "sha256": "2a4812a82de0ae29952cbdc31352cf364edf996639c8be3d87474e9f37d67935"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/src/types.ts",
+      "sha256": "ae3fc1e5be50a599f2d24b4c3946b6074c2076ec15c28cacf6731482afcef8ef"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/tests/apply.client.spec.ts",
+      "sha256": "1ac6b6c0a0660f56e43b8f88f6e9d511068be14fcbf0bdcb880510ce5a7663f9"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/tests/bootstrap-lifetime.client.spec.ts",
+      "sha256": "ae6cd8af2319ca7b6e3538adcd904454a6276cce7810acb0df02152723e1f0a1"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/tests/config.client.spec.ts",
+      "sha256": "f5ce5d764c4df73300164c4c1c85e8087d8d7e60ddb931b5163c423c9816ee39"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/tests/controller.client.spec.ts",
+      "sha256": "3cf650e65dbc2d10f345a6d7c012439b43a24baa9a7f69d9c3bf64741891ed18"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/tests/elicitation-section.client.spec.tsx",
+      "sha256": "bb2ca5aeb21f160c360d934663ec06757178cd69a8ea448326375bae6ad42044"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/tests/elicitation.client.spec.ts",
+      "sha256": "f3f932b3a7ca36efea4514c84d3821ba4a4e9453d43af98926b78e084d83ce09"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/tests/fields.client.spec.ts",
+      "sha256": "b011750cafcd7e9c5c33dbd7342a533a804429c817cc717f263331bbc9be4e88"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/tests/response.client.spec.ts",
+      "sha256": "cdfbfb991b845197912a5d49ed6c19cc21c74a898101b1f576dd19bee0132108"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/tests/section.client.spec.tsx",
+      "sha256": "73684c7181e8b0f355dbce861be345c5eeeebb09b61f2a065e2f4d4ac9f56c48"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/tests/support/common-zh.ts",
+      "sha256": "2be0bece58f339bf18a096ba52e716593af4102ab86756978d1ea43e893fd9dd"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/tests/support/framework.ts",
+      "sha256": "0822849764d6fb4eac3f642fc5c27124732a5add76b02eb550b8d809d78bd1d3"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/tests/support/props.ts",
+      "sha256": "ab587f090c79b2720fdadfb0b487437dd86a559d0c75d4c7e032a79289eaa3d5"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/tests/support/published-client.ts",
+      "sha256": "633bd9585094dc6d0b779c1ee95024624572442d00820c47cfacad3ec9d9d616"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/tsconfig.client.json",
+      "sha256": "195dcdff973ffd711124b063b95cf4826ca370b651d1ef1dd5c6b3feee45ddb2"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/tsconfig.host.json",
+      "sha256": "db82d6e890f4fc988320a95d83ae28eaed741c0da2da3fb9708309e5c602a8a3"
+    },
+    {
+      "file": "packages/dsh-plugin/modules/ui/tsconfig.json",
+      "sha256": "ad1b25d36ea100440140e543e2a2af188178934da74eadce1b27ef14e91b335e"
+    },
+    {
+      "file": "packages/dsh-plugin/package.json",
+      "sha256": "adb1d9bd12e805ead0c4638296cee6be98b933a31a5579dce68c77e6ef245d62"
+    },
+    {
+      "file": "packages/dsh-plugin/src/agent.ts",
+      "sha256": "dfb435e8bc52f4ded0577b224bf6c44632a657cd0ea90cd3dc1cd23582b84b33"
+    },
+    {
+      "file": "packages/dsh-plugin/src/browser.ts",
+      "sha256": "5a04bcd92bb156c7d5af2ad171db4e8a7c093259f3b943ce78ee5d551bd55600"
+    },
+    {
+      "file": "packages/dsh-plugin/src/host.ts",
+      "sha256": "21ecc0708cfdf412c63cbd15b994a1d6b25e83d4237f9d3545b1a10d8d2d16fb"
+    },
+    {
+      "file": "packages/dsh-plugin/src/index.ts",
+      "sha256": "28903785efa763996b7bd20e6045f9d83c79e342965e0fd5f2fba4bba9e882d6"
+    },
+    {
+      "file": "packages/dsh-plugin/src/protocol.ts",
+      "sha256": "1d5f682b136f491eaba90b2cf97b33f537fd69544aaf466c364070f63421e243"
+    },
+    {
+      "file": "packages/dsh-plugin/tests/server.spec.ts",
+      "sha256": "91d042c5f1753aa02a8ca564017c101cb6279a01daf1e2cb28bcf3c66ace959b"
+    },
+    {
+      "file": "packages/dsh-plugin/tsconfig.json",
+      "sha256": "ff8a6fb45d3737a1e729d3a96b7607b17e6888e071f5afff2e5b204ba4fc9953"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/package.json",
+      "sha256": "d3ccf98eb874ce5caef86185daf2f27e01f98354c58fded96e6a1474a0651aad"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/src/callbacks.ts",
+      "sha256": "ae69051343eeb1c6424d2ccedacd68f88edb49ace2f80917e826a9f14c0209b5"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/src/channel.ts",
+      "sha256": "347b3d0b60a9fb1bf0b0ab01ace41b317fe3f7537551a9a31eaf690999333e0a"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/src/config.ts",
+      "sha256": "15e6ade9d05cce612ddea114f2e56945b4465ecd5cc6b7d7514b2ddf789917af"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/src/drivers.ts",
+      "sha256": "dbe929dcdec2c511498dcca5850d48364ca1b1cb893e12dcd33448ce96c564fc"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/src/environment.ts",
+      "sha256": "3d04685d6d847e07360a18f5d119f046b745913f0b5a28f51d677b3be56c7f7d"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/src/index.ts",
+      "sha256": "b04168f637de9f09fff7276f52c1575137db4ee55899a726d120777403b08f06"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/src/legacy-cancellation.ts",
+      "sha256": "94f08ed54805ffbef93c56262dee0e08be76447150f633c27ca7ee0fa4fd25db"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/src/legacy-task-scope.ts",
+      "sha256": "a92d7e975fb8b6e2256a550421f9c611c76f6545d233cd52208ce12597bdd08a"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/src/legacy-tasks.ts",
+      "sha256": "74abee9eaee06b186afe15ff8b1fe9f4bf83bf881df3e3784a283452a804738d"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/src/lifetime.ts",
+      "sha256": "d0119cabbe391b3ba01d5a9322e5f22776f5ba82a8ba0649b6903d0e454ed7b7"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/src/managed-settings.ts",
+      "sha256": "d68d5b63f803a9a35d66c9e5fbff677ceb1eab5bfe7f3d9fcf6ca1cba278ab34"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/src/management.ts",
+      "sha256": "0c9ae7557c1d1c6fa35814e6dab5ee08d523504718fdb8dde16bb6b194e6aaca"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/src/pool.ts",
+      "sha256": "b7ecadab09c4de9141090134128179dec0f60b906e38e32c0f31f19393199e67"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/src/routing.ts",
+      "sha256": "dec9e8d522c3ae93fef125d70ebdf3aad5dba147ad04e3922449445beb45b110"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/src/settings.ts",
+      "sha256": "c0caa0b436fffb7ed00fdf6659eb70e73242765a39fcd9b0078cfa838bf6b982"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/tests/fixtures/blocked-start.mjs",
+      "sha256": "719963ca68691f39d19ff7275085210476ebc8bf18f571a364cbe49c0c7db137"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/tests/fixtures/files.mjs",
+      "sha256": "86d0fe9981b115b60611c5a6b80f7a017a7d747d3226dc488b6087f0927a71a6"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/tests/fixtures/task-stdio.mjs",
+      "sha256": "fc5ec8e112151989e04a4feb2166473774476a17a368ac3b212c61ff90933f59"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/tests/http-fixtures.ts",
+      "sha256": "eb9cce9dbd0073507a7da7c1494cd7550680a6f610b9b20c5d31f3de83da6634"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/tests/legacy-cancellation.spec.ts",
+      "sha256": "84a6a498efacb680ea9e175baa7e925db8285aca9acff7567bf8c1a2088815d8"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/tests/local.spec.ts",
+      "sha256": "85a6413dc4d17f5a4d02d913f8625a1eed3fef9c1db770c5e74709d50e23cc32"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/tests/managed-settings.spec.ts",
+      "sha256": "2328dd2d8afd56d6f0f7a5d56e8801759c4591d3cbfc5fa870e35bce48d23ce6"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/tests/management-codec.spec.ts",
+      "sha256": "274b0bba217a4129c5fc7938b0330033adead2ea5108e687598becc7d3601db3"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/tests/management.spec.ts",
+      "sha256": "e2f15ae046c1327a16cf1846fba401e9ef5b325dd5cb6968ccb7c65ee77590b4"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/tests/multiple-dsh.spec.ts",
+      "sha256": "dd57588120ba7108c4e5198b67dd1fa222091286b524640b3d2f8190581404e1"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/tests/routing.spec.ts",
+      "sha256": "995639b614494cac256a3874ee792d67e590b26dac6f394857ae1801b809319a"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/tests/settings.spec.ts",
+      "sha256": "92899d451031ce730c47d06fbce923ea65f4907fea2a5b11966f7f4ab2200f86"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/tests/startup-policy.spec.ts",
+      "sha256": "cee0a70c45411a707752f733e07b15af94503edba045af92b4124579f0811afe"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/tests/tasks.spec.ts",
+      "sha256": "b782d3ac88b22ad3867a3c2c1b2ce011b9ae5d65bdd96100b0349e9f8c169d13"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/tests/tunnel.spec.ts",
+      "sha256": "3da134e8b5d66cabeb7466d39528926fec3d65bf6418e33f2e14dbb81883601d"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/local/tsconfig.json",
+      "sha256": "c695732bc4b6fd668a73e9a1d02a38d2fe581ef46d77b1a6a9f232c881910dd5"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/protocol/package.json",
+      "sha256": "7c411a991c3b0bada11425636cc1c56eea845c50ab4beeaa8bf32a16c9591372"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/protocol/src/activation.ts",
+      "sha256": "37d9ecfd0f51f103de3e0cf57ea2d964a22342e3236e7875464af9e029b30e91"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/protocol/src/associations.ts",
+      "sha256": "207ac2b7010af6c875f872c5cb42bc08dc97f06b9814cf88ceecb080d1c8d964"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/protocol/src/callback-channel.ts",
+      "sha256": "968077c3495729aa783b5ad190a47d3d261b34f4943198c1eabdc83ea0fab81b"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/protocol/src/channel.ts",
+      "sha256": "1b4cd90f05784d26c05f86ce2d7d1bf04a3db40510d5905c66b0f5e08dfb87bb"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/protocol/src/handshake.ts",
+      "sha256": "5a1a30c96f56840b5d45d2bfc332fa21613986118197732ad60111e78d88e013"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/protocol/src/identity.ts",
+      "sha256": "73a39cef29ce89557c60900bdebf3b1da14a7a7efff981c46738cda69fa00535"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/protocol/src/index.ts",
+      "sha256": "52f67d1296b5bd9c355b5d8e18f5caf74d132f201bf6e1ce61e1d9ef257d3b7d"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/protocol/src/invocations.ts",
+      "sha256": "dc1747fd33d04b1b8dc4160b57323d1814f4dc8f7b10e467cb2f40a408f9db6e"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/protocol/src/protocol.ts",
+      "sha256": "c908e2e77ce2a24d0dd4969c56f91dde50ba714d0591212de8da0a820633fcc6"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/protocol/tests/activation.spec.ts",
+      "sha256": "f397011419777e4495b5f2105b209704e7460ce88f888a2c929c2bcc33a4c2b4"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/protocol/tests/associations.spec.ts",
+      "sha256": "c1d05fcec5c09f5593638b0633e709cc3203f3cc57ad74cc4144c64e670fa397"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/protocol/tests/callback-channel.spec.ts",
+      "sha256": "de62488ecbe448acc9cb68b3fa0e7507358a4fccbf7a9670badba5880108441b"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/protocol/tests/channel.spec.ts",
+      "sha256": "89f927de26343a163013f10de7c00073572e5b6a8598cf38bfd3e9ab23d095fd"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/protocol/tests/handshake.spec.ts",
+      "sha256": "8a439af5a1ebab6961cf9848768fcbfdd12aa9d1f344ec2be5682a37b21f3abd"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/protocol/tests/helpers/sockets.ts",
+      "sha256": "30245c5e7e096631035453e6262af4da8b49ddcbe3a8be4b28f57489c9dc53db"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/protocol/tests/identity.spec.ts",
+      "sha256": "29f7bbb825f940efc8976f7b2e38230d3d6c98a047c35902f31cca424233f202"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/protocol/tests/invocations.spec.ts",
+      "sha256": "60545bca0ae1bba15d828ceeb3f7a9c0b89ea521227dccb86600638757f79b2b"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/protocol/tests/protocol.spec.ts",
+      "sha256": "0af0ad6d74a2e65e8be8d4388af0457d7cb0fe8020405c40346b0d9b8c0c1a77"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/protocol/tsconfig.json",
+      "sha256": "36c8587519f406ecf0d33400a44ef5b707da08af0b09f41f8ac7599ec9543b6f"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/cordis.patch.yml",
+      "sha256": "09b9d8ee42c66021748d3e3713bb0f8ef9029f716117bdd418ff800afe986598"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/package.json",
+      "sha256": "4f679d122e11f88480e4edbc7e491980afe6cb8f29ba2f83459fd0f0c120af65"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/scripts/build-native-uri.mjs",
+      "sha256": "f066152613f1cfa6e3792d4f0659ac154f934f99147e5d0d41b161a4683ab630"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/src/background-owner.ts",
+      "sha256": "354fa95d9b179cabcc8e10cff60b8ee3d986a271d372d63e418641c29de35614"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/src/background.ts",
+      "sha256": "7edfafa360c31bc5b38948163a1819d517ec0894ea5cc5f1ee7a6f2009984481"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/src/control.ts",
+      "sha256": "2396e09b07eb3ce8510a0e72c17a2b32c2f24d055384a00bb2d9937206672474"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/src/desktop-controller.ts",
+      "sha256": "7898b8fdfa8e71a37bfd4ec587335298ed287a3777cff3a9ac623b31ed6ede67"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/src/desktop.ts",
+      "sha256": "445998c539081920f008874df9c32ed91499ad87e391e37854ec019d1c2b6ec7"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/src/device-client.ts",
+      "sha256": "0833a0389798f83d80543d1a1859497f84e0776e6ec1a2661d7c511c3e2b0ddc"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/src/dsh-connection.ts",
+      "sha256": "b48de19be11679706888478be054836775ff319deb08214d7452178d23f2d4f1"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/src/index.ts",
+      "sha256": "6328df9dcb80f750441071f8dc184b1ec57e461a3c412ab85a8573b265fc11f3"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/src/macos-install.ts",
+      "sha256": "60d73f3801ebfefa983b75ab9198aec9c0e13e6e1b584103d45416498b0f7cb0"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/src/managed-runtime.ts",
+      "sha256": "1309a5359c9725787d1c52923f01ce8319e0b5dc49471d7c8ac00a4f7d2a7aa1"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/src/native-builder.ts",
+      "sha256": "3440152ce3d35458e2becbb2cd91b0b88670ea69f35788f41cce82242ee70531"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/src/posix-install.ts",
+      "sha256": "5a051c81b8d5001ae6cd3e3ccd6eaeb67fbd9a105a62e315e92c36ccab9bfaaa"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/src/process-groups.ts",
+      "sha256": "87612b687f8fcc68bd607af7b9a4de6a286ff4f739a68eec144d5b38d8dd164e"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/src/settings-store.ts",
+      "sha256": "d6cfa88a17f4b0fdf4c6d99ea267f82346006ee40f1c24e384250f621f398ae9"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/src/startup.ts",
+      "sha256": "4aa3f377ca4d9e331b04f7575971081fdabc8ec3b8f74f047bdc484c8fa0dfc6"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/src/unix-control-lease.ts",
+      "sha256": "e7ee960c631b7156c2eb7542812e79118cf27c326a05b5857d78d1f8fb17f7da"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/src/windows-install.ts",
+      "sha256": "5b24670355c3a047b64966a46db5b145d1bf541f5bc0cac0f768008bdf29533c"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/src/windows-job.ts",
+      "sha256": "2072f2b37a914ae38cb65b2a30fbab23d5ab3fb5e8d435b35e5ed20a2d36aafa"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/src/windows-process-job.ts",
+      "sha256": "f54171a35a8d3a0673eb9102165fda00fc68eb4c7230e30c042b282ce5ecded3"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/tests/background-owner.spec.ts",
+      "sha256": "b221dab11dd0539faf8761eb3f8613e9f13a4f0578954504d37fa5eb582099cf"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/tests/background.spec.ts",
+      "sha256": "46e9c4a0eb25211d67728e026f23ebbbc0e54e155b6e4d0c41cdc9d1cd6ff1a6"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/tests/control-pending.spec.ts",
+      "sha256": "4cd552c1eb8912347f150288c1fe587ace657fdfd52576af411ce7f7c5d4ba46"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/tests/control.spec.ts",
+      "sha256": "6df870ce401f5b80af2e15663ae4108536bce8424912b98b1b752fe8c8be43a7"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/tests/desktop-controller.spec.ts",
+      "sha256": "44751b77ea69c0f7b0edd0ae2488692bedf486b700dcf547a0d777205bb3c029"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/tests/device-client.spec.ts",
+      "sha256": "659e9c596db24f3a0c7576926a4d83935be46a70baf2ccffcf2db964d71db55e"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/tests/dsh-connection.spec.ts",
+      "sha256": "c7687bbb53836d10677c4fbae0311bd8eedb85831901331b80cff713679e389d"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/tests/fixtures/background-profile.mjs",
+      "sha256": "8b0d7dfc7a68be7f72e8af8d27949ee7609aa38b3a4a809d8855f5f76bf87a65"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/tests/fixtures/unix-socket.mjs",
+      "sha256": "2612716b9bfe16d5dbfef2a087cd311dbb5472c3c1de6504b226987904aba96d"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/tests/local-profile.product.spec.ts",
+      "sha256": "0148168a15dbb1a06d650e1e9ca6a00eaca2975bb391fa47a3e738023435bdf0"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/tests/macos-install.spec.ts",
+      "sha256": "4dce2cd65430027b7be1a75c19d1c78f6a0eaa512dc136db5c1650f8386b4612"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/tests/managed-runtime.spec.ts",
+      "sha256": "c439ef9c1e61b7886875f822b5678d476f3c430933d9a802e491b1cb968e1c65"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/tests/native-activation.product.spec.ts",
+      "sha256": "00a4e86dd76bd007b10d4f9b04b82121ab96102d9421ab893c45c992e7c927f2"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/tests/native-windows.spec.ts",
+      "sha256": "d55bcf19aceb553102da0867c740c594dd544745fbd1e0e4138f501722bf05ee"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/tests/posix-install.spec.ts",
+      "sha256": "d5356337ed85347ff96c690b8cb9ce8e178a8914b01e5b38e63ff718dce19096"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/tests/product-service-slot.ts",
+      "sha256": "82b6bf1509aa79bd5fd85aeec1e52aca3a0eb6f282dc51a2b0dc0b742c9a00a9"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/tests/runtime.spec.ts",
+      "sha256": "dce93daa6be02710e9ad40b5409f6e5e28a97d35b29a74a42a471e22686f2396"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/tests/settings-store.spec.ts",
+      "sha256": "3553b8be6b7c31ccfebff1324e4f814db3bef809c6ea1e8a9941bec00b4ddd7b"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/tests/startup.spec.ts",
+      "sha256": "4ea2bb8d0f0424a712e5655752bde467f2b6bcc4e0dd2fc0b17e53b95bd78d7a"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/tests/support/process-inspector.ts",
+      "sha256": "1e4ca66f18c2118c1336d198f265f994e3eaf9d450fd2c974ea207d31a58238d"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/tests/support/windows-inspector.ts",
+      "sha256": "531377d5f35bfc7b557ffef5c5dca6c0b65755e9cb35b7ce29c4c1eeb8ff95f8"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/tests/unix-control-lease.spec.ts",
+      "sha256": "2e1e2da0cd8248205ae0d6a23266586d9481f1cd200ab14a443fdcbd132eace0"
+    },
+    {
+      "file": "packages/mcp-proxy/modules/runtime/tsconfig.json",
+      "sha256": "893db18eed2aaf995e1c2d5a69db3da383477cdc678a3bfa819ee1804d4b79fc"
+    },
+    {
+      "file": "packages/mcp-proxy/package.json",
+      "sha256": "79d6685e9ca13b78478176958e75d078c9e3ed8ed7159219853b8ea135e96f58"
+    },
+    {
+      "file": "packages/mcp-proxy/scripts/package-electron.ts",
+      "sha256": "9e18013c442af477a83cf30c17fa5b33a911ea2bcb6d57ff6d4997f7e442ed41"
+    },
+    {
+      "file": "packages/mcp-proxy/scripts/portable-cwd.ts",
+      "sha256": "d7f5ac864ddebacba6a89fca4230b797f89d77380e71dc96ad9bd70c2a562962"
+    },
+    {
+      "file": "packages/mcp-proxy/settings.example.json",
+      "sha256": "00641950025aa9bd76fd5fc2e1f836e555cf7b6e3f1d3fe1939008c371edad3c"
+    },
+    {
+      "file": "packages/mcp-proxy/src/bundled-connections.ts",
+      "sha256": "78e3b6cfd416b4161bd6979675669356db9e850c7b4fea86d8a7f442e3357422"
+    },
+    {
+      "file": "packages/mcp-proxy/src/client/api.ts",
+      "sha256": "d8f7f86e48320f7bad4bc582b12497cbdc4f6544d8f5973decf29426aa2b1919"
+    },
+    {
+      "file": "packages/mcp-proxy/src/client/messages.ts",
+      "sha256": "4caa6a57f0f011191ab340eb5b856a978c0634dfbad689fd70b85a6e9c56f1b1"
+    },
+    {
+      "file": "packages/mcp-proxy/src/client/renderer.ts",
+      "sha256": "ec66b6429591d55e011a5d91e5e2195b42dba0d304758b18dda9a6bfa74c7aa2"
+    },
+    {
+      "file": "packages/mcp-proxy/src/desktop-lifetime.ts",
+      "sha256": "dc41cf5aa21cac21ee002711e86274617887788da64d17591955c6e50106802f"
+    },
+    {
+      "file": "packages/mcp-proxy/src/desktop-main.ts",
+      "sha256": "eea10679528bb81f2d6f8ce4405f339f0fc015017b0d62edd5bdb0146ae6ab18"
+    },
+    {
+      "file": "packages/mcp-proxy/src/development-main.ts",
+      "sha256": "5affee43b7d840dc5a9b0c463a999e307abdf5ab16a57e8cf689096f5161a6b4"
+    },
+    {
+      "file": "packages/mcp-proxy/src/ensure-profile.ts",
+      "sha256": "9e325758584ed912f43ee7a64fbc518bf4ddfcf7617e519c045528a3c68619a0"
+    },
+    {
+      "file": "packages/mcp-proxy/src/main.ts",
+      "sha256": "7f4a7c9b0dd771d7b113e4521f2e0d6af3485693db38833908141ee1928c8006"
+    },
+    {
+      "file": "packages/mcp-proxy/src/preload.ts",
+      "sha256": "e627f6a329700c1928defdac4ea68ca1d2f3fe015c38b72d6cf0b2a8863f90ba"
+    },
+    {
+      "file": "packages/mcp-proxy/src/profile-launch.ts",
+      "sha256": "a783b11f60b5cf3cc27416378f310906059e03b955d3f8498ffa17ed9ee12dba"
+    },
+    {
+      "file": "packages/mcp-proxy/src/runtime-cache.ts",
+      "sha256": "28b4e21e4591cafe55bf306df1f56187a79fc12767df36df18fcbc344b1a77d0"
+    },
+    {
+      "file": "packages/mcp-proxy/src/service-shutdown.ts",
+      "sha256": "45c7a56b5aa566667cd905902309090cb470c6d0d4d7149686e5287d56cefb67"
+    },
+    {
+      "file": "packages/mcp-proxy/tests/bundled-connections.spec.ts",
+      "sha256": "73e47e8ab665a82f591f5ff54c77fb923aeb4466758a84934143a571edba6fbb"
+    },
+    {
+      "file": "packages/mcp-proxy/tests/desktop-exit.spec.ts",
+      "sha256": "d649cb33a41d277d722865573c8a62a22d49ed4eba72c3517daf401ccde96b3c"
+    },
+    {
+      "file": "packages/mcp-proxy/tests/desktop-lifetime.spec.ts",
+      "sha256": "f8707f480faa9130c6fdb2d0748ed410ec310ddd71bbe82f7f27be6bb6aa310c"
+    },
+    {
+      "file": "packages/mcp-proxy/tests/portable-cwd.spec.ts",
+      "sha256": "3ea8a29e1f98206ec560fba5c6c851c380bbe725a2d7cc1655810508a9ab97a5"
+    },
+    {
+      "file": "packages/mcp-proxy/tests/profile-launch.spec.ts",
+      "sha256": "a8bcacb288399f26f421b8ebbcd2cb261e05a114d91136b8bed35c8679799819"
+    },
+    {
+      "file": "packages/mcp-proxy/tests/runtime-cache.spec.ts",
+      "sha256": "398bca5fce3158847eb8e608d610bedec7517289ccadb023a266bb76b745e205"
+    },
+    {
+      "file": "packages/mcp-proxy/tests/service-shutdown.spec.ts",
+      "sha256": "861ed4364fcbfd169e3bf85c4f8a053ba2a0690514d75a380732a3cd8bc71468"
+    },
+    {
+      "file": "packages/mcp-proxy/tsconfig.json",
+      "sha256": "956a0e245d530995cb4e611c1d181a07d6d49c94cc73e2d3d3bd02c31e5d585a"
+    },
+    {
+      "file": "pnpm-lock.yaml",
+      "sha256": "c6781e7471a9a0650509e75f33426d985c4a7ee1005caec24e7896b358442d61"
+    },
+    {
+      "file": "pnpm-workspace.yaml",
+      "sha256": "aee8c69effb7391c3976084e4070cef7b3623692e035da7b2984acffc2e5897f"
+    },
+    {
+      "file": "scripts/archive-members.ts",
+      "sha256": "a106137dd82b51b09625847ebffce6fca6f1696813ab2d05f89916a0a774885b"
+    },
+    {
+      "file": "scripts/build-browser.ts",
+      "sha256": "1e9223d1aa28a12970c78f8089c0bc1217e861e720c8316c2b87ec3efaf9be65"
+    },
+    {
+      "file": "scripts/build-libraries.ts",
+      "sha256": "712a403e86c0b2f3cf17a24e88757613813363ff6604a5b85cf8bb6a493f7b26"
+    },
+    {
+      "file": "scripts/build-runtime-lock.json",
+      "sha256": "14f3f376730dd0ba85db2676e8785f1811f1eda9afe16a00cdba2ea1d7d03808"
+    },
+    {
+      "file": "scripts/build.ts",
+      "sha256": "5c74b36a72d2fc506d5625bdd6662590eeadd2c902ae0bb81858d8e62d4b3f12"
+    },
+    {
+      "file": "scripts/compatibility.spec.ts",
+      "sha256": "4d5e33e8c4bc18a74b030969a6576c963d9ac088af91b4273d8cfe7afbce766d"
+    },
+    {
+      "file": "scripts/compatibility.ts",
+      "sha256": "09f85f4faaaa0968dfe32a0040404c1dfa9bf54e519f76c56b42bd3394433e67"
+    },
+    {
+      "file": "scripts/dev.ts",
+      "sha256": "5e56ab42f2b2eb5febca375085019b441dcedad7d3589df930f47b34d61f62be"
+    },
+    {
+      "file": "scripts/development-proxy.spec.ts",
+      "sha256": "f28b4de068adad5709405ef8b0a2b9439f97ac28a8e9415e937b7b4ae0cd8a69"
+    },
+    {
+      "file": "scripts/development-proxy.ts",
+      "sha256": "8e538f1d4c78456439cdcd4b18ab0ad754a17ee0034e20b467a3014e468859cb"
+    },
+    {
+      "file": "scripts/development-signals.mjs",
+      "sha256": "027e6bb121832048005f7eda4fee31571a3501c49a6d319a2fccee5440778e7a"
+    },
+    {
+      "file": "scripts/development-signals.spec.ts",
+      "sha256": "2051fc9b40531cfd2ca629ebce5b72896874935d68c678e522fb77827cfe6936"
+    },
+    {
+      "file": "scripts/development-tls.ps1",
+      "sha256": "926e9168d6c13c88bd7b53ddb9433c11d68acc6d4065c5eecd43730ec536b9d0"
+    },
+    {
+      "file": "scripts/development.spec.ts",
+      "sha256": "01c1e9c6be59b6a126d21fa8cdbdfc3c06f5ccb9e99473f8fd7d7dff4dd1a82c"
+    },
+    {
+      "file": "scripts/development.ts",
+      "sha256": "fd8bd7667a11094823d9b8ef8b129671c13f27686ea7cedf7bde4eb868c56d11"
+    },
+    {
+      "file": "scripts/download-runtime.spec.ts",
+      "sha256": "4e359ef3e514aa4d0c0bc17b785b7482ed8cd760a787c1b53a2278c6643dd115"
+    },
+    {
+      "file": "scripts/download-runtime.ts",
+      "sha256": "b1f70733cce81ca8406d3ee1fcee492bee3ebe6566956c801035496715b60835"
+    },
+    {
+      "file": "scripts/install-plugin.ts",
+      "sha256": "ea4ce960f27e327c80d468d5fafce7bad719c36192c9a4fd59cd5b39b226991d"
+    },
+    {
+      "file": "scripts/installer-licenses.ts",
+      "sha256": "990129ef4060a5f22470abbbd7d5de62dc7c662207d1ba5d3eeb604a184cf995"
+    },
+    {
+      "file": "scripts/mcp-build-runtime.spec.ts",
+      "sha256": "b3e1ce9b39e95e517a75064a5820ec7dc6f35ce5a145fc54629a4a91830162cd"
+    },
+    {
+      "file": "scripts/mcp-build-runtime.ts",
+      "sha256": "3d600587291c39204b65c29d0296c0427d5cc9e3f2d2307aad4c563dbd36b505"
+    },
+    {
+      "file": "scripts/modules.json",
+      "sha256": "d5e1babe195a17b3be7b82af38b407e873130b397ff0ab025fd922ee7133c226"
+    },
+    {
+      "file": "scripts/package-installer.ts",
+      "sha256": "550185d82f7c2522843a88b21eeffdbf836da50f3520be26c28f1cce3d84b187"
+    },
+    {
+      "file": "scripts/package-local-runtime.ts",
+      "sha256": "733e3c78705f62c4cf119c83bfbee10544db34b1550224deef443665b2bf36a1"
+    },
+    {
+      "file": "scripts/package-mcp-plugin.spec.ts",
+      "sha256": "d48e603336d7b6e80f49fc59223669563c01e89f16ab47d74e7e5f11e6146482"
+    },
+    {
+      "file": "scripts/package-mcp-plugin.ts",
+      "sha256": "804dc6ac93853d7e7864e0056e1d9a3a9234036d6fa7ec9ca140dfd07ae60a95"
+    },
+    {
+      "file": "scripts/package-mcp-proxy.ts",
+      "sha256": "206ef4a811b0394f41d199f2fbe5c03739b65511f5553897aa72035a15e52c78"
+    },
+    {
+      "file": "scripts/pnpm-invocation.ts",
+      "sha256": "5b920229966f29c156847e00904d82ef03039f3dc88398592a755f113f22813d"
+    },
+    {
+      "file": "scripts/run-mcp-build-command.ts",
+      "sha256": "354fc54d2f2680b612d34bd482670f4f240117379e7d48e056eadb218df77198"
+    },
+    {
+      "file": "scripts/runtime-deployment.spec.ts",
+      "sha256": "161038ef6224b247dbc7c720124d0c8741648c9122124156dab75f04548617d5"
+    },
+    {
+      "file": "scripts/runtime-deployment.ts",
+      "sha256": "0bd6d57fcbc2ffea3dd5d604538821aa6a40a190298c9e8c2fbab9f76c47c63a"
+    },
+    {
+      "file": "scripts/runtime-imports.ts",
+      "sha256": "6ebfd4102c43340ed8e7a7d9de65c8ed040ccafaa4bfb62efa887aa0d8e8bf44"
+    },
+    {
+      "file": "scripts/test.ts",
+      "sha256": "a58515192a5ccea401cbd236b84674372aee07cf3e152b6d54375073137b84c9"
+    },
+    {
+      "file": "scripts/tsconfig.json",
+      "sha256": "e96032eec3e04c3ec4e75fd3b6dbc2e754c123295446a029789b7d3ef4f9c8f2"
+    },
+    {
+      "file": "scripts/verify.ps1",
+      "sha256": "3192fbd2c26acb3d5a302e95f26970d126012fffdd4d4ebc2d76c13534637cce"
+    },
+    {
+      "file": "scripts/windows-build-drive.spec.ts",
+      "sha256": "342fe21d6d2b7ebc715e3f94ce79be68310e5ed3c06b6c8deb5f7c28fe531105"
+    },
+    {
+      "file": "scripts/windows-build-drive.ts",
+      "sha256": "30bd6d10589d28d2a99122154cc0737df56d4ff4d7f42cae3ef3b1989ca0bec1"
+    },
+    {
+      "file": "tsconfig.base.json",
+      "sha256": "0ca53a5db40d8b2339e4a4767d07cf842fb4ec43ae67325c3778dddc4796dbf4"
+    },
+    {
+      "file": "tsconfig.json",
+      "sha256": "ed5f197b81e534ec7fc72a92ad41df46d5701c1be5c4d650bd34a6370ca870d8"
+    },
+    {
+      "file": "vitest.config.ts",
+      "sha256": "8a4de0b65c5a1986dd888c2770009aad164687174d06b5cfb1f4b347d79b3af9"
+    }
+  ]
+}

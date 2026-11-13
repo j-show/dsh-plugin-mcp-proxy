@@ -1,0 +1,320 @@
+{
+  "recordedOn": "2026-11-13",
+  "timezone": "Asia/Shanghai",
+  "sourceRevision": null,
+  "sourceNote": "Verification ran on an uncommitted working tree identified by sourceCodeFingerprint. Subsequent commit and push are recorded by Git history; this pre-commit evidence does not attest remote HEAD.",
+  "sourceCodeFingerprint": "871f3fb5022c2dbbf3e16d8472bb2f3053387df1a26c9fe9b2df895ebc705e3c",
+  "sourceManifest": "development-source-manifest-2026-11-13.json",
+  "toolchain": {
+    "hostNode": "v24.15.0",
+    "buildAndTestNode": "24.21.0",
+    "pnpm": "11.7.0",
+    "windows": "10.0.26200",
+    "electron": "44.0.0",
+    "dsh": "0.1.6-alpha.2"
+  },
+  "executions": [
+    {
+      "command": "pnpm install --frozen-lockfile",
+      "scope": "new source-export directory with independent node_modules; public content-addressed pnpm store reused",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm dev:doctor --packaging",
+      "scope": "exported source",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm dev:init",
+      "scope": "exported source; new dedicated development state, no user home copied",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm build",
+      "scope": "exported source",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm typecheck",
+      "scope": "exported source",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm test",
+      "scope": "exported source",
+      "exitCode": 0,
+      "result": "69 files passed, 2 skipped; 551 tests passed, 8 skipped"
+    },
+    {
+      "command": "pnpm dev:check",
+      "scope": "exported source",
+      "exitCode": 0,
+      "result": "7 files passed, 58 tests passed"
+    }
+  ],
+  "nativeDevelopment": {
+    "tlsBootstrap": 303,
+    "authenticatedHome": 200,
+    "unauthenticatedHome": 401,
+    "pairingBegin": 200,
+    "associationCommandExit": 0,
+    "pairingFinish": 200,
+    "pairingStatus": 200,
+    "associationState": "connected",
+    "electronIpcAvailable": true,
+    "electronOwnedRuntimeReady": true,
+    "testMcpServices": [
+      "files"
+    ],
+    "electronGracefulExit": 0,
+    "serviceSlotReleased": true,
+    "nodeRuntimeGracefulExit": 0,
+    "webGracefulExit": 0,
+    "mainInspectorAvailable": true,
+    "serverInspectorAvailable": true,
+    "runtimeInspectorAvailable": true,
+    "developmentMainSourceMapPresent": true,
+    "desktopMappedSourceBreakpoint": {
+      "source": "packages/mcp-proxy/src/desktop-main.ts",
+      "line": 48,
+      "hit": true,
+      "exitCode": 0
+    },
+    "serverMappedSourceBreakpoint": {
+      "source": "packages/dsh-plugin/modules/browser/src/index.ts",
+      "line": 236,
+      "hit": true,
+      "authenticatedBegin": 200
+    }
+  },
+  "releaseBuild": {
+    "status": "passed in the same deep exported source directory",
+    "commands": [
+      {
+        "command": "pnpm build:mcp-proxy --skip-build",
+        "log": "proxy.log",
+        "exitCode": 0
+      },
+      {
+        "command": "pnpm build:mcp-plugin --skip-build",
+        "log": "plugin.log",
+        "exitCode": 0
+      }
+    ],
+    "artifacts": [
+      {
+        "path": "release\\mcp-plugin\\dsh-session-0.1.6-alpha.2.patch",
+        "sha256": "10fde8aba0f255fb3159b6a9b1eeb2264ef4cf853136175d3cff2b38c400be56",
+        "bytes": 212
+      },
+      {
+        "path": "release\\mcp-plugin\\install.mjs",
+        "sha256": "8479016fed6573e8b5b982373c33f6044ee6b5bedc5f340297ef14775c4ac136",
+        "bytes": 350907
+      },
+      {
+        "path": "release\\mcp-plugin\\j-show-dsh-plugin-mcp-proxy-0.1.0.tgz",
+        "sha256": "62c6fe1ef03b4cc69a01408cba89ef0149d41498ef635ba3a3be71bf4dc93525",
+        "bytes": 69854
+      },
+      {
+        "path": "release\\mcp-plugin\\LICENSE",
+        "sha256": "1eb85fc97224598dad1852b5d6483bbcf0aa8608790dcc657a5a2a761ae9c8c6",
+        "bytes": 11558
+      },
+      {
+        "path": "release\\mcp-plugin\\LICENSE-MIT-UPSTREAM",
+        "sha256": "ebb4f09972aee8608be255debaf78451a68e95c290f55c240dec2ecfa16ea6be",
+        "bytes": 1065
+      },
+      {
+        "path": "release\\mcp-plugin\\README.md",
+        "sha256": "b0393b09c5c21da064a42588e9f74ffee5139339ce515435f0d83c933dcb7722",
+        "bytes": 443
+      },
+      {
+        "path": "release\\mcp-plugin\\release.json",
+        "sha256": "28fe8428fe3a5d5971c5f5b0581f3bf64f06a00660d36f22bb44fdd134d557dd",
+        "bytes": 98
+      },
+      {
+        "path": "release\\mcp-plugin\\THIRD_PARTY_NOTICES.md",
+        "sha256": "e4dee780c097f74c790c048481b6f78033d14bd3db583d5fcd6240cd388a42cc",
+        "bytes": 290
+      },
+      {
+        "path": "release\\mcp-plugin\\licenses\\@sec-ant__readable-stream@0.4.1\\LICENSE",
+        "sha256": "7e32638e170fa7342000a703a8ed950e05095b2f73fc689992a82776a3c3bd3c",
+        "bytes": 1068
+      },
+      {
+        "path": "release\\mcp-plugin\\licenses\\@sindresorhus__merge-streams@4.0.0\\license",
+        "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+        "bytes": 1117
+      },
+      {
+        "path": "release\\mcp-plugin\\licenses\\argparse@2.0.1\\LICENSE",
+        "sha256": "de4d1f2d2ad5ad0cfd1657a106476b31cb5db5ef9d1ff842b237c0c81f0c8a23",
+        "bytes": 12775
+      },
+      {
+        "path": "release\\mcp-plugin\\licenses\\execa@10.2.1\\license",
+        "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+        "bytes": 1117
+      },
+      {
+        "path": "release\\mcp-plugin\\licenses\\figures@6.1.0\\license",
+        "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+        "bytes": 1117
+      },
+      {
+        "path": "release\\mcp-plugin\\licenses\\get-stream@9.0.1\\license",
+        "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+        "bytes": 1117
+      },
+      {
+        "path": "release\\mcp-plugin\\licenses\\human-signals@8.0.1\\LICENSE",
+        "sha256": "f4ff0f211345d2496a6e9dc56d6f13f4ee52c0223ab718bfe7ebc77945af3942",
+        "bytes": 11357
+      },
+      {
+        "path": "release\\mcp-plugin\\licenses\\is-plain-obj@4.1.0\\license",
+        "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+        "bytes": 1117
+      },
+      {
+        "path": "release\\mcp-plugin\\licenses\\is-stream@4.0.1\\license",
+        "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+        "bytes": 1117
+      },
+      {
+        "path": "release\\mcp-plugin\\licenses\\is-unicode-supported@2.1.0\\license",
+        "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+        "bytes": 1117
+      },
+      {
+        "path": "release\\mcp-plugin\\licenses\\js-yaml@4.3.2\\LICENSE",
+        "sha256": "a07bc24468b9654ce76a547d47a2db282d07733b715db4c73a98bd63961f9550",
+        "bytes": 1084
+      },
+      {
+        "path": "release\\mcp-plugin\\licenses\\npm-run-path@6.0.0\\license",
+        "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+        "bytes": 1117
+      },
+      {
+        "path": "release\\mcp-plugin\\licenses\\parse-ms@4.0.0\\license",
+        "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+        "bytes": 1117
+      },
+      {
+        "path": "release\\mcp-plugin\\licenses\\path-key@4.0.0\\license",
+        "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+        "bytes": 1117
+      },
+      {
+        "path": "release\\mcp-plugin\\licenses\\pretty-ms@9.3.1\\license",
+        "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+        "bytes": 1117
+      },
+      {
+        "path": "release\\mcp-plugin\\licenses\\signal-exit@4.1.0\\LICENSE.txt",
+        "sha256": "b173e19b9a78df305577ace0e52ef45a4bcc915ea28b47b256dc3b68dcb1f7e7",
+        "bytes": 790
+      },
+      {
+        "path": "release\\mcp-plugin\\licenses\\strip-final-newline@4.0.0\\license",
+        "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+        "bytes": 1117
+      },
+      {
+        "path": "release\\mcp-plugin\\licenses\\unicorn-magic@0.3.0\\license",
+        "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+        "bytes": 1117
+      },
+      {
+        "path": "release\\mcp-plugin\\licenses\\which-command@0.1.0\\license",
+        "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+        "bytes": 1117
+      },
+      {
+        "path": "release\\mcp-plugin\\licenses\\yoctocolors@2.2.0\\license",
+        "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+        "bytes": 1117
+      },
+      {
+        "path": "release\\mcp-proxy\\j-show-mcp-proxy-runtime-0.1.0.tgz",
+        "sha256": "bebb24dff43066d409ef036c1dca7311e2b5f4b4e9fdb61371b9fdb74bcee645",
+        "bytes": 79096
+      },
+      {
+        "path": "release\\mcp-proxy\\mcp-proxy.exe",
+        "sha256": "20407a3f2857b6204058d91cbd9b4464ae506daa5024f1fdab64045199d8c57f",
+        "bytes": 167219736
+      }
+    ]
+  },
+  "review": {
+    "independentReview": "No remaining confirmed P1/P2 findings after independent fixes and re-review"
+  },
+  "limitations": [
+    "GitHub hosted workflow configured but not dispatched from this uncommitted tree",
+    "No real-model, cross-user, dual-device or dual-DSH final product acceptance",
+    "No cold public-registry-only installation; normal pnpm cache reuse was allowed",
+    "Upstream dsh-client-ui-primitives references a missing source map; non-fatal test warnings retained",
+    "No ordinary-browser CA trust import performed; mapped source breakpoints verified through the Node inspector and source maps"
+  ],
+  "logs": [
+    {
+      "command": "pnpm dev:doctor --packaging",
+      "exitCode": 0,
+      "localLog": ".artifacts/ci/doctor.log",
+      "sourceLogSha256": "4e27ae457be3239245b0b83e84272926178349ac1fccfeed4cbb9251b244d1b5"
+    },
+    {
+      "command": "pnpm dev:init",
+      "exitCode": 0,
+      "localLog": ".artifacts/ci/development-init.log",
+      "sourceLogSha256": "b8a2cac625064c81545134908f5b0933a22f90f46c1571fa71b21945e0c063cf"
+    },
+    {
+      "command": "pnpm build",
+      "exitCode": 0,
+      "localLog": ".artifacts/ci/build.log",
+      "sourceLogSha256": "8a650cc855d275856419bc4b0a3781f57b98c935cb779565d75dd65ab57ef230"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exitCode": 0,
+      "localLog": ".artifacts/ci/typecheck.log",
+      "sourceLogSha256": "87d81a4a4469fd04fff6ec54bc49cf2bf0d55e9c014edcc126d328078fa10d80"
+    },
+    {
+      "command": "pnpm test",
+      "exitCode": 0,
+      "localLog": ".artifacts/ci/test.log",
+      "sourceLogSha256": "66f0bb8e975f495404d421bf1212b35f9aee1e197894fa208c915684babe2af7"
+    },
+    {
+      "command": "pnpm dev:check",
+      "exitCode": 0,
+      "localLog": ".artifacts/ci/development-check.log",
+      "sourceLogSha256": "ab779461e76f3ccc90f9c37b2e66d48db21e57f0ceb82b8a90da71741328a6e6"
+    },
+    {
+      "command": "pnpm build:mcp-proxy --skip-build",
+      "exitCode": 0,
+      "localLog": ".artifacts/ci/proxy.log",
+      "sourceLogSha256": "de6239016bcefd0c4e831954128870f504f85b325c1f25b03188c499b273f56a"
+    },
+    {
+      "command": "pnpm build:mcp-plugin --skip-build",
+      "exitCode": 0,
+      "localLog": ".artifacts/ci/plugin.log",
+      "sourceLogSha256": "5f4527760436cbb620add693d3d7f1147a6d0725304a05a85fe99e73459a5ba4"
+    }
+  ],
+  "localEvidenceRoot": ".artifacts/clean-verification-1794560189192/checkout",
+  "transcript": "development-validation-2026-11-13.txt",
+  "transcriptSha256": "3991a5c1f462d0cd9a35a9e81033c8816ff143626bc71b446484b8d7b01b635d"
+}
