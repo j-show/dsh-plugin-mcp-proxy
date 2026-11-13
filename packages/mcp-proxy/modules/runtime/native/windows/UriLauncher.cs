@@ -21,6 +21,17 @@ internal static class UriLauncher
     [DllImport("shell32.dll")]
     private static extern void SHChangeNotify(int eventId, uint flags, IntPtr item1, IntPtr item2);
 
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern uint GetLongPathName(string shortPath, StringBuilder longPath, uint length);
+
+    private static string LauncherPath(string filename)
+    {
+        StringBuilder path = new StringBuilder(32768);
+        uint length = GetLongPathName(filename, path, (uint)path.Capacity);
+        if (length == 0 || length >= path.Capacity) throw new IOException("Launcher path unavailable");
+        return path.ToString();
+    }
+
     private static void Trace(string stage)
     {
         try
@@ -144,12 +155,15 @@ internal static class UriLauncher
         if (String.IsNullOrEmpty(settings.RegistryKey) || !settings.RegistryKey.StartsWith("Software\\", StringComparison.OrdinalIgnoreCase)
             || settings.RegistryKey.Length < 10 || settings.Owner == null || !Regex.IsMatch(settings.Owner, "\\A[a-f0-9]{64}\\z")
             || settings.InstallTimeoutMs < 1) return 1;
-        string executable = Assembly.GetExecutingAssembly().Location;
+        // Assembly.Location and receipt paths can use different 8.3 aliases on CI.
+        // Expand only the trusted current/predecessor paths; keep registry command checks exact.
+        string executable = LauncherPath(Assembly.GetExecutingAssembly().Location);
         string command = "\"" + executable + "\" \"%1\"";
         string previous = null;
         if (!String.IsNullOrEmpty(settings.PreviousLauncher))
         {
             if (!Regex.IsMatch(settings.PreviousLauncher, "\\Amcp-proxy-[a-f0-9]{12}\\.exe\\z")) return 1;
+            // The predecessor may already be deleted when recovering an interrupted receipt update.
             previous = "\"" + Path.Combine(Path.GetDirectoryName(executable), settings.PreviousLauncher) + "\" \"%1\"";
         }
         using (Mutex mutex = new Mutex(false, "Global\\dsh-mcp-proxy-installer"))

@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, unlink, writeFile } from 'node:fs/promises'
+import { mkdtemp, readFile, realpath, rm, unlink, writeFile } from 'node:fs/promises'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { basename, dirname, join } from 'node:path'
@@ -39,8 +39,15 @@ it.skipIf(process.platform !== 'win32').each([
     expect(events).not.toContain('a'.repeat(43))
   })
 
-it.skipIf(process.platform !== 'win32')('installs a profile-owned launcher and removes only its recorded files', { timeout: 15000 }, async () => {
-  const root = await mkdtemp(join(tmpdir(), 'mcp-proxy-install-'))
+it.skipIf(process.platform !== 'win32').each(['native', 'short'] as const)('installs and upgrades an owned launcher through %s paths', { timeout: 20000 }, async (mode, context) => {
+  const created = await mkdtemp(join(tmpdir(), 'mcp-proxy-install-long-directory-'))
+  onTestFinished(() => rm(created, { recursive: true, force: true }))
+  const canonical = await realpath(created)
+  const code = "Add-Type -TypeDefinition 'using System.Text; using System.Runtime.InteropServices; public static class ShortPath { [DllImport(\"kernel32.dll\", CharSet=CharSet.Unicode)] public static extern uint GetShortPathName(string p, StringBuilder b, int n); }'; $b = [Text.StringBuilder]::new(32768); if ([ShortPath]::GetShortPathName($env:MCP_PROXY_TEST_LONG_PATH,$b,$b.Capacity) -eq 0) { exit 1 }; [Console]::Write($b.ToString())"
+  const short = mode === 'short' ? (await promisify(execFile)('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', code],
+    { env: { ...process.env, MCP_PROXY_TEST_LONG_PATH: canonical }, windowsHide: true })).stdout.trim() : canonical
+  if (mode === 'short' && short === canonical) { context.skip(); return } // Volume has 8.3 aliases disabled.
+  const root = mode === 'short' ? short : created
   const helper = await compileWindowsUriHelper(join(root, 'build'), 10000)
   const spec = { profileDir: root, home: root, profile: 'mcp-proxy', node: process.execPath,
     cli: join(root, 'dsh.js'), settings: join(root, 'settings.json'), registryKey: `Software\\mcp-proxy-test-${randomUUID()}`,
@@ -61,6 +68,10 @@ it.skipIf(process.platform !== 'win32')('installs a profile-owned launcher and r
   await writeFile(receiptFile, JSON.stringify({ ...receipt, currentHelper: nextName, previousLauncher: filename.split(/[\\/]/u).at(-1) }))
   const successor = await installWindowsUri(spec, helper, 5000, new AbortController().signal)
   expect(successor).toBe(join(root, 'mcp-proxy-os', nextName))
+  expect(await installWindowsUri(spec, helper, 5000, new AbortController().signal)).toBe(successor)
+  // A crash between predecessor deletion and receipt publication must remain recoverable.
+  const retiredReceipt = JSON.parse(await readFile(receiptFile, 'utf8')) as Record<string, unknown>
+  await writeFile(receiptFile, JSON.stringify({ ...retiredReceipt, previousLauncher: basename(filename) }))
   expect(await installWindowsUri(spec, helper, 5000, new AbortController().signal)).toBe(successor)
   const userFile = join(root, 'mcp-proxy-os', 'keep-user.txt')
   await writeFile(userFile, 'keep')
@@ -94,6 +105,13 @@ it.skipIf(process.platform !== 'win32')('registers and removes only its owned UR
     })
     await save(owner)
     await promisify(execFile)(executable, ['--register'], { timeout: 5000, windowsHide: true })
+    const commandKey = `HKCU\\${metadata.registryKey}\\shell\\open\\command`
+    const setCommand = (value: string) => promisify(execFile)('reg.exe', ['add', commandKey, '/ve', '/t', 'REG_SZ', '/d', value, '/f'], { windowsHide: true })
+    try {
+      await setCommand('"C:\\unrelated.exe" "%1"')
+      await expect(promisify(execFile)(executable, ['--register'], { timeout: 5000, windowsHide: true })).rejects.toMatchObject({ code: 2 })
+      await expect(promisify(execFile)(executable, ['--unregister'], { timeout: 5000, windowsHide: true })).rejects.toMatchObject({ code: 2 })
+    } finally { await setCommand(`"${await realpath(executable)}" "%1"`) }
     await save('b'.repeat(64))
     await expect(promisify(execFile)(executable, ['--register'], { timeout: 5000, windowsHide: true })).rejects.toMatchObject({ code: 2 })
     await expect(promisify(execFile)(executable, ['--unregister'], { timeout: 5000, windowsHide: true })).rejects.toMatchObject({ code: 2 })

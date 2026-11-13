@@ -5,3 +5,9 @@ Private implementation module bundled into the parent MCP connector or DSH plugi
 Use `pnpm dev:runtime --inspect` for the isolated native profile described in
 [development](../../../../docs/development.md). Recovery tests retain the unknown/no-replay
 contract and wait within the configured startup/reconnect budget, including MCP shutdown.
+
+Windows URI registration expands the trusted current and predecessor executable paths
+from 8.3 aliases before checking registry commands. Native regressions cover short-path
+upgrade/uninstall and still reject another owner or an unrelated registered command.
+The predecessor name is combined with the normalized current directory, so recovery
+also works after predecessor deletion but before its receipt update was committed.
