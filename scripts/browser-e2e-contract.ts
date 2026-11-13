@@ -31,5 +31,8 @@ export function requireBrowserMatrix(value: unknown): void {
   for (const browser of ['chrome', 'edge']) {
     const matches = value.filter(row => row?.browser === browser)
     if (matches.length !== 1 || !desktopScenarios.every(s => matches[0].scenarios?.[s] === true)) throw new Error(`Incomplete ${browser} desktop matrix`)
+    const guards = matches[0].guards
+    if (guards?.webDocumentRejected !== true || guards?.trayOcclusionRefused !== true || !Number.isSafeInteger(guards?.ancestorLimit)
+      || guards.ancestorLimit < 1 || !Number.isSafeInteger(guards?.documentDepth) || guards.documentDepth <= guards.ancestorLimit) throw new Error(`Incomplete ${browser} native safety guards`)
   }
 }

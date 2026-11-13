@@ -19,7 +19,7 @@ interface ControlApi {
   requestLocalStop(address: string, timeout: number, pid: number): Promise<void>
 }
 export async function runBrowserMatrix(repository: string, state: string, helper: string, executable: string,
-  browser: 'chrome' | 'edge', browserExecutable: string, serverArtifact: ServerArtifact): Promise<{ browser: string; scenarios: Record<string, boolean>; pluginSha256: string; version: string }> {
+  browser: 'chrome' | 'edge', browserExecutable: string, serverArtifact: ServerArtifact): Promise<{ browser: string; scenarios: Record<string, boolean>; guards: { webDocumentRejected: boolean; documentDepth: number; ancestorLimit: number; trayOcclusionRefused: boolean }; pluginSha256: string; version: string }> {
   const scope = join(state, browser)
   const data = join(scope, 'app-data'), home = join(scope, 'client-home'), workspace = join(scope, 'workspace'), profile = join(scope, 'browser-profile')
   const temp = join(scope, 'temp')
@@ -39,7 +39,7 @@ export async function runBrowserMatrix(repository: string, state: string, helper
   const remember = async (id: number) => { const identity = await nativeProbe<Identity | null>(helper, 'identity', String(id)); if (!identity) throw new Error('Required owned process identity unavailable'); observed.set(id, identity); return identity }
   const stopped = (identity: Identity) => eventually(async () => !await nativeProbe<boolean>(helper, 'alive', String(identity.pid), identity.started), 'owned process exit', 30000)
   const nativeActions = nativeActionSession((operation, ...args) => nativeProbe(helper, operation, ...args))
-  const action = async (operation: string, target: Identity) => nativeActions.action(operation, String(target.pid), target.started)
+  const action = async (operation: string, target: Identity, ...args: string[]) => nativeActions.action(operation, String(target.pid), target.started, ...args)
   const status = async () => {
     const reply = await control.requestLocalManagement(address, { kind: 'snapshot' }, 3000, 1048576)
     if (!reply.ok || resolve(reply.snapshot?.settingsFile ?? '').toLowerCase() !== resolve(settings).toLowerCase()) throw new Error('Machine service belongs to another configuration')
@@ -91,6 +91,26 @@ export async function runBrowserMatrix(repository: string, state: string, helper
     browserIdentity = await remember(browserProcess.pid!)
     cdp = await BrowserCdp.page(profile)
     const version = await cdp.send('Browser.getVersion') as { product: string; userAgent: string }
+    await cdp.send('Page.bringToFront')
+    await eventually(() => cdp!.evaluate<boolean>('document.readyState === "complete" && !!document.body'), 'owned blank document')
+    stage = 'protocol webpage rejection guard'
+    // Negative fixture lives only on this owned blank tab. It must never be
+    // mistaken for native consent, even beyond the bounded ancestor walk.
+    await cdp.evaluate(`(() => {
+      if(location.href!=='about:blank')throw new Error('Owned blank fixture required');
+      const root=document.createElement('div');let node=root;
+      for(let i=0;i<50;i++){const group=document.createElement('div');group.setAttribute('role','group');group.setAttribute('aria-label','Protocol guard '+i);node.append(group);node=group;}
+      const text=document.createElement('p');text.textContent='mcp-proxy '+${JSON.stringify(web.origin)};node.append(text);
+      for(const label of ['Open mcp-proxy','Cancel']){const button=document.createElement('button');button.textContent=label;node.append(button);}
+      document.body.replaceChildren(root);
+    })()`)
+    await eventually(async () => {
+      const rows = await nativeProbe<Array<{ buttons: Array<{ kind: string; offscreen: boolean }> }>>(helper, 'gui-dialog-info', String(browserIdentity!.pid), browserIdentity!.started)
+      return rows.some(row => row.buttons.some(button => button.kind === 'protocol-open' && !button.offscreen))
+    }, 'accessible protocol rejection fixture')
+    const documentGuard = await nativeProbe<{ rejected: boolean; documentDepth: number; ancestorLimit: number }>(helper, 'protocol-document-guard', String(browserIdentity.pid), browserIdentity.started, web.origin)
+    if (documentGuard.rejected !== true || !Number.isSafeInteger(documentGuard.ancestorLimit) || documentGuard.ancestorLimit < 1
+      || documentGuard.documentDepth <= documentGuard.ancestorLimit) throw new Error('Webpage consent rejection guard did not execute')
     await cdp.send('Page.navigate', { url: web.bootstrap })
     await cdp.send('Page.bringToFront')
     await eventually(() => cdp!.evaluate<boolean>('document.readyState === "complete"'), 'DSH document')
@@ -101,8 +121,8 @@ export async function runBrowserMatrix(repository: string, state: string, helper
     const connect = async () => {
       await cdp!.send('Page.bringToFront')
       await cdp!.clickText('^(Connect this computer|Reconnect this computer|连接这台电脑|重新连接这台电脑)$')
-      await confirmNativeProtocol(() => action('confirm-protocol', browserIdentity!))
-      await eventually(async () => !await nativeProbe<boolean>(helper, 'protocol-prompt', String(browserIdentity!.pid), browserIdentity!.started), 'protocol confirmation closes')
+      await confirmNativeProtocol(() => action('confirm-protocol', browserIdentity!, web!.origin))
+      await eventually(async () => { try { return !await nativeProbe<boolean>(helper, 'protocol-prompt', String(browserIdentity!.pid), browserIdentity!.started, web!.origin) } catch { return false } }, 'protocol confirmation closes')
       const trace = join(home, 'profiles/mcp-proxy/mcp-proxy-os', basename(receipt.currentHelper, '.exe') + '.activation.log')
       await eventually(async () => { try { return (await readFile(trace, 'utf8')).trim().length > 0 } catch { return false } }, 'native OS handler execution')
       await eventually(async () => (await status()).servers.some(row => row.state === 'connected'), 'automatic TLS pairing')
@@ -166,7 +186,8 @@ export async function runBrowserMatrix(repository: string, state: string, helper
     if (!ownedCertificate(certificate!.thumbprint, certificate!)) throw new Error('CA ownership changed')
     await nativeProbe(helper, 'ca-remove', certificate!.thumbprint); certificate = undefined
     scenarios.cleanup = true
-    return { browser, scenarios, pluginSha256, version: version.product + ' / ' + version.userAgent }
+    return { browser, scenarios, guards: { webDocumentRejected: true, documentDepth: documentGuard.documentDepth,
+      ancestorLimit: documentGuard.ancestorLimit, trayOcclusionRefused: guard.occlusionRefused }, pluginSha256, version: version.product + ' / ' + version.userAgent }
   } catch (error) { failure = error; throw new Error(`${browser} ${stage}: ${error instanceof Error ? error.message : 'unknown failure'}`) }
   finally {
     const errors: string[] = []
@@ -175,6 +196,10 @@ export async function runBrowserMatrix(repository: string, state: string, helper
       if (gui) {
         try { await writeFile(join(repository, `.artifacts/ci/browser-${browser}-gui.json`), JSON.stringify(await nativeProbe(helper, 'gui-dialog-info', String(gui.pid), gui.started), null, 2)) }
         catch { /* The owned GUI may already have exited; never inspect another application. */ }
+      }
+      if (browserIdentity) {
+        try { await writeFile(join(repository, `.artifacts/ci/browser-${browser}-native.json`), JSON.stringify(await nativeProbe(helper, 'gui-dialog-info', String(browserIdentity.pid), browserIdentity.started), null, 2)) }
+        catch { /* The captured browser may have exited; never inspect a different profile. */ }
       }
       try { await writeFile(join(repository, `.artifacts/ci/browser-${browser}-tray.json`), JSON.stringify(await nativeProbe(helper, 'tray-info'), null, 2)) }
       catch { /* Tray diagnostics are structural only and never block owned cleanup. */ }
@@ -200,7 +225,7 @@ export async function runBrowserMatrix(repository: string, state: string, helper
             const image = await cdp.send('Page.captureScreenshot', { format: 'png' }) as { data: string }
             await writeFile(join(repository, `.artifacts/ci/browser-${browser}-failure.png`), Buffer.from(image.data, 'base64'))
             if (browserIdentity) {
-              try { await nativeProbe(helper, 'screenshot-protocol', String(browserIdentity.pid), browserIdentity.started, join(repository, `.artifacts/ci/browser-${browser}-protocol.png`)) }
+              try { await nativeProbe(helper, 'screenshot-protocol', String(browserIdentity.pid), browserIdentity.started, web!.origin, join(repository, `.artifacts/ci/browser-${browser}-protocol.png`)) }
               catch { /* The protocol prompt may already have closed; never capture another window. */ }
             }
           }

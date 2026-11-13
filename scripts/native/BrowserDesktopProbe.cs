@@ -16,6 +16,7 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 
 class BrowserDesktopProbe {
+  const int ProtocolAncestorLimit=32;
   static bool nativeInputAttempted=false;
   static string nativeInputStage="none";
   [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Unicode)] struct PE {public uint size,usage,pid;public IntPtr heap;public uint module,threads,parent;public int priority;public uint flags;[MarshalAs(UnmanagedType.ByValTStr,SizeConst=260)]public string exe;}
@@ -163,17 +164,70 @@ class BrowserDesktopProbe {
       }else image.Save(filename,ImageFormat.Png);
     }
   }
-  static void SafeProtocolCapture(AutomationElement target,int pid,string filename) {
-    var window=TargetWindow(target,pid);var node=TreeWalker.RawViewWalker.GetParent(target);AutomationElement dialog=null;
-    // Capture the smallest protocol subtree containing both consent buttons and its
-    // "always allow" checkbox. Never include browser chrome or an entire browser root.
-    for(int i=0;i<32&&node!=null;i++,node=TreeWalker.RawViewWalker.GetParent(node)) {
-      var checks=node.FindAll(TreeScope.Descendants,new PropertyCondition(AutomationElement.ControlTypeProperty,ControlType.CheckBox));
-      if(checks.Count==0)continue;
-      var buttons=node.FindAll(TreeScope.Descendants,new PropertyCondition(AutomationElement.ControlTypeProperty,ControlType.Button));
-      if(buttons.Cast<AutomationElement>().Any(e=>!e.Current.IsOffscreen&&System.Text.RegularExpressions.Regex.IsMatch(e.Current.Name??"","^(Cancel|取消)$",System.Text.RegularExpressions.RegexOptions.IgnoreCase))){dialog=node;break;}
+  sealed class ProtocolSelection {
+    public readonly AutomationElement Button,Context;
+    public ProtocolSelection(AutomationElement button,AutomationElement context){Button=button;Context=context;}
+  }
+  static bool ProtocolOpenLabel(string label) {
+    var match=System.Text.RegularExpressions.Regex.Match((label??"").Trim(),"^(Open|打开)\\s*",System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    if(!match.Success)return false;
+    var app=(label??"").Trim().Substring(match.Length).Trim(' ','"','“','”','「','」','?','？');
+    return app.Length==0||TrayLabel(app);
+  }
+  static AutomationElement ProtocolContext(AutomationElement button,AutomationElement window,string authority,out string reason) {
+    reason="context-unavailable";var ancestor=button;bool rooted=false;
+    for(int i=0;i<ProtocolAncestorLimit&&ancestor!=null;i++,ancestor=TreeWalker.RawViewWalker.GetParent(ancestor)) {
+      if(ancestor.Current.ControlType==ControlType.Document){reason="web-document-ancestor";return null;}
+      if(Automation.Compare(ancestor,window)){rooted=true;break;}
+      if(Automation.Compare(ancestor,AutomationElement.RootElement))break;
     }
-    if(dialog==null)throw new Exception("Protocol-only screenshot region unavailable");
+    if(!rooted){reason="native-root-not-reached";return null;}
+    var node=TreeWalker.RawViewWalker.GetParent(button);
+    var brand=new System.Text.RegularExpressions.Regex("(?<![A-Za-z0-9_-])mcp-proxy(?:[.]exe)?(?![A-Za-z0-9_.-])",System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    var origin=new System.Text.RegularExpressions.Regex("(?<![A-Za-z0-9_.:@-])"+System.Text.RegularExpressions.Regex.Escape(authority)+"(?![A-Za-z0-9_.:@-])",System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    for(int i=0;i<ProtocolAncestorLimit&&node!=null;i++,node=TreeWalker.RawViewWalker.GetParent(node)) {
+      if(node.Current.ControlType==ControlType.Document||Automation.Compare(node,AutomationElement.RootElement))return null;
+      var nodes=node.FindAll(TreeScope.Subtree,Condition.TrueCondition);bool hasBrand=false,hasOrigin=false;var cancels=new List<AutomationElement>();
+      foreach(AutomationElement item in nodes) {
+        var c=item.Current;
+        // Neither webpage text nor the address bar may authorize a native Open.
+        if(c.ControlType==ControlType.Document||(c.ClassName??"").IndexOf("Omnibox",StringComparison.OrdinalIgnoreCase)>=0)return null;
+        if(c.IsOffscreen)continue;string name=c.Name??"";
+        hasBrand|=brand.IsMatch(name);hasOrigin|=origin.IsMatch(name);
+        if(c.ControlType==ControlType.Button&&System.Text.RegularExpressions.Regex.IsMatch(name,"^(Cancel|取消)$",System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+          &&!cancels.Any(previous=>Automation.Compare(previous,item)))cancels.Add(item);
+      }
+      if(hasBrand&&hasOrigin&&cancels.Count==1)return node;
+      if(hasBrand&&cancels.Count==1)reason="origin-missing";
+      else if(hasOrigin&&cancels.Count==1)reason="app-label-missing";
+      else if(hasBrand&&hasOrigin)reason="cancel-count-"+cancels.Count;
+      if(Automation.Compare(node,window))break;
+    }
+    return null;
+  }
+  static ProtocolSelection FindProtocol(IEnumerable<IntPtr> windows,string expectedOrigin) {
+    Uri origin;if(!Uri.TryCreate(expectedOrigin,UriKind.Absolute,out origin)||origin.Scheme!="https"||origin.UserInfo!=""||origin.GetLeftPart(UriPartial.Authority)!=expectedOrigin)throw new Exception("Invalid expected protocol origin");
+    var found=new List<ProtocolSelection>();var reasons=new HashSet<string>();
+    foreach(var w in windows.Where(IsWindowVisible)) {
+      var root=AutomationElement.FromHandle(w);if(root==null)continue;
+      foreach(AutomationElement button in root.FindAll(TreeScope.Descendants,new PropertyCondition(AutomationElement.ControlTypeProperty,ControlType.Button))) {
+        if(button.Current.IsOffscreen||!ProtocolOpenLabel(button.Current.Name))continue;
+        string reason;var context=ProtocolContext(button,root,origin.Authority,out reason);if(context==null)reasons.Add(reason);
+        if(context!=null&&!found.Any(previous=>Automation.Compare(previous.Button,button)))found.Add(new ProtocolSelection(button,context));
+      }
+    }
+    if(found.Count!=1)throw new NativeTargetCountException(found.Count,"protocol="+(reasons.Count==0?"candidate-label-missing":String.Join(",",reasons.ToArray())));return found[0];
+  }
+  static object ProtocolDocumentFixture(List<IntPtr> windows,string expectedOrigin) {
+    var button=Button(windows,"^Open mcp-proxy$",ControlType.Button);var node=button;int depth=-1;
+    for(int i=0;i<128&&node!=null;i++,node=TreeWalker.RawViewWalker.GetParent(node))if(node.Current.ControlType==ControlType.Document){depth=i;break;}
+    if(depth<=ProtocolAncestorLimit)throw new Exception("HTML fixture did not exercise the ancestor depth limit");
+    try{FindProtocol(windows,expectedOrigin);}
+    catch(NativeTargetCountException e){if(e.Count!=0)throw;return new{rejected=true,documentDepth=depth,ancestorLimit=ProtocolAncestorLimit};}
+    throw new Exception("Protocol locator accepted a webpage confirmation fixture");
+  }
+  static void SafeProtocolCapture(ProtocolSelection selection,int pid,string filename) {
+    var window=TargetWindow(selection.Button,pid);var dialog=selection.Context;
     RECT root;if(!GetWindowRect(window,out root))throw new Exception("No owned protocol window bounds");var bounds=dialog.Current.BoundingRectangle;
     if(bounds.Width>=root.right-root.left||bounds.Height>=root.bottom-root.top)throw new Exception("Refusing entire browser screenshot");
     var edits=AutomationElement.FromHandle(window).FindAll(TreeScope.Descendants,new PropertyCondition(AutomationElement.ControlTypeProperty,ControlType.Edit));
@@ -209,7 +263,7 @@ class BrowserDesktopProbe {
   }
   sealed class NativeTargetCountException:Exception {
     public readonly int Count;
-    public NativeTargetCountException(int count):base("Expected one matching native control; found "+count){Count=count;}
+    public NativeTargetCountException(int count,string detail=null):base("Expected one matching native control; found "+count+(detail==null?"":"; "+detail)){Count=count;}
   }
   static AutomationElement Button(IEnumerable<IntPtr> windows, string pattern, ControlType type,bool requireBounds=false) {
     var found=new List<AutomationElement>();
@@ -383,7 +437,7 @@ class BrowserDesktopProbe {
             System.Text.RegularExpressions.Regex.IsMatch(label,"^(Yes|是)$",System.Text.RegularExpressions.RegexOptions.IgnoreCase)?"yes":
             System.Text.RegularExpressions.Regex.IsMatch(label,"^(Cancel|取消)$",System.Text.RegularExpressions.RegexOptions.IgnoreCase)?"cancel":
             System.Text.RegularExpressions.Regex.IsMatch(label,"^(Disconnect|断开)$",System.Text.RegularExpressions.RegexOptions.IgnoreCase)?"disconnect":
-            System.Text.RegularExpressions.Regex.IsMatch(label,"^(Exit|退出)$",System.Text.RegularExpressions.RegexOptions.IgnoreCase)?"exit":"other";
+            System.Text.RegularExpressions.Regex.IsMatch(label,"^(Exit|退出)$",System.Text.RegularExpressions.RegexOptions.IgnoreCase)?"exit":ProtocolOpenLabel(label)?"protocol-open":"other";
           buttons.Add(new{kind,type=c.ControlType.ProgrammaticName,enabled=c.IsEnabled,offscreen=c.IsOffscreen,runtimeId=e.GetRuntimeId()});
         }
       }catch(ElementNotAvailableException){}
@@ -443,9 +497,10 @@ class BrowserDesktopProbe {
           result=rows;
         }
         else if(op=="close-window") {if(own.Count!=1)throw new Exception("GUI window is not unique");PostMessage(own[0],0x0010,IntPtr.Zero,IntPtr.Zero);}
-        else if(op=="confirm-protocol") {ConfirmProtocol(Button(windows,"^(Open|打开).*mcp-proxy",ControlType.Button),p.Id);}
-        else if(op=="protocol-prompt") {try{Button(windows,"^(Open|打开).*mcp-proxy",ControlType.Button);result=true;}catch{result=false;}}
-        else if(op=="screenshot-protocol") {SafeProtocolCapture(Button(windows,"^(Open|打开).*mcp-proxy",ControlType.Button),p.Id,a[3]);result=new{captured=true};}
+        else if(op=="confirm-protocol") {ConfirmProtocol(FindProtocol(windows,a[3]).Button,p.Id);}
+        else if(op=="protocol-document-guard")result=ProtocolDocumentFixture(windows,a[3]);
+        else if(op=="protocol-prompt") {try{FindProtocol(windows,a[3]);result=true;}catch(NativeTargetCountException e){if(e.Count!=0)throw;result=false;}}
+        else if(op=="screenshot-protocol") {SafeProtocolCapture(FindProtocol(windows,a[3]),p.Id,a[4]);result=new{captured=true};}
         else if(op=="confirm-ca") {
           var dialogs=new List<IntPtr>();foreach(var w in windows){var names=AutomationElement.FromHandle(w).FindAll(TreeScope.Descendants,Condition.TrueCondition);foreach(AutomationElement e in names)if((e.Current.Name??"").Contains("MCP Proxy Project Development CA")){dialogs.Add(w);break;}}
           if(dialogs.Count!=1)throw new Exception("Owned test CA warning not found");SetForegroundWindow(dialogs[0]);Click(Button(dialogs,"^(Yes|是|是\\(Y\\)|是\\(&Y\\))$",ControlType.Button));

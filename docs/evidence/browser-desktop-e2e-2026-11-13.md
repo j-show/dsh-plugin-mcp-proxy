@@ -120,3 +120,11 @@ URI 预检改读合并的 ClassesRoot，拒绝用户级或系统级已有 handle
 默认测试 571 通过、8 跳过，GUI 断开及重新配对已通过，失败推进到 tray exit 的菜单查找。
 退出菜单改为在该 GUI 新鲜枚举的可见窗口子树查找，按 UIA 身份去重，要求非空可视边界；只等待菜单项出现，不重发右键。
 本机私有开发组件已执行真实托盘右键/原生 Exit，随后 GUI 退出、服务位恢复空闲，原 URI 哈希一致；仍不代替两浏览器 release 验收。
+
+运行 [43468315813](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43468315813)
+Chrome 七场景及回收全部通过；Edge 到达初次配对，应用名按钮匹配为 0。
+[Edge 官方教程](https://learn.microsoft.com/en-us/microsoft-edge/extensions-chromium/getting-started/picture-viewer-popup-webpage?tabs=v3)
+记录应用名在对话框、按钮仅为 Open 的布局，但不提供 UIA Name。定位器现统一验证最小原生上下文：应用品牌、当前 HTTPS authority 和唯一 Cancel，
+拒绝网页 Document 祖先/子树与地址栏容器；支持两种 Open 标签，复选框可按策略隐藏且不改状态。确认、消失检测和安全截图共用该定位器。
+复审指出深度上限不能跳过 Document 排除；现必须明确到达原生根才可选择。每个浏览器先在自有 about:blank 构造超过上限的可访问 HTML 伪确认，
+确认其 Document 深度超过原生边界且定位器拒绝，再导航真实 DSH；矩阵报告必须含该拒绝与托盘遮挡两项证据，缺失或深度不足均失败。

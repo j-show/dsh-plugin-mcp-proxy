@@ -27,10 +27,13 @@ it('never removes a certificate unless its exact newly imported fingerprint is o
 })
 it('requires both browsers and every real lifecycle action without silent skips', () => {
   const scenarios = ['pair', 'hide', 'trayRestore', 'secondLaunch', 'reconnect', 'trayExit', 'cleanup']
-  const rows = ['chrome', 'edge'].map(browser => ({ browser, scenarios: Object.fromEntries(scenarios.map(s => [s, true])) }))
+  const rows = ['chrome', 'edge'].map(browser => ({ browser, scenarios: Object.fromEntries(scenarios.map(s => [s, true])),
+    guards: { webDocumentRejected: true, documentDepth: 50, ancestorLimit: 32, trayOcclusionRefused: true } }))
   expect(() => requireBrowserMatrix(rows)).not.toThrow()
   expect(() => requireBrowserMatrix(rows.slice(0, 1))).toThrow()
   expect(() => requireBrowserMatrix([{ ...rows[0], scenarios: { ...rows[0]!.scenarios, trayExit: false } }, rows[1]])).toThrow()
+  expect(() => requireBrowserMatrix([{ ...rows[0], guards: undefined }, rows[1]])).toThrow('safety guards')
+  expect(() => requireBrowserMatrix([{ ...rows[0], guards: { ...rows[0]!.guards, documentDepth: 32 } }, rows[1]])).toThrow('safety guards')
 })
 it('ignores already-exited negotiation children but refuses live unowned markers', () => {
   const owned = { pid: 2, started: 'owned' }
