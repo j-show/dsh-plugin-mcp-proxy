@@ -47,9 +47,13 @@ class BrowserDesktopProbe {
     if(p.StartTime.ToUniversalTime().Ticks.ToString()!=a[2])throw new Exception("Process identity changed");return p;
   }
   static object Info(Process p, IntPtr w) { return new {pid=p.Id,started=p.StartTime.ToUniversalTime().Ticks.ToString(),visible=IsWindowVisible(w),handle=w.ToInt64().ToString(),image=p.MainModule.FileName,owned=true}; }
-  static void Click(AutomationElement e,bool right=false) {
+  static void Click(AutomationElement e,bool right=false,bool pointer=false) {
     if(e.Current.IsOffscreen)throw new Exception("Native target is offscreen");
+    object invoke;if(!pointer&&!right&&e.TryGetCurrentPattern(InvokePattern.Pattern,out invoke)){((InvokePattern)invoke).Invoke();return;}
     var b=e.Current.BoundingRectangle;if(b.Width<=0||b.Height<=0)throw new Exception("No native target bounds");
+    var hit=AutomationElement.FromPoint(new System.Windows.Point(b.X+b.Width/2,b.Y+b.Height/2));bool target=false;
+    for(int i=0;i<8&&hit!=null;i++,hit=TreeWalker.RawViewWalker.GetParent(hit))if(Automation.Compare(hit,e)){target=true;break;}
+    if(!target)throw new Exception("Native control is occluded; refusing pointer input");
     SetCursorPos((int)(b.X+b.Width/2),(int)(b.Y+b.Height/2));
     mouse_event(right?0x0008u:0x0002u,0,0,0,UIntPtr.Zero);mouse_event(right?0x0010u:0x0004u,0,0,0,UIntPtr.Zero);
   }
@@ -87,6 +91,7 @@ class BrowserDesktopProbe {
     }
   }
   [STAThread] static int Main(string[] a) {
+    Console.OutputEncoding=new UTF8Encoding(false);Console.InputEncoding=new UTF8Encoding(false);
     SetProcessDPIAware();
     try {
       object result=null;var op=a[0];
@@ -100,7 +105,7 @@ class BrowserDesktopProbe {
         Directory.SetAccessControl(a[1],acl);result=new{protectedState=true};
       } else if(op.StartsWith("ca-"))result=Certificate(op,a[1]);
       else if(op=="alive") {try {var p=Process.GetProcessById(Int32.Parse(a[1]));result=p.StartTime.ToUniversalTime().Ticks.ToString()==a[2];}catch(ArgumentException){result=false;}}
-      else if(op=="identity") {var p=Process.GetProcessById(Int32.Parse(a[1]));result=new {pid=p.Id,started=p.StartTime.ToUniversalTime().Ticks.ToString()};}
+      else if(op=="identity") {var p=Process.GetProcessById(Int32.Parse(a[1]));result=new {pid=p.Id,started=p.StartTime.ToUniversalTime().Ticks.ToString(),image=p.MainModule.FileName};}
       else if(op=="tray-present") {try{Button(TrayWindows(),"^mcp-proxy",ControlType.Button);result=true;}catch{result=false;}}
       else if(op=="gui"||op=="scope-processes") {
         string root=Path.GetFullPath(a[1]).TrimEnd('\\')+"\\";var rows=new List<object>();
@@ -119,6 +124,10 @@ class BrowserDesktopProbe {
         }
         else if(op=="close-window") {if(own.Count!=1)throw new Exception("GUI window is not unique");PostMessage(own[0],0x0010,IntPtr.Zero,IntPtr.Zero);}
         else if(op=="confirm-protocol") {if(windows.Count==0)throw new Exception("Browser has no native window");SetForegroundWindow(windows[0]);Click(Button(windows,"^(Open|打开).*mcp-proxy",ControlType.Button));}
+        else if(op=="confirm-ca") {
+          var dialogs=new List<IntPtr>();foreach(var w in windows){var names=AutomationElement.FromHandle(w).FindAll(TreeScope.Descendants,Condition.TrueCondition);foreach(AutomationElement e in names)if((e.Current.Name??"").Contains("MCP Proxy Project Development CA")){dialogs.Add(w);break;}}
+          if(dialogs.Count!=1)throw new Exception("Owned test CA warning not found");SetForegroundWindow(dialogs[0]);Click(Button(dialogs,"^(Yes|是|是\\(Y\\)|是\\(&Y\\))$",ControlType.Button));
+        }
         else if(op=="disconnect") {if(own.Count!=1)throw new Exception("GUI window is not unique");SetForegroundWindow(own[0]);Click(Button(own,"^(Disconnect|断开)$",ControlType.Button));}
         else if(op=="show-mcps"||op=="show-connections") {if(own.Count!=1)throw new Exception("GUI window is not unique");SetForegroundWindow(own[0]);Click(Button(own,op=="show-mcps"?"^(Local MCPs|本地 MCP)$":"^(DSH connections|DSH 连接)$",ControlType.Button));}
         else if(op=="gui-connected") {
@@ -131,7 +140,7 @@ class BrowserDesktopProbe {
           using(var image=new Bitmap(rect.right-rect.left,rect.bottom-rect.top))using(var g=Graphics.FromImage(image)){var dc=g.GetHdc();try{if(!PrintWindow(own[0],dc,2))throw new Exception("Window capture failed");}finally{g.ReleaseHdc(dc);}image.Save(a[3],ImageFormat.Png);}result=new{captured=true};
         }
         else if(op=="confirm-disconnect")Click(Button(windows,"^(OK|确定)$",ControlType.Button));
-        else if(op=="tray-click")Click(Tray());
+        else if(op=="tray-click")Click(Tray(),false,true);
         else if(op=="tray-exit") {
           Click(Tray(),true);System.Threading.Thread.Sleep(300);
           var menus=AutomationElement.RootElement.FindAll(TreeScope.Children,new PropertyCondition(AutomationElement.ControlTypeProperty,ControlType.Menu));

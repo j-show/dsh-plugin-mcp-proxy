@@ -123,3 +123,6 @@ Explorer 托盘，机器服务位及 `mcp-proxy://` 注册项均空闲。已有�
 不支持交互桌面的 runner 会明确失败，需要配置具备该能力的 runner，不能改成 headless 后宣称通过。
 报告及经秘密检查的界面图位于 `.artifacts/ci/browser-*`；私有 profile、CA 私钥及原始日志
 保留在 `.artifacts/browser-e2e`，不会上传。实际通过状态以对应 commit 的 CI 为准。
+
+Windows 导入或移除根证书可能出现安全确认；测试仅处理本轮 helper 的创建身份与测试 CA
+匹配的窗口。普通原生按钮通过 UIA 执行，托盘指针操作先核对命中对象，遮挡时失败而不误点。
