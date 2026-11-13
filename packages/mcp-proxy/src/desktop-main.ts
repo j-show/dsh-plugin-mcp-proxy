@@ -164,6 +164,7 @@ class DesktopMain {
       await api.installWindowsUri({ node: join(this.runtime, 'mcp-proxy.exe'), cli: join(this.runtime, 'resources/dsh/lib/bin.js'),
         settings: this.filename, home: this.home, profile: 'mcp-proxy', profileDir: join(this.home, 'profiles/mcp-proxy'),
         registryKey: 'Software\\Classes\\mcp-proxy', desktop: true, electronRunAsNode: false,
+        localAppData: process.env.LOCALAPPDATA,
       }, join(this.runtime, 'resources/dsh/node_modules/@j-show/mcp-proxy-runtime/lib/mcp-proxy.exe'), 10000, new AbortController().signal)
       this.protocolReady = true; this.setBootstrap('ready')
     } catch (_error) { this.protocolReady = false; this.setBootstrap('protocolFailed') }

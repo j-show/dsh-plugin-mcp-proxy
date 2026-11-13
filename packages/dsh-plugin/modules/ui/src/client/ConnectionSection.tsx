@@ -21,7 +21,7 @@ export function ConnectionSection({ useMcpProxyConnection, connect, refresh, dis
   const state = useMcpProxyConnection(value => value)
   const busy = state.phase === 'loading' || state.phase === 'opening' || state.phase === 'waiting' || state.phase === 'disconnecting'
   return (
-    <section className={css.section}>
+    <section className={css.section} data-mcp-phase={state.phase}>
       <h3 className={css.title}>{t('title')}</h3>
       <p className={css.hint}>{t('hint')}</p>
       <p className={css.status} role="status" aria-live="polite">{t(state.phase)}</p>

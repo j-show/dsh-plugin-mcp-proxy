@@ -11,3 +11,5 @@ from 8.3 aliases before checking registry commands. Native regressions cover sho
 upgrade/uninstall and still reject another owner or an unrelated registered command.
 The predecessor name is combined with the normalized current directory, so recovery
 also works after predecessor deletion but before its receipt update was committed.
+URI receipts may include an absolute `localAppData` path; the native launcher carries
+it into child startup, while older receipts retain the inherited Windows environment.

@@ -18,6 +18,8 @@ export interface WindowsInstallSpec {
   readonly electronRunAsNode?: boolean
   /** Launch the persistent Electron GUI and return without waiting for it to exit. */
   readonly desktop?: boolean
+  /** Preserve the installed desktop's app-data context when Windows launches the URI handler. */
+  readonly localAppData?: string
 }
 /**
  * Publish and register the owned Windows protocol launcher.
@@ -58,6 +60,7 @@ export async function installWindowsUri(spec: WindowsInstallSpec, helper: string
       ...(spec.electronRunAsNode === undefined ? {} : { electronRunAsNode: spec.electronRunAsNode }),
       ...(spec.desktop === undefined ? {} : { desktop: spec.desktop }),
       node: spec.node, home: spec.home, installTimeoutMs: timeoutMs,
+      ...(spec.localAppData === undefined ? {} : { localAppData: spec.localAppData }),
       associateArgs: (spec.desktop ? ['--config', spec.settings] : [spec.cli, '--profile', spec.profile, '--config', spec.settings, '--associate'])
         .map(quote).join(' '),
       ...(previous === undefined ? {} : previous.currentHelper !== currentHelper
@@ -97,6 +100,7 @@ export async function uninstallWindowsUri(spec: WindowsInstallSpec, timeoutMs: n
 }
 
 interface Receipt {
+  readonly localAppData?: string
   readonly electronRunAsNode?: boolean
   readonly desktop?: boolean
   readonly version: 1
@@ -119,7 +123,7 @@ function validate(spec: WindowsInstallSpec, timeoutMs: number) {
   if (process.platform !== 'win32' || !Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 2147483647
     || !/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/u.test(spec.profile)
     || !/^Software\\[a-zA-Z0-9\\_-]+$/u.test(spec.registryKey)
-    || ![spec.profileDir, spec.home, spec.node, spec.cli, spec.settings]
+    || ![spec.profileDir, spec.home, spec.node, spec.cli, spec.settings, ...(spec.localAppData === undefined ? [] : [spec.localAppData])]
       .every(value => isAbsolute(value) && !/["\x00-\x1f]/u.test(value))) {
     throw new Error('Invalid Windows mcp-proxy installation locations')
   }

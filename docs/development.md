@@ -110,3 +110,16 @@ CI 从新的 checkout 使用 frozen lockfile 执行构建、类型检查、默�
 原生产物验收使用 `pnpm test:product`，在 `pnpm build:mcp-proxy` 成功后自动绑定该次构建。
 release CI 也运行它；服务位占用时先正常退出自己的开发 Electron/runtime。
 入口不会停止未知服务，要求全部 5 项实际通过，并记录服务位和测试目录清理结果。
+
+## 真实浏览器和桌面验收
+
+先执行 `pnpm test:browser --preflight`。必须同时安装普通 Chrome/Edge，有可交互输入桌面和
+Explorer 托盘，机器服务位及 `mcp-proxy://` 注册项均空闲。已有安装时安全拒绝，不自动卸载。
+完整入口 `pnpm test:browser` 使用本次产物记录、服务端插件归档及独立 profile，临时导入
+测试 CA 并由真实产品注册 URI，逐个浏览器操作协议确认框、配对、窗口与托盘。
+使用现有公开工具链和 UIA/CDP，无额外浏览器框架或宿主 AI 插件依赖。
+
+成功要求两种浏览器全部场景和回收检查通过。CI 先做桌面预检，再在 release 验证中执行；
+不支持交互桌面的 runner 会明确失败，需要配置具备该能力的 runner，不能改成 headless 后宣称通过。
+报告及经秘密检查的界面图位于 `.artifacts/ci/browser-*`；私有 profile、CA 私钥及原始日志
+保留在 `.artifacts/browser-e2e`，不会上传。实际通过状态以对应 commit 的 CI 为准。

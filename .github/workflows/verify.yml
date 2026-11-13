@@ -22,6 +22,8 @@ jobs:
           node-version-file: .node-version
       - name: Install public locked dependencies
         run: pnpm install --frozen-lockfile
+      - name: Require a real interactive Windows desktop and both browsers
+        run: pnpm test:browser --preflight
       - name: Check, package and test native products
         shell: pwsh
         run: ./scripts/verify.ps1 -Mode release

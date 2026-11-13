@@ -62,6 +62,7 @@ internal static class UriLauncher
         [DataMember(Name = "installTimeoutMs")] public int InstallTimeoutMs;
         [DataMember(Name = "electronRunAsNode")] public bool ElectronRunAsNode;
         [DataMember(Name = "desktop")] public bool Desktop;
+        [DataMember(Name = "localAppData")] public string LocalAppData;
     }
 
     [DataContract]
@@ -280,6 +281,10 @@ internal static class UriLauncher
             start.WindowStyle = settings.Desktop ? ProcessWindowStyle.Normal : ProcessWindowStyle.Hidden;
             start.WorkingDirectory = settings.Home;
             start.EnvironmentVariables["DSH_HOME"] = settings.Home;
+            if (!String.IsNullOrEmpty(settings.LocalAppData)) {
+                if (!Path.IsPathRooted(settings.LocalAppData)) throw new IOException("Invalid app-data context");
+                start.EnvironmentVariables["LOCALAPPDATA"] = settings.LocalAppData;
+            }
             start.EnvironmentVariables.Remove("CHROME_CRASHPAD_PIPE_NAME");
             start.EnvironmentVariables.Remove("CHROME_CRASHPAD_SERVER_URL");
             if (settings.Desktop)

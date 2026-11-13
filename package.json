@@ -27,6 +27,7 @@
     "typecheck": "tsc -b tsconfig.json",
     "test": "node --import tsx/esm scripts/test.ts",
     "test:product": "node --import tsx/esm scripts/test-product.ts",
+    "test:browser": "node --import tsx/esm scripts/test-browser.ts",
     "test:unit": "node --import tsx/esm scripts/test.ts"
   },
   "devDependencies": {

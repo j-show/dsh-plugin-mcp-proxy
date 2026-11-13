@@ -36,6 +36,7 @@ try {
     $report.productTests = 'required; inspect product-verification.json for outcome'
     Invoke-Checked 'product' @('test:product')
     $report.productTests = 'five native product cases passed; zero skips'
+    Invoke-Checked 'browser-desktop' @('test:browser')
   }
 } finally {
   $report | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $evidenceDirectory 'verification.json') -Encoding utf8

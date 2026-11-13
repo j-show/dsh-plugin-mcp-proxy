@@ -15,7 +15,7 @@ it.skipIf(process.platform !== 'win32').each([
     const root = await mkdtemp(join(tmpdir(), 'mcp proxy & native-'))
     const spec = { profileDir: root, home: root, profile: 'mcp-proxy', node: process.execPath,
       cli: join(root, 'dsh fixture.mjs'), settings: join(root, 'received.json'), electronRunAsNode,
-      registryKey: `Software\\mcp-proxy-test-${randomUUID()}`,
+      registryKey: `Software\\mcp-proxy-test-${randomUUID()}`, localAppData: join(root, 'isolated-data'),
     }
     onTestFinished(async () => {
       try { await uninstallWindowsUri(spec, 5000, new AbortController().signal) }
@@ -24,14 +24,14 @@ it.skipIf(process.platform !== 'win32').each([
     const helper = await compileWindowsUriHelper(join(root, 'build'), 10000)
     const entry = join(root, 'dsh fixture.mjs')
     const output = join(root, 'received.json')
-    await writeFile(entry, "import { writeFile } from 'node:fs/promises'; const args = process.argv.slice(2); await writeFile(args[args.indexOf('--config') + 1], JSON.stringify({ args, home: process.env.DSH_HOME, nodeMode: process.env.ELECTRON_RUN_AS_NODE ?? null }));\n")
+    await writeFile(entry, "import { writeFile } from 'node:fs/promises'; const args = process.argv.slice(2); await writeFile(args[args.indexOf('--config') + 1], JSON.stringify({ args, home: process.env.DSH_HOME, localAppData: process.env.LOCALAPPDATA, nodeMode: process.env.ELECTRON_RUN_AS_NODE ?? null }));\n")
     const executable = await installWindowsUri(spec, helper, 5000, new AbortController().signal)
     const uri = `mcp-proxy://associate/${'a'.repeat(43)}` + (pairing ? '?v=2&origin=https%3A%2F%2Fdsh.example' : '')
     await promisify(execFile)(executable, [uri], { timeout: 5000, windowsHide: true })
     await expect.poll(async () => {
       try { return JSON.parse(await readFile(output, 'utf8')) as unknown } catch (_error) { return undefined }
     }).toEqual({ args: ['--profile', 'mcp-proxy', '--config', output, '--associate', uri], home: root,
-      nodeMode: electronRunAsNode ? '1' : null,
+      nodeMode: electronRunAsNode ? '1' : null, localAppData: spec.localAppData,
     })
     const events = await readFile(join(dirname(executable), basename(executable, '.exe') + '.activation.log'), 'utf8')
     expect(events).toContain('activation-received')

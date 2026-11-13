@@ -6,6 +6,11 @@
 
 原生产物自动化入口的构建绑定、服务位和清理验证见[自动化记录](evidence/native-product-automation-2026-11-13.md)。
 
+Chrome/Edge 与原生 GUI/托盘矩阵按[已批准设计](superpowers/specs/2026-11-13-browser-desktop-e2e-design.md)
+使用 `pnpm test:browser` 单独执行；桌面预检失败、已有 URI handler 安全拒绝或场景跳过均不算通过。
+报告区分两种浏览器的配对、隐藏、托盘恢复、二次启动、重连、退出及回收；结果以对应 CI 为准，
+不关闭尚未覆盖的真实模型、跨用户、多设备和 A7 其他场景。
+
 2026-11-13 的 URI 短路径故障定位及修复回归见[原生 URI 修复记录](evidence/native-uri-short-path-2026-11-13.md)。
 旧提交的本机通过记录不覆盖其远端 CI 失败；后续提交须以对应完整 CI 运行结果为准。
 

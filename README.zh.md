@@ -27,6 +27,10 @@
 要求 5 项原生产物测试全部通过，并检查服务位及测试数据清理。运行前需正常退出占用本机服务位的应用。
 release CI 在两端打包后自动执行，详见[验收指南](docs/acceptance.md)。
 
+`pnpm test:browser` 验证真实 Chrome/Edge 协议确认、自动配对及 GUI/托盘生命周期。
+需要交互桌面、Explorer 托盘及空闲 URI 注册项；`--preflight` 可安全检查，绝不覆盖现有安装。
+release CI 要求两种浏览器场景全部执行，不以跳过算成功。
+
 使用 Node.js 22.19+ 或 24+，以及 pnpm 11.7.0。依赖均来自公共 npm 仓库，不需要 Harness 源码目录。
 
 ```sh

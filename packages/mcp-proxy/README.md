@@ -8,6 +8,10 @@ Release builds emit `release/mcp-proxy/product-build.json` to bind the portable 
 to its qualified unpacked runtime. Use `pnpm test:product` for native artifact acceptance;
 the manifest verification is read-only and rejects changed files before execution.
 
+`pnpm test:browser` checks the actual Windows protocol dialog, pairing, GUI pages,
+window hiding, tray restore, second launch and tray Exit. URI registration records
+the installer's app-data context so system activation preserves isolated/custom state.
+
 This package owns the Electron GUI and tray. Its private `modules/protocol`, `modules/local` and `modules/runtime` packages own wire exchange, downstream clients and the standalone DSH profile. Build from the repository root with `pnpm build:mcp-proxy`; deliver `release/mcp-proxy/mcp-proxy.exe` only.
 
 See the detailed [configuration and operations](../../docs/configuration.md), [capability limits](../../docs/requirements.md#能力范围) and [acceptance record](../../docs/acceptance.md). These current guides are in Chinese. File operations belong to configured downstream MCPs; this application has no built-in file tools.

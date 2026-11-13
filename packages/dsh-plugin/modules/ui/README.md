@@ -6,3 +6,6 @@ Private module bundled into its parent deliverable; build and test from the repo
 Start at [src/client/index.ts](src/client/index.ts) and [src/client/elicitation-controller.ts](src/client/elicitation-controller.ts); focused coverage starts at [tests/elicitation.client.spec.ts](tests/elicitation.client.spec.ts).
 For native setup and source debugging follow the [development guide](../../../../docs/development.md).
 Requirements, architecture and acceptance remain owned by the root docs.
+
+The connection section exposes its existing phase as `data-mcp-phase` for browser
+acceptance assertions. Native URI activation is still triggered only by the real UI action.

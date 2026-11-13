@@ -30,6 +30,11 @@ unused local service slot. It binds the recorded build's EXE/runtime pair, requi
 all five native product cases to pass, and verifies service/data cleanup. Release CI
 runs this automatically after both builds; see the [acceptance guide](docs/acceptance.md).
 
+`pnpm test:browser` adds headed Chrome/Edge, real Windows protocol confirmation and
+GUI/tray lifecycle acceptance. It requires an interactive desktop, Explorer tray and
+an unoccupied `mcp-proxy://` registration. `--preflight` checks these without taking
+over an existing installation. Release CI requires both browser matrices, not silent skips.
+
 Use Node.js 22.19+ or 24+ and pnpm 11.7.0. Dependencies come from the public npm registry; no Harness checkout is required.
 
 ```sh
