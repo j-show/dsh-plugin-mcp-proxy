@@ -7,8 +7,8 @@ import { basename, dirname, join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { BrowserCdp, eventually } from './browser-cdp.ts'
 import { nativeProbe, type NativeWindow } from './browser-native.ts'
-import { uniqueTarget, ownedCertificate, type DesktopPreflight } from './browser-e2e-contract.ts'
-import { startBrowserWeb, isolatedEnvironment, type WebFixture, type ServerArtifact } from './browser-e2e-environment.ts'
+import { uniqueTarget, ownedCertificate, activeMcpIdentities, type DesktopPreflight } from './browser-e2e-contract.ts'
+import { startBrowserWeb, isolatedEnvironment, alive, type WebFixture, type ServerArtifact } from './browser-e2e-environment.ts'
 import { assertProductServiceIdle } from './product-service.ts'
 
 interface Identity { pid: number; started: string }
@@ -36,7 +36,7 @@ export async function runBrowserMatrix(repository: string, state: string, helper
   let failure: unknown
   let stage = 'web-install'
   const observed = new Map<number, Identity>()
-  const remember = async (id: number) => { const identity = await nativeProbe<Identity>(helper, 'identity', String(id)); observed.set(id, identity); return identity }
+  const remember = async (id: number) => { const identity = await nativeProbe<Identity | null>(helper, 'identity', String(id)); if (!identity) throw new Error('Required owned process exited before identity capture'); observed.set(id, identity); return identity }
   const stopped = (identity: Identity) => eventually(async () => !await nativeProbe<boolean>(helper, 'alive', String(identity.pid), identity.started), 'owned process exit', 30000)
   const action = async (operation: string, target: Identity) => nativeProbe(helper, operation, String(target.pid), target.started)
   const status = async () => {
@@ -49,6 +49,12 @@ export async function runBrowserMatrix(repository: string, state: string, helper
     return rows.length ? uniqueTarget(rows) : undefined
   }
   const mcpPids = async () => (await readFile(marker, 'utf8')).trim().split('\n').filter(Boolean).map(line => (JSON.parse(line) as { pid: number }).pid)
+  const liveMcps = async () => {
+    const tree = await nativeProbe<Identity[]>(helper, 'children', String(service!.pid), observed.get(service!.pid)!.started)
+    const live = activeMcpIdentities(await mcpPids(), tree, alive)
+    for (const identity of live) observed.set(identity.pid, identity)
+    return live.map(row => row.pid).sort((a, b) => a - b)
+  }
   const uninstall = async () => {
     const installer = await import(pathToFileURL(join(repository, 'packages/mcp-proxy/modules/runtime/src/windows-install.ts')).href) as { uninstallWindowsUri(spec: unknown, timeout: number, signal: AbortSignal): Promise<void> }
     await installer.uninstallWindowsUri({ profileDir: join(home, 'profiles/mcp-proxy'), home, profile: 'mcp-proxy', node: process.execPath,
@@ -70,8 +76,10 @@ export async function runBrowserMatrix(repository: string, state: string, helper
     service = await eventually(async () => {
       try { const current = await control.requestLocalStatus(address, 1000); return current.ready ? current : false } catch { return false }
     }, 'GUI-owned runtime', 90000)
+    stage = 'service identity'
     await status(); await remember(service.pid)
-    for (const pid of await mcpPids()) await remember(pid)
+    stage = 'MCP identities'
+    await liveMcps()
     const installed = await readFile(join(home, 'profiles/mcp-proxy/mcp-proxy-os/launcher.json'), 'utf8')
     const receipt = JSON.parse(installed) as { owner: string; currentHelper: string; localAppData?: string }
     if (receipt.owner !== createHash('sha256').update(resolve(home, 'profiles/mcp-proxy').toLowerCase()).digest('hex') || receipt.localAppData !== data) throw new Error('URI registration did not retain the test installation context')
@@ -119,18 +127,20 @@ export async function runBrowserMatrix(repository: string, state: string, helper
     await eventually(async () => { const current = await guiState(); return current?.visible ? current : false }, 'real tray restores GUI')
     scenarios.trayRestore = true
     stage = 'second launch'
+    const beforeSecond = await liveMcps()
+    const markerCount = (await mcpPids()).length
     const second = spawn(executable, ['--config', settings], { cwd: workspace, env, stdio: 'ignore', windowsHide: true })
     let secondTimeout: ReturnType<typeof setTimeout> | undefined
     try { await Promise.race([once(second, 'exit'), new Promise((_, reject) => { secondTimeout = setTimeout(() => reject(new Error('Second launch did not exit')), 180000) })]) }
     finally { clearTimeout(secondTimeout) }
-    if ((await guiState())?.pid !== gui.pid || (await status()).pid !== service.pid || (await mcpPids()).length !== 1) throw new Error('Second launch duplicated owned processes')
+    if ((await guiState())?.pid !== gui.pid || (await status()).pid !== service.pid || JSON.stringify(await liveMcps()) !== JSON.stringify(beforeSecond) || (await mcpPids()).length !== markerCount) throw new Error('Second launch duplicated owned processes')
     scenarios.secondLaunch = true
     stage = 'disconnect and reconnect'
     await action('disconnect', gui)
     await eventually(async () => { try { await action('confirm-disconnect', gui!); return true } catch { return false } }, 'GUI disconnect confirmation')
     await eventually(async () => (await status()).servers.every(row => row.state === 'disconnected'), 'GUI disconnect')
     await connect(); scenarios.reconnect = true
-    for (const pid of await mcpPids()) await remember(pid)
+    await liveMcps()
     for (const identity of await nativeProbe<Identity[]>(helper, 'children', String(service.pid), (await remember(service.pid)).started)) observed.set(identity.pid, identity)
     for (const identity of await nativeProbe<Identity[]>(helper, 'children', String(gui.pid), gui.started)) observed.set(identity.pid, identity)
     stage = 'tray exit'

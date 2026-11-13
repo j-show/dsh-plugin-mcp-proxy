@@ -105,7 +105,7 @@ class BrowserDesktopProbe {
         Directory.SetAccessControl(a[1],acl);result=new{protectedState=true};
       } else if(op.StartsWith("ca-"))result=Certificate(op,a[1]);
       else if(op=="alive") {try {var p=Process.GetProcessById(Int32.Parse(a[1]));result=p.StartTime.ToUniversalTime().Ticks.ToString()==a[2];}catch(ArgumentException){result=false;}}
-      else if(op=="identity") {var p=Process.GetProcessById(Int32.Parse(a[1]));result=new {pid=p.Id,started=p.StartTime.ToUniversalTime().Ticks.ToString(),image=p.MainModule.FileName};}
+      else if(op=="identity") {try{var p=Process.GetProcessById(Int32.Parse(a[1]));result=new {pid=p.Id,started=p.StartTime.ToUniversalTime().Ticks.ToString(),image=p.MainModule.FileName};}catch(ArgumentException){result=null;}}
       else if(op=="tray-present") {try{Button(TrayWindows(),"^mcp-proxy",ControlType.Button);result=true;}catch{result=false;}}
       else if(op=="gui"||op=="scope-processes") {
         string root=Path.GetFullPath(a[1]).TrimEnd('\\')+"\\";var rows=new List<object>();

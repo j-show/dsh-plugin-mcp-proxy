@@ -15,6 +15,17 @@ export function ownedCertificate(thumb: string, receipt: { thumbprint: string; a
   return /^[A-F0-9]{40}$/.test(thumb) && receipt.added && receipt.thumbprint === thumb
 }
 export const desktopScenarios = ['pair', 'hide', 'trayRestore', 'secondLaunch', 'reconnect', 'trayExit', 'cleanup'] as const
+/** Negotiation can retire a startup child; never attach an exited/reused marker to an unrelated process. */
+export function activeMcpIdentities<T extends { pid: number }>(markers: number[], tree: T[], running: (pid: number) => boolean): T[] {
+  const selected: T[] = []
+  for (const pid of new Set(markers)) {
+    const identity = tree.find(row => row.pid === pid)
+    if (identity) selected.push(identity)
+    else if (running(pid)) throw new Error('Cannot attribute a live MCP marker PID to the owned service')
+  }
+  if (!selected.length) throw new Error('No live test MCP belongs to the GUI service')
+  return selected
+}
 export function requireBrowserMatrix(value: unknown): void {
   if (!Array.isArray(value) || value.length !== 2) throw new Error('Both browser matrices must execute')
   for (const browser of ['chrome', 'edge']) {

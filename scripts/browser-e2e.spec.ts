@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { assertDesktopPreflight, requireBrowserMatrix, ownedCertificate, uniqueTarget } from './browser-e2e-contract.ts'
+import { assertDesktopPreflight, requireBrowserMatrix, ownedCertificate, uniqueTarget, activeMcpIdentities } from './browser-e2e-contract.ts'
 
 it('refuses existing URI owners and noninteractive desktops before touching user state', () => {
   const ready = { platform: 'win32', interactive: true, tray: true, chrome: true, edge: true, uriOccupied: false }
@@ -26,4 +26,10 @@ it('requires both browsers and every real lifecycle action without silent skips'
   expect(() => requireBrowserMatrix(rows)).not.toThrow()
   expect(() => requireBrowserMatrix(rows.slice(0, 1))).toThrow()
   expect(() => requireBrowserMatrix([{ ...rows[0], scenarios: { ...rows[0]!.scenarios, trayExit: false } }, rows[1]])).toThrow()
+})
+it('ignores already-exited negotiation children but refuses live unowned markers', () => {
+  const owned = { pid: 2, started: 'owned' }
+  expect(activeMcpIdentities([1, 2, 2], [owned], () => false)).toEqual([owned])
+  expect(() => activeMcpIdentities([1, 2], [owned], pid => pid === 1)).toThrow('Cannot attribute')
+  expect(() => activeMcpIdentities([1], [], () => false)).toThrow('No live')
 })
