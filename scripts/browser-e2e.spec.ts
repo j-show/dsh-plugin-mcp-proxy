@@ -2,7 +2,8 @@ import { expect, it, onTestFinished } from 'vitest'
 import { copyFile, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { assertDesktopPreflight, requireBrowserMatrix, ownedCertificate, uniqueTarget, activeMcpIdentities } from './browser-e2e-contract.ts'
+import { runInNewContext } from 'node:vm'
+import { assertDesktopPreflight, assertStartupPreflight, requireColdStartupMatrix, requireBrowserMatrix, ownedCertificate, uniqueTarget, activeMcpIdentities } from './browser-e2e-contract.ts'
 import { BrowserCdp, prepareDshPage, safeBrowserDiagnostic, verifyPageBoots } from './browser-cdp.ts'
 import { compileDesktopProbe, nativeProbe, nativeActionSession, nativeConfirmationPoll, confirmNativeAction, confirmNativeProtocol } from './browser-native.ts'
 
@@ -48,6 +49,21 @@ it('uses the real notice and optional model controls once before opening setting
   expect(clicks).toHaveLength(2)
   expect(new RegExp(clicks[0]!, 'i').test('Continue')).toBe(true)
   expect(new RegExp(clicks[1]!, 'i').test('Configure later')).toBe(true)
+})
+it('waits for a document body after cold navigation instead of failing the evaluation', async () => {
+  let calls = 0
+  await prepareDshPage({ evaluate: async <T>(expression: string) => {
+    if (calls++ === 0) return runInNewContext(expression, { document: { body: null } }) as T
+    return { ready: true } as T
+  }, clickText: async () => { throw new Error('No onboarding controls in this fixture') } })
+  expect(calls).toBe(2)
+})
+it('handles onboarding that appears after the shell before accepting connection settings', async () => {
+  const pages = [{ settingsClosed: true }, { notice: true }, { notice: true }, { model: true }, { settingsClosed: true }, { ready: true }]
+  const clicks: string[] = []
+  await prepareDshPage({ evaluate: async <T>() => pages.shift() as T, clickText: async pattern => { clicks.push(pattern) } }, 'settings')
+  expect(clicks.map(pattern => new RegExp(pattern, 'i').test('Settings') ? 'settings' : new RegExp(pattern, 'i').test('Continue') ? 'notice' : 'model'))
+    .toEqual(['settings', 'notice', 'model', 'settings'])
 })
 it('retries pre-input protocol refusals but never replays uncertain input or an unreported helper exit', async () => {
   let attempts = 0
@@ -145,4 +161,23 @@ it('requires every fresh page boot and stops at the first activation failure wit
 it('reports a browser process exit before waiting for a missing debugging file', async () => {
   await expect(BrowserCdp.page('unused-profile', undefined, () => { throw new Error('Browser exited: code=23') }))
     .rejects.toThrow('Browser exited: code=23')
+})
+it('permits startup-only investigation with an existing URI owner but still requires real desktops and both browsers', () => {
+  const ready = { platform: 'win32', interactive: true, tray: true, chrome: true, edge: true, uriOccupied: true }
+  expect(() => assertStartupPreflight(ready)).not.toThrow()
+  expect(() => assertStartupPreflight({ ...ready, interactive: false })).toThrow('interactive')
+  expect(() => assertStartupPreflight({ ...ready, edge: false })).toThrow('Edge')
+})
+it('refuses missing cold environments, reused process observations and incomplete cleanup', () => {
+  const rows = ['chrome', 'edge'].map(browser => ({ browser, environments: Array.from({ length: 3 }, (_, index) => ({
+    index, cleanup: true, boots: Array.from({ length: 3 }, (_, boot) => ({ index: boot, cleanup: true, profile: `cold-${index}-${boot}` }))
+  })) }))
+  expect(() => requireColdStartupMatrix(rows)).not.toThrow()
+  expect(() => requireColdStartupMatrix(rows.slice(0, 1))).toThrow()
+  expect(() => requireColdStartupMatrix([{ ...rows[0], environments: rows[0]!.environments.slice(1) }, rows[1]])).toThrow()
+  rows[0]!.environments[0]!.boots[1]!.profile = 'cold-0-0'
+  expect(() => requireColdStartupMatrix(rows)).toThrow()
+  rows[0]!.environments[0]!.boots[1]!.profile = 'cold-0-1'
+  rows[0]!.environments[0]!.boots[1]!.cleanup = false
+  expect(() => requireColdStartupMatrix(rows)).toThrow()
 })

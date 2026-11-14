@@ -135,7 +135,7 @@ export async function runBrowserMatrix(repository: string, state: string, helper
       }
       await prepareDshPage(cdp!)
     })
-    await cdp.clickText('^(Settings|设置)$')
+    await prepareDshPage(cdp, 'settings')
     await cdp.clickText('^(This computer|本机连接)$')
     const connect = async () => {
       await cdp!.send('Page.bringToFront')

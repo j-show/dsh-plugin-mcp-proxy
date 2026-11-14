@@ -70,7 +70,10 @@ export async function startBrowserWeb(repository: string, directory: string, bou
   for (const dir of [home, tls, workspace]) await mkdir(dir, { recursive: true })
   await generateDevelopmentTls(tls)
   const emptyNpm = join(state, 'public.npmrc'); await writeFile(emptyNpm, 'registry=https://registry.npmjs.org/\n')
-  const env = { ...isolatedEnvironment(home, join(state, 'server-app-data')), npm_config_userconfig: emptyNpm }
+  const temp = join(state, 'server-temp'), roaming = join(state, 'server-roaming')
+  for (const path of [temp, roaming]) await mkdir(path, { recursive: true })
+  const env = { ...isolatedEnvironment(home, join(state, 'server-app-data')), APPDATA: roaming, TEMP: temp, TMP: temp,
+    npm_config_cache: join(state, 'npm-cache'), npm_config_userconfig: emptyNpm }
   const artifact = bound ?? await bindServerArtifact(repository, state)
   const archive = artifact.archive, pluginSha256 = artifact.sha256
   if (createHash('sha256').update(await readFile(archive)).digest('hex') !== pluginSha256) throw new Error('Bound server artifact hash mismatch')

@@ -97,12 +97,23 @@ export class BrowserCdp {
 }
 
 /** Fresh public DSH profiles show a nonbinding notice and optional model setup. Use real UI controls. */
-export async function prepareDshPage(cdp: Pick<BrowserCdp, 'evaluate' | 'clickText'>): Promise<void> {
+export async function prepareDshPage(cdp: Pick<BrowserCdp, 'evaluate' | 'clickText'>, destination: 'shell' | 'settings' = 'shell'): Promise<void> {
   let acknowledged = false, deferred = false
   await eventually(async () => {
-    const page = await cdp.evaluate<{ notice: boolean; model: boolean; ready: boolean }>(`(() => {const t=document.body.innerText;const e=[...document.querySelectorAll('button,a,[role="button"]')].find(e=>/^(Settings|设置)$/i.test(e.getAttribute('aria-label')||e.getAttribute('title')||e.textContent?.trim()||''));const b=e?.getBoundingClientRect();return {notice:/Internal Testing Notice|内测声明/.test(t),model:/Add an API key to get started|添加一个 API Key 开始使用/.test(t),ready:!!(e&&b&&e.contains(document.elementFromPoint(b.x+b.width/2,b.y+b.height/2)))}})()`)
+    const target = destination === 'settings' ? 'This computer|本机连接' : 'Settings|设置'
+    const page = await cdp.evaluate<{ notice: boolean; model: boolean; ready: boolean; settingsClosed?: boolean }>(`(() => {
+      if(!document.body)return {notice:false,model:false,ready:false};
+      const t=document.body.innerText, controls=[...document.querySelectorAll('button,a,[role="button"],[role="tab"]')];
+      const label=e=>e.getAttribute('aria-label')||e.getAttribute('title')||e.textContent?.trim()||'';
+      const hit=e=>{const b=e?.getBoundingClientRect();return !!(e&&b&&b.width>0&&b.height>0&&e.contains(document.elementFromPoint(b.x+b.width/2,b.y+b.height/2)))};
+      const e=controls.find(e=>new RegExp(${JSON.stringify('^(' + target + ')$')},'i').test(label(e))&&hit(e));
+      const settings=controls.find(e=>/^(Settings|设置)$/i.test(label(e))&&hit(e));
+      return {notice:/Internal Testing Notice|内测声明/.test(t),model:/Add an API key to get started|添加一个 API Key 开始使用/.test(t),
+        ready:!!e,settingsClosed:!!settings&&settings.getAttribute('aria-expanded')==='false'};
+    })()`)
     if (page.notice) { if (!acknowledged) { await cdp.clickText('^(Continue|继续)$'); acknowledged = true }; return false }
     if (page.model) { if (!deferred) { await cdp.clickText('^(Configure later|稍后配置)$'); deferred = true }; return false }
+    if (destination === 'settings' && page.settingsClosed && !page.ready) { await cdp.clickText('^(Settings|设置)$'); return false }
     return page.ready
   }, 'normal DSH notice and optional model onboarding')
 }

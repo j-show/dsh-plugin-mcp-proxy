@@ -42,8 +42,12 @@ exclude tickets, private state and the address bar. See the [acceptance guide](d
 and [implementation evidence](docs/evidence/browser-desktop-e2e-2026-11-13.md) for scope and results.
 Failure reports preserve native dialog structure and the last safe control error.
 Client activation diagnostics include scrubbed errors and observed framework/module revisions.
-Startup investigation requires 20 separate successful Web document boots per browser;
-failed observations stop immediately and browser exits are reported during CDP discovery.
+Startup investigation requires three fresh DSH installations per browser, each with three
+cold browser processes and new profiles, followed by 20 new-document observations in the
+lifecycle matrix. `pnpm test:browser --startup-only` runs only the cold matrix against the
+current server archive; it leaves existing URI owners and desktop services untouched.
+Each DSH installation uses a separate npm cache. Failed observations stop immediately;
+reports include CDP/Web startup durations, scrubbed errors and cleanup results.
 Exit checks cover the actual tray menu and termination of the GUI, service and owned children.
 Protocol prompts use native app/origin context across browser-specific labels and sentence punctuation.
 

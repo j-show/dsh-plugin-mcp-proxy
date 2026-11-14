@@ -527,6 +527,11 @@ class BrowserDesktopProbe {
           ClickNotification(Tray(),true);nativeInputStage="exit-menu-discovery";
           var item=ExitMenu(p.Id);nativeInputStage="exit-menu-selection";Click(item);
         } else if(op=="window") {if(own.Count!=1)throw new Exception("GUI window is not unique");result=Info(p,own[0]);}
+        else if(op=="focus-browser") {
+          var roots=windows.Where(w=>{var cls=new StringBuilder(256);GetClassName(w,cls,cls.Capacity);return IsWindowVisible(w)&&cls.ToString()=="Chrome_WidgetWin_1";}).ToList();
+          if(roots.Count!=1)throw new Exception("Owned browser window is not unique");
+          FocusTarget(AutomationElement.FromHandle(roots[0]),p.Id);
+        }
         else if(op=="close-browser") {foreach(var w in windows)PostMessage(w,0x0010,IntPtr.Zero,IntPtr.Zero);}
         else if(op=="kill-owned")p.Kill();
         else throw new Exception("Unknown native test operation");

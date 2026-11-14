@@ -1,11 +1,31 @@
 /** Fail-closed contracts for tests which operate the real Windows desktop. */
 export interface DesktopPreflight { platform: string; interactive: boolean; tray: boolean; chrome: boolean; edge: boolean; uriOccupied: boolean }
 export function assertDesktopPreflight(p: DesktopPreflight): void {
-  if (p.platform !== 'win32') throw new Error('Browser desktop E2E requires Windows')
   if (p.uriOccupied) throw new Error('Existing mcp-proxy URI owner; do not replace it')
+  assertStartupPreflight(p)
+}
+/** Cold Web startup does not register a URI or launch the desktop product. */
+export function assertStartupPreflight(p: DesktopPreflight): void {
+  if (p.platform !== 'win32') throw new Error('Browser desktop E2E requires Windows')
   if (!p.interactive) throw new Error('An interactive input desktop is required')
   if (!p.tray) throw new Error('A real Explorer tray is required')
   if (!p.chrome || !p.edge) throw new Error('Both Chrome and Edge are required')
+}
+export const coldEnvironments = 3, coldBootsPerEnvironment = 3
+export function requireColdStartupMatrix(value: unknown): void {
+  if (!Array.isArray(value) || value.length !== 2) throw new Error('Both cold browser matrices must execute')
+  for (const browser of ['chrome', 'edge']) {
+    const rows = value.filter(row => row?.browser === browser)
+    if (rows.length !== 1 || rows[0].environments?.length !== coldEnvironments) throw new Error(`Incomplete ${browser} cold environments`)
+    const profiles = new Set<string>()
+    for (const [index, environment] of rows[0].environments.entries()) {
+      if (environment.index !== index || environment.cleanup !== true || environment.boots?.length !== coldBootsPerEnvironment) throw new Error('Incomplete cold environment cleanup')
+      for (const [boot, observation] of environment.boots.entries()) {
+        if (observation.index !== boot || observation.cleanup !== true || typeof observation.profile !== 'string' || profiles.has(observation.profile)) throw new Error('Incomplete or reused cold browser boot')
+        profiles.add(observation.profile)
+      }
+    }
+  }
 }
 export function uniqueTarget<T extends { owned: boolean }>(rows: T[]): T {
   if (rows.length !== 1 || !rows[0]?.owned) throw new Error('Expected exactly one owned native UI target')
