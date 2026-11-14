@@ -11,3 +11,4 @@
 - Dispatch native consent once after verified focus/foreground/geometry and the protection interval. Retry only proven pre-input refusals; uncertain input disables further tray UI cleanup and uses the existing owned process/service recovery.
 - Retain only sanitized diagnostics and scoped screenshots. Profiles, identity files, private keys, authentication URLs/headers and raw server logs remain private.
 - CI evidence names the actual commit, dirty state, executed command exits and artifact hashes. Record observed framework resolution anchors/module revisions; distinguish implementation, automated coverage and the remaining product matrix.
+- Startup observations require a new document epoch for every navigation and stop at the first failure. Preserve child exit/signal diagnostics during CDP discovery; repeated successful boots alone do not establish a historical failure's root cause.

@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { basename, dirname, join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { BrowserCdp, eventually, prepareDshPage } from './browser-cdp.ts'
+import { BrowserCdp, eventually, prepareDshPage, verifyPageBoots, safeBrowserDiagnostic } from './browser-cdp.ts'
 import { nativeProbe, nativeActionSession, confirmNativeAction, confirmNativeProtocol, type NativeWindow } from './browser-native.ts'
 import { uniqueTarget, ownedCertificate, activeMcpIdentities, type DesktopPreflight } from './browser-e2e-contract.ts'
 import { startBrowserWeb, isolatedEnvironment, alive, type WebFixture, type ServerArtifact } from './browser-e2e-environment.ts'
@@ -33,6 +33,7 @@ export async function runBrowserMatrix(repository: string, state: string, helper
   let gui: NativeWindow | undefined, browserProcess: ChildProcess | undefined, browserIdentity: Identity | undefined, cdp: BrowserCdp | undefined
   let service: { pid: number; ready: boolean } | undefined
   let launcher: ChildProcess | undefined
+  let browserOutput = ''
   let failure: unknown
   let stage = 'web-install'
   const observed = new Map<number, Identity>()
@@ -87,10 +88,14 @@ export async function runBrowserMatrix(repository: string, state: string, helper
     if (receipt.owner !== createHash('sha256').update(resolve(home, 'profiles/mcp-proxy').toLowerCase()).digest('hex') || receipt.localAppData !== data) throw new Error('URI registration did not retain the test installation context')
     stage = 'browser startup'
     browserProcess = spawn(browserExecutable, ['--user-data-dir=' + profile, '--remote-debugging-port=0', '--no-first-run',
-      '--no-default-browser-check', '--disable-background-mode', '--force-renderer-accessibility', '--window-size=1200,800', 'about:blank'], { env, stdio: 'ignore', windowsHide: false })
+      '--no-default-browser-check', '--disable-background-mode', '--force-renderer-accessibility', '--window-size=1200,800', 'about:blank'], { env, stdio: ['ignore','pipe','pipe'], windowsHide: false })
+    browserProcess.stdout?.on('data', bytes => { browserOutput = (browserOutput + String(bytes)).slice(-65536) })
+    browserProcess.stderr?.on('data', bytes => { browserOutput = (browserOutput + String(bytes)).slice(-65536) })
     await once(browserProcess, 'spawn')
     browserIdentity = await remember(browserProcess.pid!)
-    cdp = await BrowserCdp.page(profile, web.origin)
+    cdp = await BrowserCdp.page(profile, web.origin, () => {
+      if (browserProcess!.exitCode !== null || browserProcess!.signalCode !== null) throw new Error(`Browser exited before CDP: code=${browserProcess!.exitCode}; signal=${browserProcess!.signalCode}`)
+    })
     const version = await cdp.send('Browser.getVersion') as { product: string; userAgent: string }
     await cdp.send('Page.bringToFront')
     await eventually(() => cdp!.evaluate<boolean>('document.readyState === "complete" && !!document.body'), 'owned blank document')
@@ -116,7 +121,20 @@ export async function runBrowserMatrix(repository: string, state: string, helper
     await cdp.send('Page.bringToFront')
     await eventually(() => cdp!.evaluate<boolean>('document.readyState === "complete"'), 'DSH document')
     stage = 'settings navigation'
-    await prepareDshPage(cdp)
+    await verifyPageBoots(20, async index => {
+      stage = 'Web startup observation ' + (index + 1)
+      if (index > 0) {
+        const previous = await cdp!.evaluate<number>('performance.timeOrigin')
+        const navigation = await cdp!.send('Page.navigate', { url: web!.origin }) as { loaderId?: string; errorText?: string }
+        if (navigation.errorText || !navigation.loaderId) throw new Error('Web document navigation failed')
+        await eventually(async () => {
+          const frame = await cdp!.send('Page.getFrameTree') as { frameTree: { frame: { loaderId: string } } }
+          return frame.frameTree.frame.loaderId === navigation.loaderId
+        }, 'matching Web navigation loader')
+        await eventually(() => cdp!.evaluate<boolean>(`performance.timeOrigin !== ${previous} && document.readyState === 'complete'`), 'new Web document')
+      }
+      await prepareDshPage(cdp!)
+    })
     await cdp.clickText('^(Settings|设置)$')
     await cdp.clickText('^(This computer|本机连接)$')
     const connect = async () => {
@@ -194,6 +212,8 @@ export async function runBrowserMatrix(repository: string, state: string, helper
     const errors: string[] = []
     const cleanup = async (label: string, work: () => Promise<unknown>) => { try { await work() } catch { errors.push(label) } }
     if (failure) {
+      await cleanup('browser launch diagnostics', () => writeFile(join(repository, `.artifacts/ci/browser-${browser}-launch.json`), JSON.stringify({
+        stage, exitCode: browserProcess?.exitCode, signal: browserProcess?.signalCode, output: safeBrowserDiagnostic(browserOutput) }, null, 2)))
       if (gui) {
         try { await writeFile(join(repository, `.artifacts/ci/browser-${browser}-gui.json`), JSON.stringify(await nativeProbe(helper, 'gui-dialog-info', String(gui.pid), gui.started), null, 2)) }
         catch { /* The owned GUI may already have exited; never inspect another application. */ }

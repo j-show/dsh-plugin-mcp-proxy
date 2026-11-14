@@ -22,6 +22,11 @@ export async function eventually<T>(read: () => Promise<T | undefined | false>, 
   }
   throw new Error(`Deadline: ${label}`)
 }
+/** Each navigation is a separate required observation, never a retry of a failed boot. */
+export async function verifyPageBoots(count: number, boot: (index: number) => Promise<void>): Promise<void> {
+  if (!Number.isSafeInteger(count) || count < 1) throw new Error('Invalid startup observation count')
+  for (let index = 0; index < count; index++) await boot(index)
+}
 export class BrowserCdp {
   private id = 0
   private readonly pending = new Map<number, { resolve(value: unknown): void; reject(error: Error): void; timer: ReturnType<typeof setTimeout> }>()
@@ -53,8 +58,9 @@ export class BrowserCdp {
     })
     socket.addEventListener('close', () => { for (const entry of this.pending.values()) { clearTimeout(entry.timer); entry.reject(new Error('CDP closed')) }; this.pending.clear() })
   }
-  static async page(profile: string, diagnosticOrigin?: string): Promise<BrowserCdp> {
+  static async page(profile: string, diagnosticOrigin?: string, checkProcess: () => void = () => {}): Promise<BrowserCdp> {
     const port = await eventually(async () => {
+      checkProcess()
       try { return Number((await readFile(join(profile, 'DevToolsActivePort'), 'utf8')).split('\n')[0]) || undefined } catch { return undefined }
     }, 'owned browser debugging endpoint')
     const target = await eventually(async () => {

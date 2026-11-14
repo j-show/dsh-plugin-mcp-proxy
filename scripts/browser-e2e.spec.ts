@@ -3,7 +3,7 @@ import { copyFile, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { assertDesktopPreflight, requireBrowserMatrix, ownedCertificate, uniqueTarget, activeMcpIdentities } from './browser-e2e-contract.ts'
-import { prepareDshPage, safeBrowserDiagnostic } from './browser-cdp.ts'
+import { BrowserCdp, prepareDshPage, safeBrowserDiagnostic, verifyPageBoots } from './browser-cdp.ts'
 import { compileDesktopProbe, nativeProbe, nativeActionSession, nativeConfirmationPoll, confirmNativeAction, confirmNativeProtocol } from './browser-native.ts'
 
 it('refuses existing URI owners and noninteractive desktops before touching user state', () => {
@@ -133,4 +133,16 @@ it('retains useful client errors while omitting credentials, activation tickets 
   for (const value of ['Authorization: Bearer short', 'Cookie: local=value', 'password=short', '-----BEGIN PRIVATE KEY-----']) {
     expect(safeBrowserDiagnostic(value)).toBe('[sensitive diagnostic omitted]')
   }
+})
+it('requires every fresh page boot and stops at the first activation failure without retry', async () => {
+  const calls: string[] = []
+  await expect(verifyPageBoots(4, async index => {
+    calls.push('navigate'+index)
+    if(index===2)throw new Error('plugin activation failed')
+  })).rejects.toThrow('plugin activation failed')
+  expect(calls).toEqual(['navigate0','navigate1','navigate2'])
+})
+it('reports a browser process exit before waiting for a missing debugging file', async () => {
+  await expect(BrowserCdp.page('unused-profile', undefined, () => { throw new Error('Browser exited: code=23') }))
+    .rejects.toThrow('Browser exited: code=23')
 })
