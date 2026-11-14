@@ -13,6 +13,10 @@ Chrome/Edge 与原生 GUI/托盘矩阵按[已批准设计](superpowers/specs/202
 报告区分配对、隐藏、托盘恢复、二次启动、重连、退出及回收；后续提交仍须核对各自 CI，
 不关闭尚未覆盖的真实模型、跨用户、多设备和 A7 其他场景。
 
+提交 `b96e3bc` 的[完整 CI](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43605821033)
+另通过每浏览器 3 套全新 DSH 环境、9 次独立浏览器冷启动及全部清理，见[启动调查记录](evidence/startup-anomalies-2026-11-14.md)。
+历史 Chrome 调试入口缺失和 Edge 插件激活异常未复现，根因仍未确认，不因冷启动矩阵通过而关闭。
+
 2026-11-13 的 URI 短路径故障定位及修复回归见[原生 URI 修复记录](evidence/native-uri-short-path-2026-11-13.md)。
 旧提交的本机通过记录不覆盖其远端 CI 失败；后续提交须以对应完整 CI 运行结果为准。
 

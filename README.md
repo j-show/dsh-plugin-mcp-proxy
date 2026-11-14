@@ -48,6 +48,7 @@ lifecycle matrix. `pnpm test:browser --startup-only` runs only the cold matrix a
 current server archive; it leaves existing URI owners and desktop services untouched.
 Each DSH installation uses a separate npm cache. Failed observations stop immediately;
 reports include CDP/Web startup durations, scrubbed errors and cleanup results.
+See the [cold-start investigation](docs/evidence/startup-anomalies-2026-11-14.md) for verified results and unresolved historical failures.
 Exit checks cover the actual tray menu and termination of the GUI, service and owned children.
 Protocol prompts use native app/origin context across browser-specific labels and sentence punctuation.
 

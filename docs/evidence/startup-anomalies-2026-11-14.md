@@ -20,10 +20,25 @@
   失败页面保留声明且无客户端异常。准备流程已改为持续处理正常引导直到本机连接入口可命中，
   仅在 Settings 的 aria-expanded=false 且可命中时打开设置；回归覆盖后出现的 onboarding。
 
-当前历史 Chrome DevToolsActivePort 缺失、Edge `web boot: ... failed` 仍保持未归因；
-冷启动验证与完整 CI 结果待本轮执行完成后记录，不以新的驱动缺陷替代历史根因。
+当前历史 Chrome DevToolsActivePort 缺失、Edge `web boot: ... failed` 仍保持未归因，
+不以新的驱动缺陷替代历史根因。对比历史 Edge 失败提交 `3db6d18`：UI/浏览器适配源码及依赖锁文件均无变化。
 
 本机诊断另外确认：窗口虽处于 normal 状态，页面 visibilityState=hidden；仅 CDP bringToFront
 不足以获得系统前台。创建身份校验后的 Win32 前台操作被系统明确拒绝，故本机冷矩阵不能作为通过证据。
 新增独立 browser foreground 阶段验证，避免将无效点击与 UI 插件启动混为一谈。
-相关单元回归 18 项通过；完整默认测试 579 通过、8 跳过。全新 runner 的冷矩阵仍需以 CI 结果为准。
+相关单元回归 18 项通过；完整默认测试 579 通过、8 跳过。
+
+## 已验证结果
+
+实现提交 `b96e3bcbada3b4ed4472f29e708d4d4c7c9b13ef` 的
+[完整 Windows CI](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43605821033) 已通过，
+checkout 为 clean；逐次原始结果及归档哈希固定于[冷启动证据](cold-browser-startup-2026-11-14.json)。
+
+| 浏览器 | 全新 DSH 环境 | 独立进程/profile | CDP 建立耗时 | Web 设置就绪耗时 |
+| --- | --- | --- | --- | --- |
+| Chrome 156.0.8078.80 | 3 | 9 次全部通过 | 445–4761 ms | 1714–2297 ms |
+| Edge 156.0.4314.58 | 3 | 9 次全部通过 | 706–1064 ms | 1688–2262 ms |
+
+两种浏览器另各完成 20 次新文档启动和原有七场景生命周期、网页伪确认及托盘遮挡拒绝检查。
+全部环境、浏览器进程、CA、URI 和机器服务回收通过；五项原生产物测试零跳过，十个验证命令退出码均为 0。
+这些结果证明复现入口和新增驱动修正已通过实际 CI；两项历史异常本轮没有复现，仍不标记已找到根因或已修复。

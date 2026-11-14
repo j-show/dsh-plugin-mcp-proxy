@@ -1,0 +1,314 @@
+{
+  "verifiedCommit": "b96e3bcbada3b4ed4472f29e708d4d4c7c9b13ef",
+  "dirty": false,
+  "workflowRun": "https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43605821033",
+  "artifact": {
+    "id": 14118540736,
+    "sha256": "6825554ecd261f1c492a0ac3d5a0ff827f9aa5e2bb3f6edbe35202aec55fe75f"
+  },
+  "scope": "fresh Windows runner; three private DSH installations per browser; three independent browser processes/profiles per installation; not repeated operating-system or browser installation",
+  "build": {
+    "buildId": "build-proxy-InSKIg",
+    "executableSha256": "477b70fa6f10c586e59324c82657cecf4d78a5978d8b20e94b962046bf14ee9f",
+    "manifestSha256": "b6c0aa01c4fd67c4b476d72c7af0caf8dff61861ff3b182047140ff456328a7b",
+    "serverPluginSha256": "2d75826445356bf1a5db8713df80181c626daa2658dbb0c71d3d2cce7f058601"
+  },
+  "coldStartup": [
+    {
+      "browser": "chrome",
+      "environments": [
+        {
+          "index": 0,
+          "pluginSha256": "2d75826445356bf1a5db8713df80181c626daa2658dbb0c71d3d2cce7f058601",
+          "boots": [
+            {
+              "index": 0,
+              "profile": "browser-chrome-cold-0-0/profile-0",
+              "version": "Chrome/156.0.8078.80",
+              "cdpMs": 4761,
+              "webMs": 2297,
+              "cleanup": true
+            },
+            {
+              "index": 1,
+              "profile": "browser-chrome-cold-0-1/profile-1",
+              "version": "Chrome/156.0.8078.80",
+              "cdpMs": 531,
+              "webMs": 1896,
+              "cleanup": true
+            },
+            {
+              "index": 2,
+              "profile": "browser-chrome-cold-0-2/profile-2",
+              "version": "Chrome/156.0.8078.80",
+              "cdpMs": 552,
+              "webMs": 1714,
+              "cleanup": true
+            }
+          ],
+          "cleanup": true
+        },
+        {
+          "index": 1,
+          "pluginSha256": "2d75826445356bf1a5db8713df80181c626daa2658dbb0c71d3d2cce7f058601",
+          "boots": [
+            {
+              "index": 0,
+              "profile": "browser-chrome-cold-1-0/profile-0",
+              "version": "Chrome/156.0.8078.80",
+              "cdpMs": 459,
+              "webMs": 2147,
+              "cleanup": true
+            },
+            {
+              "index": 1,
+              "profile": "browser-chrome-cold-1-1/profile-1",
+              "version": "Chrome/156.0.8078.80",
+              "cdpMs": 460,
+              "webMs": 1884,
+              "cleanup": true
+            },
+            {
+              "index": 2,
+              "profile": "browser-chrome-cold-1-2/profile-2",
+              "version": "Chrome/156.0.8078.80",
+              "cdpMs": 445,
+              "webMs": 1798,
+              "cleanup": true
+            }
+          ],
+          "cleanup": true
+        },
+        {
+          "index": 2,
+          "pluginSha256": "2d75826445356bf1a5db8713df80181c626daa2658dbb0c71d3d2cce7f058601",
+          "boots": [
+            {
+              "index": 0,
+              "profile": "browser-chrome-cold-2-0/profile-0",
+              "version": "Chrome/156.0.8078.80",
+              "cdpMs": 468,
+              "webMs": 2126,
+              "cleanup": true
+            },
+            {
+              "index": 1,
+              "profile": "browser-chrome-cold-2-1/profile-1",
+              "version": "Chrome/156.0.8078.80",
+              "cdpMs": 518,
+              "webMs": 1854,
+              "cleanup": true
+            },
+            {
+              "index": 2,
+              "profile": "browser-chrome-cold-2-2/profile-2",
+              "version": "Chrome/156.0.8078.80",
+              "cdpMs": 527,
+              "webMs": 1754,
+              "cleanup": true
+            }
+          ],
+          "cleanup": true
+        }
+      ]
+    },
+    {
+      "browser": "edge",
+      "environments": [
+        {
+          "index": 0,
+          "pluginSha256": "2d75826445356bf1a5db8713df80181c626daa2658dbb0c71d3d2cce7f058601",
+          "boots": [
+            {
+              "index": 0,
+              "profile": "browser-edge-cold-0-0/profile-0",
+              "version": "Edg/156.0.4314.58",
+              "cdpMs": 1064,
+              "webMs": 2147,
+              "cleanup": true
+            },
+            {
+              "index": 1,
+              "profile": "browser-edge-cold-0-1/profile-1",
+              "version": "Edg/156.0.4314.58",
+              "cdpMs": 957,
+              "webMs": 1701,
+              "cleanup": true
+            },
+            {
+              "index": 2,
+              "profile": "browser-edge-cold-0-2/profile-2",
+              "version": "Edg/156.0.4314.58",
+              "cdpMs": 932,
+              "webMs": 1688,
+              "cleanup": true
+            }
+          ],
+          "cleanup": true
+        },
+        {
+          "index": 1,
+          "pluginSha256": "2d75826445356bf1a5db8713df80181c626daa2658dbb0c71d3d2cce7f058601",
+          "boots": [
+            {
+              "index": 0,
+              "profile": "browser-edge-cold-1-0/profile-0",
+              "version": "Edg/156.0.4314.58",
+              "cdpMs": 963,
+              "webMs": 2163,
+              "cleanup": true
+            },
+            {
+              "index": 1,
+              "profile": "browser-edge-cold-1-1/profile-1",
+              "version": "Edg/156.0.4314.58",
+              "cdpMs": 979,
+              "webMs": 1774,
+              "cleanup": true
+            },
+            {
+              "index": 2,
+              "profile": "browser-edge-cold-1-2/profile-2",
+              "version": "Edg/156.0.4314.58",
+              "cdpMs": 1009,
+              "webMs": 1728,
+              "cleanup": true
+            }
+          ],
+          "cleanup": true
+        },
+        {
+          "index": 2,
+          "pluginSha256": "2d75826445356bf1a5db8713df80181c626daa2658dbb0c71d3d2cce7f058601",
+          "boots": [
+            {
+              "index": 0,
+              "profile": "browser-edge-cold-2-0/profile-0",
+              "version": "Edg/156.0.4314.58",
+              "cdpMs": 813,
+              "webMs": 2262,
+              "cleanup": true
+            },
+            {
+              "index": 1,
+              "profile": "browser-edge-cold-2-1/profile-1",
+              "version": "Edg/156.0.4314.58",
+              "cdpMs": 929,
+              "webMs": 1762,
+              "cleanup": true
+            },
+            {
+              "index": 2,
+              "profile": "browser-edge-cold-2-2/profile-2",
+              "version": "Edg/156.0.4314.58",
+              "cdpMs": 706,
+              "webMs": 1735,
+              "cleanup": true
+            }
+          ],
+          "cleanup": true
+        }
+      ]
+    }
+  ],
+  "lifecycle": [
+    {
+      "browser": "chrome",
+      "version": "Chrome/156.0.8078.80 / Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "scenarios": {
+        "pair": true,
+        "hide": true,
+        "trayRestore": true,
+        "secondLaunch": true,
+        "reconnect": true,
+        "trayExit": true,
+        "cleanup": true
+      },
+      "guards": {
+        "webDocumentRejected": true,
+        "documentDepth": 51,
+        "ancestorLimit": 32,
+        "trayOcclusionRefused": true
+      }
+    },
+    {
+      "browser": "edge",
+      "version": "Edg/156.0.4314.58 / Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36 Edg/156.0.0.0",
+      "scenarios": {
+        "pair": true,
+        "hide": true,
+        "trayRestore": true,
+        "secondLaunch": true,
+        "reconnect": true,
+        "trayExit": true,
+        "cleanup": true
+      },
+      "guards": {
+        "webDocumentRejected": true,
+        "documentDepth": 51,
+        "ancestorLimit": 32,
+        "trayOcclusionRefused": true
+      }
+    }
+  ],
+  "cleanup": "owned private state removed; URI/CA/process/service checks passed",
+  "tests": {
+    "default": {
+      "passed": 579,
+      "skipped": 8
+    },
+    "development": {
+      "passed": 58
+    },
+    "product": {
+      "passed": 5,
+      "skipped": 0
+    }
+  },
+  "commands": [
+    {
+      "command": "pnpm dev:doctor --packaging",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm dev:init",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm build",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm typecheck",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm test",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm dev:check",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm build:mcp-proxy --skip-build",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm build:mcp-plugin --skip-build",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm test:product",
+      "exitCode": 0
+    },
+    {
+      "command": "pnpm test:browser",
+      "exitCode": 0
+    }
+  ],
+  "historicalAnomalies": {
+    "chromeDebugEndpoint": "not reproduced; root cause unconfirmed",
+    "edgePluginActivation": "not reproduced; root cause unconfirmed"
+  }
+}
