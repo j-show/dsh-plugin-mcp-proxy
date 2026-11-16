@@ -99,6 +99,7 @@ export class DesktopHost {
       const key = (file: string) => process.platform === 'win32' ? resolve(file).toLowerCase() : resolve(file)
       if (!reply.ok || key(reply.snapshot.settingsFile) !== key(this.settings)) throw new Error('Another configuration owns the local service')
       this.ownedPid = reply.snapshot.pid
+      this.emit('owner',{pid:this.ownedPid,settingsFile:this.settings})
       this.ready.resolve()
       if (this.options.registerProtocol) await this.registerUri()
       else { this.protocolReady = true; this.publish('ready') }

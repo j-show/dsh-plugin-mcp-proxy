@@ -23,7 +23,6 @@ pnpm build:mcp-plugin
 | `release/mcp-proxy/win-32/`、`win-64/` | 对应架构 NSIS 安装包；安装后运行 mcp-proxy.exe |
 | `release/mcp-proxy/mac-intel/`、`mac-arm/` | 对应架构 DMG |
 | `release/mcp-proxy/linux/` | Ubuntu x64 deb |
-| `release/mcp-proxy/j-show-mcp-proxy-runtime-0.1.0.tgz` | 额外的 Node profile 归档，仅供产物集成测试，不是用户安装步骤 |
 | `release/mcp-plugin/j-show-dsh-plugin-mcp-proxy-0.1.0.tgz` | 含内部模块和浏览器产物的服务端插件 |
 | `release/mcp-plugin/install.mjs`、`release.json`、补丁、许可证 | 服务端发布安装工具及配套文件，需保留整个目录 |
 
@@ -107,11 +106,16 @@ GUI 参数按行填写；环境变量/请求头输入 JSON 对象，roots 按行
 
 普通用户使用 GUI。下列命令是维护入口，路径应替换为实际已生成的配置，且使用相同 `DSH_HOME`（如设置过）：
 
-```powershell
+```bat
 .\mcp-proxy.exe --config "C:\McpProxy\settings.json" --stop
 .\mcp-proxy.exe --config "C:\McpProxy\settings.json" --install
 .\mcp-proxy.exe --config "C:\McpProxy\settings.json" --uninstall
 ```
+
+macOS/Linux 使用对应安装中的 `mcp-proxy` 程序与本机绝对配置路径，参数相同。
+
+Windows 普通卸载会在删除程序和内置运行时前执行自有 URI 移除；归属冲突或清理失败会中止卸载，不能绕过检查删除未知注册。
+若仅在启动终端里临时指定了 `DSH_HOME`，先在相同环境执行 `--uninstall`，再运行系统卸载；卸载程序无法从另一个终端推断该私有 home。
 
 `--install/--uninstall` 操作该 profile 拥有的 URI 入口；不覆盖或删除无关所有者。`--uninstall` 不是删除所有用户数据或撤销所有服务器设备。移除前退出 GUI，再移除所属 URI；确认无运行进程后才可删除自己的 EXE/缓存。配置、身份和工作文件是否保留由用户决定，不要把删除整个数据目录作为故障修复步骤。已有自动登记设备的撤销管理尚无完整产品 UI。
 
@@ -129,8 +133,14 @@ node release/mcp-plugin/install.mjs --dsh-root <目标DSH包管理安装根目�
 
 启动环境设置 `MCP_PROXY_ORIGIN` 为外部可访问的规范 HTTPS origin，再用目标安装的 `dsh --profile web` 启动。DSH 原有登录、模型、端口、TLS 终止及其他启动配置由部署者已有配置提供，本指南不改为另一模型或另造启动服务。
 
-```powershell
-$env:MCP_PROXY_ORIGIN = 'https://agent.example.com'
+```sh
+MCP_PROXY_ORIGIN=https://agent.example.com dsh --profile web
+```
+
+Windows 命令提示符：
+
+```bat
+set "MCP_PROXY_ORIGIN=https://agent.example.com"
 dsh --profile web
 ```
 

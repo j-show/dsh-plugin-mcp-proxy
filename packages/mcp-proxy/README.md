@@ -14,6 +14,8 @@ After installation, open `mcp-proxy` and add downstream MCPs. Closing hides the 
 tray Exit stops owned resources. Command-line operations remain `--config`, `--start`,
 `--stop`, `--associate`, `--install`, `--uninstall`, `--help`.
 `DSH_HOME` selects a custom profile home; URI registration never replaces unknown owners.
+The Windows uninstaller removes receipt-owned URI state before its payload; failures abort uninstall.
+Supervisor crash recovery waits for the original service and owned descendants, preserving replacement owners.
 
 Default data is under `%LOCALAPPDATA%/McpProxy/data` on Windows,
 `~/Library/Application Support/McpProxy/data` on Mac and

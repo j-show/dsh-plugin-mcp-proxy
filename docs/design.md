@@ -1,6 +1,6 @@
 # 现行技术方案
 
-本文描述独立项目当前实现及必须保留的设计约束，对应[需求 B1—B28、M1—M3](requirements.md)。历史方案 A 的完整中英文版本保存在[历史基线](history/README.md)；其中旧源码位置、包名、应用数据目录及旧式单服务器路线不作为现行接入说明。当前验收缺口集中记录在[验收记录](acceptance.md)。
+本文描述独立项目当前实现及必须保留的设计约束，对应[需求 B1—B28、M1—M4](requirements.md)。历史方案 A 的完整中英文版本保存在[历史基线](history/README.md)；其中旧源码位置、包名、应用数据目录及旧式单服务器路线不作为现行接入说明。当前验收缺口集中记录在[验收记录](acceptance.md)。
 
 ## 部署与模块
 
@@ -13,10 +13,10 @@ flowchart TB
     Agent --> Log[DSH Session 事件与附件]
     UI[ui 连接状态及人工回答] <--> Browser
   end
-  subgraph Desktop[一个 Windows 连通应用]
+  subgraph Desktop[一个本机连通应用]
     GUI[Tauri 窗口与托盘] -->|窄 IPC| Supervisor[随包 Node 22 监督进程]
     Supervisor --> Runtime[固定 dsh profile]
-    URI[原生 URI 入口] -->|私有命名管道| Runtime
+    URI[原生 URI 入口] -->|私有控制通道| Runtime
     Runtime --> Channels[按 DSH 地址独立通道]
     Channels --> Routes[不可变调用归属]
     Routes --> Pool[共享本地 MCP 池]
@@ -50,6 +50,8 @@ Rust 启动 Node 前按编译时内嵌摘要校验资源清单及所有文件；
 Rust 通过私有 stdio 监督随包 Node 进程，Node 再启动固定 `mcp-proxy` profile；不在 WebView 或 Rust 重写 agent/MCP。
 公共 app-boot API 初始化 profile，startup 在预算内检查必需提供方。退出等待自有进程清理，监督进程失联使用既有 DSH 信号关闭路径。
 Windows Job 约束后代进程，x86/x64 使用匹配的结构尺寸；HTTP/SSE 外部服务不由应用停止。
+Rust 在首个启动 RPC 前建立监督进程的 Windows Job／Unix 进程组。监督进程确认退出后，恢复入口仅处理先前验证的 PID 和配置，等待实际服务退出；控制通道消失不代表清理结束。
+内核归属范围内的残留进程可在宽限后清理；采用的外部既有服务仍须验证原身份，失败不放行退出。普通 NSIS 卸载在删除运行时前移除记录归属的 URI，验证失败便中止。
 
 GUI 的 Tauri 单实例机制复用窗口。后台服务通过固定机器命名管道 `\\.\pipe\dsh-mcp-proxy` 的首实例所有权排他；不以 PID 超时抢占，也不监听固定本地 TCP 端口。B3 要求跨工作目录、profile 和操作系统登录会话成立；跨 Windows 用户的排他性及管道权限仍需专门产品验收，不能把同用户测试当作已完成证明。
 
@@ -63,7 +65,7 @@ Rust 只接受本地 main 窗口来源的固定管理命令；前端不能派发
 sequenceDiagram
   participant W as 已登录的 DSH Web
   participant H as DSH 插件
-  participant O as Windows URI 入口
+  participant O as 操作系统 URI 入口
   participant L as 本地服务
   W->>H: begin 创建浏览器绑定的一次性票据
   H-->>W: 带版本 地址 票据的 URI

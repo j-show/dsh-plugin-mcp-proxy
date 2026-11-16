@@ -6,6 +6,7 @@
 下方 Electron 的历史 CI、缓存、断点与浏览器证据保留为历史事实，不能替代 Tauri 的原生/GUI 验收。
 新入口为 `build:shared`、各平台 `build:*`、`verify`、`test:product --target`、`test:installer --target`。
 本轮已在本机生成 Windows x86/x64 安装包并通过两种架构各五项产物用例；macOS/Linux 与 Tauri 浏览器/托盘结果按本轮 CI 单独记录。
+CI 修复后的本机工作区验证见[后续证据](evidence/tauri-followup-2026-11-16.json)：581 项默认测试、7 项 Rust 测试及两架构原生产物通过；保留既有 URI 的真实安装/卸载通过。新增“注册后普通卸载”、直接 DMG 及 Unix 进程清理按新 CI 验证，不能沿用旧安装测试结果。
 
 迁移基线日期：2026-11-07；最新浏览器自动化证据：2026-11-14（Asia/Shanghai）。适用独立项目 `0.1.0`、公共 DSH `0.1.6-alpha.2` 及所附兼容补丁。需求编号见[requirements](requirements.md)，设计见[design](design.md)，启动和配置见[configuration](configuration.md)。本文是证据清单，不把已实现或单元测试通过等同于完整产品验收。
 

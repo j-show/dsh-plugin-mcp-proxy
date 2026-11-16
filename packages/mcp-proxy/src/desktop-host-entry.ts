@@ -2,10 +2,14 @@
 import { createInterface } from 'node:readline'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
-import { join, dirname } from 'node:path'
+import { join, dirname, isAbsolute } from 'node:path'
+import {createRequire} from 'node:module'
+import {pathToFileURL} from 'node:url'
 import { homedir } from 'node:os'
 import { DesktopHost, desktopDataDirectory, type DesktopHostOptions } from './desktop-host.ts'
 import { ensureLocalProfile } from './ensure-profile.ts'
+import {recoverService,assertRecoverySocketAbsent} from './recover-service.ts'
+import type * as DesktopApi from '@j-show/mcp-proxy-runtime/desktop'
 
 const send = (value: unknown) => { process.stdout.write(JSON.stringify(value) + '\n') }
 async function administrative(options: DesktopHostOptions): Promise<void> {
@@ -22,7 +26,24 @@ async function administrative(options: DesktopHostOptions): Promise<void> {
   const [code, signal] = await once(child, 'exit') as [number | null, string | null]
   if (code !== 0 || signal !== null) throw new Error('Administrative command failed')
 }
-if (process.argv[2] === '--admin') {
+if(process.argv[2]==='--recover-shutdown'){
+  try{
+    const owner=JSON.parse(process.argv[3]!) as {resources:string;pid:number;settingsFile:string}
+    if(typeof owner.resources!=='string'||!isAbsolute(owner.resources)||typeof owner.settingsFile!=='string'||!isAbsolute(owner.settingsFile))throw new Error('Invalid recovery locations')
+    const require=createRequire(join(owner.resources,'dsh/package.json'))
+    const api=await import(pathToFileURL(require.resolve('@j-show/mcp-proxy-runtime/desktop')).href) as typeof DesktopApi
+    const address=await api.machineControlAddress()
+    await recoverService(owner,{
+      exited:()=>{try{process.kill(owner.pid,0);return false}catch(error){if((error as NodeJS.ErrnoException).code==='ESRCH')return true;throw error}},
+      status:async()=>{try{return await api.requestLocalStatus(address,1000)}catch{await assertRecoverySocketAbsent(address);return undefined}},
+      snapshot:async()=>{
+        const reply=api.parseLocalManagementReply(await api.requestLocalManagement(address,{kind:'snapshot'},5000,1048576))
+        if(!reply.ok)throw new Error('Recovery snapshot unavailable')
+        return reply.snapshot
+      },stop:pid=>api.requestLocalStop(address,5000,pid),
+    })
+  }catch{process.stderr.write('mcp-proxy: recovery-shutdown failed\n');process.exitCode=1}
+}else if (process.argv[2] === '--admin') {
   try { await administrative(JSON.parse(process.argv[3]!) as DesktopHostOptions) }
   catch { process.stderr.write('mcp-proxy: administrative operation failed\n'); process.exitCode = 1 }
 } else {

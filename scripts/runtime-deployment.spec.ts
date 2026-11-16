@@ -2,7 +2,7 @@ import { expect, it, onTestFinished } from 'vitest'
 import { mkdtemp, mkdir, readFile, rm, symlink, writeFile, lstat, rmdir, readdir, link } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { materializeDeploymentLinks, restoreDeploymentDependencies } from './runtime-deployment.ts'
+import { materializeDeploymentLinks, restoreDeploymentDependencies, pruneDeploymentWorkspaces } from './runtime-deployment.ts'
 
 async function setup() {
   const root = await mkdtemp(join(tmpdir(), 'runtime-deploy-'))
@@ -11,6 +11,7 @@ async function setup() {
   const source = join(root, 'source')
   await mkdir(join(stage, 'node_modules'), { recursive: true })
   await mkdir(join(source, 'package/node_modules/private'), { recursive: true })
+  await mkdir(join(source, 'package/modules/example/node_modules/private'), { recursive: true })
   await writeFile(join(source, 'package/index.js'), 'export const value = 1\n')
   await writeFile(join(stage, 'package.json'), JSON.stringify({ dependencies: { package: '1' } }))
   return { stage, source }
@@ -32,6 +33,19 @@ it('restores a missing declared package without copying its source node_modules'
   expect(await restoreDeploymentDependencies(stage, source)).toEqual(['package'])
   expect(await readFile(join(stage, 'node_modules/package/index.js'), 'utf8')).toContain('value = 1')
   await expect(lstat(join(stage, 'node_modules/package/node_modules'))).rejects.toMatchObject({ code: 'ENOENT' })
+  await expect(lstat(join(stage, 'node_modules/package/modules/example/node_modules'))).rejects.toMatchObject({ code: 'ENOENT' })
+})
+
+it('removes unreferenced workspace hoists before materializing links without touching source packages',async()=>{
+  const {stage,source}=await setup()
+  const scope=join(stage,'node_modules/@j-show');await mkdir(scope)
+  await symlink(join(source,'package'),join(scope,'server'),process.platform==='win32'?'junction':'dir')
+  await mkdir(join(stage,'node_modules/.pnpm/node_modules/@j-show/server'),{recursive:true})
+  await writeFile(join(stage,'node_modules/.pnpm/node_modules/@j-show/server/source.ts'),'not a runtime dependency')
+  await pruneDeploymentWorkspaces(stage,new Set(['@j-show/server']))
+  await expect(lstat(join(scope,'server'))).rejects.toMatchObject({code:'ENOENT'})
+  await expect(lstat(join(stage,'node_modules/.pnpm/node_modules/@j-show/server'))).rejects.toMatchObject({code:'ENOENT'})
+  expect(await readFile(join(source,'package/index.js'),'utf8')).toContain('value = 1')
 })
 
 it('materializes package links as independent files and preserves their sources', async () => {

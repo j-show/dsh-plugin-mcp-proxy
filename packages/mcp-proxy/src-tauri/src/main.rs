@@ -2,6 +2,7 @@
 mod bridge;
 mod diagnostics;
 mod integrity;
+mod supervisor_owner;
 use bridge::Bridge;
 use serde_json::{json, Value};
 use std::{

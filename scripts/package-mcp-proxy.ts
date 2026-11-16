@@ -6,7 +6,8 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
 import { pnpmInvocation } from './pnpm-invocation.ts'
-import { materializeDeploymentLinks, restoreDeploymentDependencies } from './runtime-deployment.ts'
+import { materializeDeploymentLinks, restoreDeploymentDependencies, pruneDeploymentWorkspaces } from './runtime-deployment.ts'
+import modules from './modules.json' with {type:'json'}
 
 /** Explicit build inputs; the official executable and license must match the requested target. */
 export interface McpProxyPackageOptions {
@@ -53,6 +54,17 @@ export async function packageMcpProxy(options: McpProxyPackageOptions, run?: Run
     '--config.allow-unused-patches=true', '--config.node-linker=hoisted', '--config.auto-install-peers=false',
     '--config.link-workspace-packages=true', output], options.environment)
   await (run ?? execute)(invocation.command, invocation.args, repository)
+  const manifests=new Map(await Promise.all(modules.map(async module=>[module.name,
+    JSON.parse(await readFile(join(repository,module.directory,'package.json'),'utf8')) as {dependencies?:Record<string,string>;peerDependencies?:Record<string,string>} ] as const)))
+  const required=new Set<string>()
+  function visit(name:string):void{
+    if(required.has(name))return
+    required.add(name)
+    const manifest=manifests.get(name)
+    for(const dependency of Object.keys({...manifest?.dependencies,...manifest?.peerDependencies}))if(manifests.has(dependency))visit(dependency)
+  }
+  visit('@j-show/mcp-proxy')
+  await pruneDeploymentWorkspaces(output,new Set(modules.filter(module=>!required.has(module.name)||module.name==='@j-show/mcp-proxy').map(module=>module.name)))
   await restoreDeploymentDependencies(output, join(repository, 'packages/mcp-proxy/node_modules'))
   await materializeDeploymentLinks(output)
   const deployed: unknown = JSON.parse(await readFile(join(output, 'package.json'), 'utf8'))

@@ -8,3 +8,4 @@
 - Keep app-data launch context in trusted receipt metadata, never in browser activation parameters. Production uses Tauri and Node 22; retain legacy receipt parsing/tests only for safe existing-launcher removal and upgrade.
 - Normalize the full executable path before locating activation diagnostics; short aliases must retain the same fixed-name, URI-free trace.
 - Use direct native probes rather than PowerShell. Size Job structures for the executing Node architecture; preserve each install/uninstall deadline and all ownership, recovery and cleanup assertions.
+- Native profile fixtures must create identity files at mode 0600; keep DSH's POSIX credential permission checks enabled.

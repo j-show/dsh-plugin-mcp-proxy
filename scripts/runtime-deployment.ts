@@ -1,7 +1,26 @@
 /** File materialization shared by runtime distribution builders. */
 import { existsSync } from 'node:fs'
 import { copyFile, cp, lstat, mkdir, mkdtemp, readFile, readdir, realpath, rename, rm, unlink } from 'node:fs/promises'
-import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
+
+/** Remove pnpm's unrelated workspace hoists from this new, private deployment only. */
+export async function pruneDeploymentWorkspaces(staging:string,excluded:ReadonlySet<string>):Promise<void>{
+  const root=resolve(staging,'node_modules');await realDirectory(root)
+  async function visit(directory:string):Promise<void>{
+    for(const entry of await readdir(directory,{withFileTypes:true})){
+      const path=join(directory,entry.name),parent=dirname(path)
+      const scope=basename(parent),name=scope.startsWith('@')?scope+'/'+entry.name:entry.name
+      const packageParent=scope.startsWith('@')?dirname(parent):parent
+      const metadata=await lstat(path)
+      if(basename(packageParent)==='node_modules'&&excluded.has(name)){
+        if(metadata.isSymbolicLink())await unlink(path)
+        else if(metadata.isDirectory())await rm(path,{recursive:true,force:false})
+        else throw new Error('Unexpected workspace deployment entry')
+      }else if(metadata.isDirectory()&&!metadata.isSymbolicLink())await visit(path)
+    }
+  }
+  await visit(root)
+}
 
 /**
  * @param staging - owned deployment directory.
@@ -83,9 +102,8 @@ async function realDirectory(path: string): Promise<void> {
 
 async function copyPackage(source: string, destination: string): Promise<void> {
   await mkdir(dirname(destination), { recursive: true })
-  const nested = join(source, 'node_modules')
   await cp(source, destination, { recursive: true, dereference: true,
-    filter: path => path !== nested && !path.startsWith(nested + sep),
+    filter: path => !relative(source,path).split(sep).includes('node_modules'),
   })
 }
 

@@ -39,7 +39,7 @@ await withProductRunLock(async()=>{
     if(process.platform==='win32'){
       const helper=await compileDesktopProbe(state);await nativeProbe(helper,'protect-state',state)
       const before=await nativeProbe<InstallInfo>(helper,'installer-info')
-      if(before.installations.length||before.run||before.appId)throw new Error('Installer test requires no existing mcp-proxy installation/integration; unknown owners are preserved')
+      if(before.installations.length||before.run||before.appId||before.uriDigest!==digest(Buffer.alloc(0)).toUpperCase())throw new Error('Installer test requires no existing mcp-proxy installation/integration; unknown owners are preserved')
       const installed=join(state,'installed'),executable=join(installed,'mcp-proxy.exe'),uninstaller=join(installed,'uninstall.exe')
       const unquote=(value:string)=>value.replace(/^"|"$/g,'')
       let installedOwner=false
@@ -54,6 +54,9 @@ await withProductRunLock(async()=>{
           throw new Error('Installer application differs from the bound build')
         }
         await verifyDesktopRuntime(installed);await help(executable);await verifyDesktopRuntime(installed)
+        await execute(executable,['--install'],{cwd:join(state,'workspace'),env,windowsHide:true,timeout:90000,maxBuffer:1048576})
+        if((await nativeProbe<InstallInfo>(helper,'installer-info')).uriDigest===before.uriDigest)throw new Error('Installed application did not register its URI')
+        report.uri='registered by installed application; removal must be performed by the ordinary uninstaller'
         report.payload='installed executable and runtime matched the recorded build; CLI passed'
       }finally{
         const info=await nativeProbe<InstallInfo>(helper,'installer-info')
@@ -69,7 +72,7 @@ await withProductRunLock(async()=>{
         const after=await nativeProbe<InstallInfo>(helper,'installer-info')
         if(after.uriDigest!==before.uriDigest||after.run!==before.run||after.appId!==before.appId)throw new Error('Installer changed pre-existing integration state')
       }
-      report.scope='real current-user NSIS install, installed CLI and owned uninstall; existing URI unchanged'
+      report.scope='real current-user NSIS install, installed CLI/URI registration and ordinary owned uninstall; integrations restored'
     }else if(process.platform==='darwin'){
       const mount=join(state,'mount');await mkdir(mount)
       let mounted=false
@@ -77,8 +80,13 @@ await withProductRunLock(async()=>{
         await execute('hdiutil',['attach','-readonly','-nobrowse','-mountpoint',mount,build.installer],{timeout:90000});mounted=true
         const apps=(await readdir(mount)).filter(name=>name==='mcp-proxy.app')
         if(apps.length!==1)throw new Error('DMG lacks its application')
-        await help(join(mount,apps[0]!,'Contents/MacOS/mcp-proxy'))
-      }finally{if(mounted)await execute('hdiutil',['detach',mount],{timeout:30000})}
+        const contents=join(mount,apps[0]!,'Contents'),executable=join(contents,'MacOS/mcp-proxy'),distribution=join(contents,'Resources')
+        if(digest(await readFile(executable))!==build.executableSha256)throw new Error('DMG executable differs from the bound build')
+        await verifyDesktopRuntime(distribution);await help(executable);await verifyDesktopRuntime(distribution)
+      }finally{if(mounted){
+        try{await execute('hdiutil',['detach',mount],{timeout:15000})}
+        catch{await execute('hdiutil',['detach','-force',mount],{timeout:30000})}
+      }}
       report.scope='read-only mounted DMG application CLI; no LaunchServices or installation changes'
     }else if(process.platform==='linux'){
       const extracted=join(state,'extract');await mkdir(extracted)

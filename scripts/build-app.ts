@@ -16,6 +16,7 @@ import { writeRuntimeInventory } from './runtime-inventory.ts'
 import { writeProductBuild } from './product-build.ts'
 import { writeRustLicenses } from './rust-licenses.ts'
 import {installerPayloadBinary} from './bundle-payload.ts'
+import {createMacDiskImage} from './mac-disk-image.ts'
 export interface AppBuildOutput { target: string; distribution: string; executable: string }
 interface ConnectionPreset { origin: string; certificate: string }
 
@@ -64,6 +65,7 @@ async function packageTarget(root: string, target: AppTarget, shared: string, de
     const suffix = target.bundle === 'nsis' ? '.exe' : target.bundle === 'dmg' ? '.dmg' : '.deb'
     const application = JSON.parse(await readFile(join(root,'package.json'),'utf8')) as {version:string}
     const architecture = target.platform === 'linux' ? 'amd64' : target.arch === 'ia32' ? 'x86' : target.arch === 'arm64' ? 'aarch64' : 'x64'
+    if(target.bundle==='dmg')await createMacDiskImage(dirname(dirname(dirname(applicationBinary))),join(bundles,`mcp-proxy_${application.version}_${architecture}.dmg`),stage)
     const ending = '_' + architecture + (target.bundle === 'nsis' ? '-setup' : '') + suffix
     const candidates = (await readdir(bundles)).filter(file => file.startsWith(`mcp-proxy_${application.version}_`) && file.endsWith(ending))
     if (candidates.length !== 1) throw new Error('Expected one target installer')

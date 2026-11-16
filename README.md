@@ -58,6 +58,7 @@ Every target carries checksum-pinned Node **22.23.5**, matching native dependenc
 an immutable runtime inventory and third-party notices. Installers and executable/runtime
 pairs are recorded together; a changed runtime is rejected rather than repaired during acceptance.
 Mac builds retain the `.app` alongside DMG generation so the recorded executable comes from the actual bundle.
+The read-only DMG is created directly with `hdiutil`, without Finder layout scripts.
 Application version and npm scripts/dependencies are controlled by the root `package.json`;
 Rust dependencies are locked in `Cargo.toml`/`Cargo.lock`.
 
@@ -73,6 +74,8 @@ install missing WebView2; Node is included and does not require a user installat
 Open the application, add MCP commands or HTTP/SSE endpoints, then choose “Connect this computer” in DSH Web.
 Closing the window hides it; tray Exit waits for owned service/MCP cleanup without a second confirmation.
 URI registration preserves unknown owners. Configuration, identity and user files are separate from installed binaries.
+Windows uninstall removes the receipt-verified URI before deleting the bundled runtime; an ownership or cleanup error stops uninstall.
+After a supervisor crash, Exit verifies the original service and drains only its owned process scope before releasing the desktop instance.
 
 For the server, stop DSH **0.1.6-alpha.2**, then run against its package-manager installation root:
 

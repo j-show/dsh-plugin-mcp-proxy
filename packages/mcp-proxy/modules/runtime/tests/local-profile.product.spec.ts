@@ -94,10 +94,10 @@ async function fixture(acknowledge: boolean, projectEnvironment = false) {
   })
   const identity = join(root, 'identity.yaml')
   if (projectEnvironment) {
-    await writeFile(identity, 'version: 1\nrefs: {}\n')
+    await writeFile(identity, 'version: 1\nrefs: {}\n', { mode: 0o600 })
     await writeFile(join(home, '.env'), `${credential}=wrong-home-value\n`)
     await writeFile(join(root, '.env'), `${credential}=${token}\n`)
-  } else await writeFile(identity, `version: 1\nrefs:\n  ${credential}: ${token}\n`)
+  } else await writeFile(identity, `version: 1\nrefs:\n  ${credential}: ${token}\n`, { mode: 0o600 })
   const marker = join(root, 'mcp-processes.jsonl')
   async function startupDiagnostic(): Promise<string> {
     const log = await readFile(join(profile, 'mcp-proxy.log'), 'utf8').catch(() => '')

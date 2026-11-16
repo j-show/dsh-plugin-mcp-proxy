@@ -5,7 +5,7 @@ import { promisify } from 'node:util'
 /**
  * Import each public local-application entry without starting an agent or MCP.
  * @param directory - deployed dependency resolver root.
- * @param executable - qualified Node executable or Electron in Node mode.
+ * @param executable - qualified bundled Node executable.
  * @param environment - child runtime environment.
  * @returns after all application entries and their dependencies import successfully.
  */

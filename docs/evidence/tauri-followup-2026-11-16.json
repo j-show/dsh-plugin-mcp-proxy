@@ -1,0 +1,73 @@
+{
+  "sourceKind": "working tree after 41c788c; new URI-registration uninstall, macOS/Linux and GUI matrix await new commit CI",
+  "node": "22.23.5",
+  "pnpmBuild": "11.28.12",
+  "tests": {
+    "default": {
+      "passed": 581,
+      "skipped": 8
+    },
+    "rust": {
+      "passed": 7,
+      "skipped": 0
+    },
+    "typecheck": "passed"
+  },
+  "products": [
+    {
+      "target": "win-32",
+      "product": {
+        "status": "passed",
+        "tests": {
+          "passed": 5,
+          "skipped": 0
+        },
+        "serviceBefore": "idle",
+        "serviceAfter": "idle",
+        "cleanup": "test-owned data removed"
+      },
+      "installer": {
+        "status": "passed",
+        "cleanup": true,
+        "scope": "real current-user NSIS install, installed CLI and owned uninstall; existing URI unchanged",
+        "variant": "41c788c installer harness preserving existing personal URI; no new URI registration"
+      },
+      "hashes": {
+        "executable": "c223c91bab938f70c2e4feadc4b7fd4bfcf954f87c55754b7d326c9b4fb42cb1",
+        "installer": "dd50d6b9f68db527c56f65656f03ddc1a25dc103a2a2f7e93fb21617ab4486f2",
+        "runtimeManifest": "e9cf10ba35d2138a926bc817fab2e9ad246398f82bc9fbdf39118f914686a85f"
+      }
+    },
+    {
+      "target": "win-64",
+      "product": {
+        "status": "passed",
+        "tests": {
+          "passed": 5,
+          "skipped": 0
+        },
+        "serviceBefore": "idle",
+        "serviceAfter": "idle",
+        "cleanup": "test-owned data removed"
+      },
+      "installer": {
+        "status": "passed",
+        "cleanup": true,
+        "scope": "real current-user NSIS install, installed CLI and owned uninstall; existing URI unchanged",
+        "variant": "41c788c installer harness preserving existing personal URI; no new URI registration"
+      },
+      "hashes": {
+        "executable": "3e4f970d26da3a9365c8cf4d5307ad714fca34da69576a8b58176cd0ff7df2b7",
+        "installer": "36599afbd96cff82e2244927fa3f06841fbe42c0524347ba8835d9e69f22432e",
+        "runtimeManifest": "621e7a3bdc471820a0ff7ec3f540ad7eb213bb512eb52d4e350d6b5c01616581"
+      }
+    }
+  ],
+  "regressions": {
+    "workspaceDeployment": "2 failures before fix; focused tests passed after fix; pnpm 11.28 deploy and both NSIS builds passed",
+    "supervisorContainment": "real supervisor exited with live descendant: failed before bounded containment drain, passed afterward",
+    "ownerRecovery": "missing socket waits actual exit; changed pid/settings and rejected owner remain protected",
+    "macDiskImage": "Intel Tauri layout detach timeout reproduced in run 43814561040; direct read-only DMG pending native CI"
+  },
+  "review": "independent read-only review and follow-ups found no remaining Critical/Important; native validation remains distinct"
+}

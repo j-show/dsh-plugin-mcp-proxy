@@ -15,5 +15,7 @@ URI receipts may include an absolute `localAppData` path; the native launcher ca
 it into child startup, while older receipts retain the inherited Windows environment.
 Activation diagnostics use the canonical helper name even when Windows launches its
 8.3 alias, retaining only fixed stage names and never URI contents.
-The multi-step native upgrade regression has a 90-second aggregate budget, including
-bounded cold PowerShell startup; individual install/uninstall deadlines remain 5 seconds.
+The multi-step native upgrade regression has a 90-second aggregate budget;
+direct native probes preserve individual 5-second install/uninstall deadlines.
+Native profile acceptance creates owner-only identity files (`0600`), matching
+the real DSH credential provider on macOS and Linux.
