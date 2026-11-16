@@ -99,6 +99,11 @@ async function fixture(acknowledge: boolean, projectEnvironment = false) {
     await writeFile(join(root, '.env'), `${credential}=${token}\n`)
   } else await writeFile(identity, `version: 1\nrefs:\n  ${credential}: ${token}\n`)
   const marker = join(root, 'mcp-processes.jsonl')
+  async function startupDiagnostic(): Promise<string> {
+    const log = await readFile(join(profile, 'mcp-proxy.log'), 'utf8').catch(() => '')
+    // Report only fixed application stages; raw DSH logs can contain private paths or credentials.
+    return log.split('\n').filter(line => /^mcp-proxy: [a-z-]+ failed$/.test(line.trim())).join('\n') || 'No fixed startup stage reported'
+  }
   const settings = join(root, 'settings.json')
   await writeFile(settings, JSON.stringify({ server: { origin, credentialRef: credential, caFile: cert },
     identityFile: identity, directory: workspace, services: [{ service: 'files', transport: 'stdio',
@@ -125,7 +130,7 @@ async function fixture(acknowledge: boolean, projectEnvironment = false) {
       child.once('exit', (code, signal) => { resolve([code, signal]) })
     })
     starters.delete(child)
-    if (code !== 0 || signal !== null) throw new Error(`Local profile command failed: ${diagnostic}`)
+    if (code !== 0 || signal !== null) throw new Error(`Local profile command failed: ${diagnostic}\n${await startupDiagnostic()}`)
   }
   async function pids() {
     return (await readFile(marker, 'utf8')).trim().split('\n').map((line) => {
@@ -134,7 +139,7 @@ async function fixture(acknowledge: boolean, projectEnvironment = false) {
       return value.pid
     })
   }
-  return { root, home, profile, workspace, settings, catalog: catalog.promise, state, command, pids }
+  return { root, home, profile, workspace, settings, catalog: catalog.promise, state, command, pids, startupDiagnostic }
 }
 
 it.skipIf(process.env.MCP_PROXY_PRODUCT_TESTS !== '1')('runs the mcp-proxy profile in the background, delivers a local file and joins stopped MCP processes', async () => {
@@ -167,7 +172,7 @@ it.skipIf(process.env.MCP_PROXY_PRODUCT_TESTS !== '1')('cancels a real profile a
     pollIntervalMs: 20, shutdownTimeoutMs: 2000,
   }, stop.signal).then(value => ({ value }), (error: unknown) => ({ error }))
   onTestFinished(async () => { stop.abort(); await outcome })
-  await Promise.race([test.catalog, outcome.then(() => { throw new Error('Profile startup settled before the withheld catalog acknowledgement') })])
+  await Promise.race([test.catalog, outcome.then(async () => { throw new Error(`Profile startup settled before the withheld catalog acknowledgement: ${await test.startupDiagnostic()}`) })])
   const status = await requestLocalStatus(await machineControlAddress(), 5000)
   test.state.pid = status.pid
   expect(status.ready).toBe(false)

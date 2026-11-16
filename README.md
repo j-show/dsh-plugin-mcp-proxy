@@ -37,6 +37,7 @@ pnpm test:rust
 
 There is no top-level `build`: native installers are built on their corresponding OS.
 Scripts dispatch through `scripts/tasks.ts`; PowerShell is not a project prerequisite.
+Windows archive operations select system tar explicitly, including when invoked from Git Bash.
 Older pnpm 10 settings are mirrored in `package.json#pnpm`; later managers read
 `pnpm-workspace.yaml`. The postinstall hook preserves a lock format readable by pnpm 10.0 and later, without changing dependency resolutions.
 
@@ -56,6 +57,7 @@ Platform aggregates reuse one verified shared build and same-OS dependency closu
 Every target carries checksum-pinned Node **22.23.5**, matching native dependencies,
 an immutable runtime inventory and third-party notices. Installers and executable/runtime
 pairs are recorded together; a changed runtime is rejected rather than repaired during acceptance.
+Mac builds retain the `.app` alongside DMG generation so the recorded executable comes from the actual bundle.
 Application version and npm scripts/dependencies are controlled by the root `package.json`;
 Rust dependencies are locked in `Cargo.toml`/`Cargo.lock`.
 

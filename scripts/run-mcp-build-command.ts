@@ -1,5 +1,6 @@
 /** Shell-free process execution shared by the MCP release builders. */
 import { spawn } from 'node:child_process'
+import {nativeTar} from './native-tools.ts'
 
 /**
  * Run a build step and fail immediately on an unsuccessful process exit.
@@ -12,6 +13,7 @@ import { spawn } from 'node:child_process'
 export async function runMcpBuildCommand(
   command: string, args: readonly string[], cwd: string, environment: NodeJS.ProcessEnv = process.env,
 ): Promise<void> {
+  if(command==='tar')command=nativeTar(process.platform,environment)
   const child = spawn(command, [...args], { cwd, env: environment, stdio: 'inherit', shell: false, windowsHide: true })
   await new Promise<void>((resolve, reject) => {
     child.once('error', reject)

@@ -7,6 +7,7 @@ export const appTargets: Readonly<Record<string, AppTarget>> = {
   'mac-arm': { id: 'mac-arm', platform: 'darwin', arch: 'arm64', triple: 'aarch64-apple-darwin', bundle: 'dmg' },
   linux: { id: 'linux', platform: 'linux', arch: 'x64', triple: 'x86_64-unknown-linux-gnu', bundle: 'deb' },
 }
+export function bundleKinds(target: AppTarget): string[] { return target.bundle==='dmg'?['app','dmg']:[target.bundle] }
 export function appBuildPlan(name: string, platform: NodeJS.Platform): AppTarget[] {
   if (name === 'host') name = platform === 'win32' ? (process.arch === 'ia32' ? 'win-32' : 'win-64')
     : platform === 'darwin' ? (process.arch === 'arm64' ? 'mac-arm' : 'mac-intel') : 'linux'

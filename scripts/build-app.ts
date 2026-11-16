@@ -5,7 +5,7 @@ import { dirname, join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { parseArgs } from 'node:util'
 import { withFileLock } from '@deepseek-ai/dsh-atomic-write'
-import { appBuildPlan, type AppTarget } from './app-targets.ts'
+import { appBuildPlan, bundleKinds, type AppTarget } from './app-targets.ts'
 import { buildShared } from './build-shared.ts'
 import { prepareMcpBuildRuntime, mcpBuildEnvironment, targetRuntimeDownload } from './mcp-build-runtime.ts'
 import { downloadPrimaryRuntimeAsset } from './download-runtime.ts'
@@ -44,13 +44,13 @@ async function packageTarget(root: string, target: AppTarget, shared: string, de
   const runtimeDigest = await writeRuntimeInventory(resources,target.platform,target.arch,download.version)
   if (target.arch === process.arch || (process.platform === 'win32' && target.arch === 'ia32')) await verifyMcpRuntimeImports(join(resources,'dsh'),join(resources,'dsh/runtime',target.platform === 'win32' ? 'node.exe' : 'node'))
   const config = join(stage,'tauri.json')
-  await writeFile(config,JSON.stringify({ build:{frontendDist:join(shared,'desktop')},bundle:{targets:[target.bundle],resources:{[resources + '/']:'resources/'}} }))
+  await writeFile(config,JSON.stringify({ build:{frontendDist:join(shared,'desktop')},bundle:{targets:bundleKinds(target),resources:{[resources + '/']:'resources/'}} }))
   const require = createRequire(join(root,'package.json'))
   await runMcpBuildCommand('rustup',['target','add',target.triple],root)
   const cli = join(dirname(require.resolve('@tauri-apps/cli/package.json')),'tauri.js')
   const project = join(root,'packages/mcp-proxy'), cargoTarget = join(project,'src-tauri/target')
   await runMcpBuildCommand(process.execPath,[cli,'build','--target',target.triple,'--config',config,
-    ...(development ? ['--debug'] : []),...(noBundle ? ['--no-bundle'] : ['--bundles',target.bundle])],project,
+    ...(development ? ['--debug'] : []),...(noBundle ? ['--no-bundle'] : ['--bundles',bundleKinds(target).join(',')])],project,
     {...process.env,MCP_PROXY_RUNTIME_SHA256:runtimeDigest})
   const binary = join(cargoTarget,target.triple,development ? 'debug' : 'release','mcp-proxy' + (target.platform === 'win32' ? '.exe' : ''))
   const applicationBinary=target.bundle==='dmg'&&!noBundle
