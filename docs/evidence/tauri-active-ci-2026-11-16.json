@@ -1,0 +1,88 @@
+{
+  "commit": "e1f8b35762738d511c994e6a36f786300ae08bff",
+  "url": "https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43842454583",
+  "status": "completed",
+  "conclusion": "success",
+  "scope": "6 enabled jobs; Intel Mac DMG deferred by explicit user decision, not verified",
+  "jobs": [
+    {
+      "id": 133214235976,
+      "name": "shared",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 133214236379,
+      "name": "package-manager (11)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 133214236530,
+      "name": "package-manager (12)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 133214672995,
+      "name": "native (ubuntu-22.04, build:linux, linux, x86_64-unknown-linux-gnu)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 133214673141,
+      "name": "native (windows-2025, build:win, win-64, i686-pc-windows-msvc x86_64-pc-windows-msvc)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 133214673221,
+      "name": "native (macos-15, build:mac:arm, mac-arm, aarch64-apple-darwin)",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 14214617719,
+      "name": "native-win-64-e1f8b35762738d511c994e6a36f786300ae08bff",
+      "digest": "sha256:57c1d035318bc6c2ea5f5fffb49733620f3f8a5ddfa3e66f469518e195e43dac"
+    },
+    {
+      "id": 14214515009,
+      "name": "shared-e1f8b35762738d511c994e6a36f786300ae08bff",
+      "digest": "sha256:94e9664c97a21fd3f15ab55f96cbb41b18e18ddfc478e65a838a1a84f8529baf"
+    },
+    {
+      "id": 14214106424,
+      "name": "native-linux-e1f8b35762738d511c994e6a36f786300ae08bff",
+      "digest": "sha256:d6b8f265e89b72e28a0ed75a8e1edc0f48f736c3747ad3f49b3b3acd7dc3e3a0"
+    },
+    {
+      "id": 14213507948,
+      "name": "native-mac-arm-e1f8b35762738d511c994e6a36f786300ae08bff",
+      "digest": "sha256:b9dbb9fe9d07a2c162462cde64cf691dfb87db99cd403077c42232f0cf4948eb"
+    }
+  ],
+  "sourceCheckout": {
+    "revision": "e1f8b35762738d511c994e6a36f786300ae08bff",
+    "dirty": false
+  },
+  "tests": {
+    "shared": {
+      "passed": 582,
+      "skipped": 13
+    },
+    "development": {
+      "passed": 59
+    },
+    "typecheck": "passed"
+  },
+  "intelMac": {
+    "status": "skipped",
+    "format": "dmg",
+    "acceptance": "not verified",
+    "decisionDate": "2026-11-16",
+    "retry": "build:mac:intel on another Mac or workflow_dispatch.mac_intel_runner"
+  }
+}
