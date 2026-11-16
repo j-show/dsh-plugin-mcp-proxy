@@ -9,3 +9,4 @@
 - Normalize the full executable path before locating activation diagnostics; short aliases must retain the same fixed-name, URI-free trace.
 - Use direct native probes rather than PowerShell. Size Job structures for the executing Node architecture; preserve each install/uninstall deadline and all ownership, recovery and cleanup assertions.
 - Native profile fixtures must create identity files at mode 0600; keep DSH's POSIX credential permission checks enabled.
+- Background group EPERM is unknown, never proof of exit. Reconcile only within the original cleanup budget, require authoritative absence and direct-child join, never signal unknown scopes or retry a denied signal. Preserve process-exit assertions before bounded fixture-directory deletion retries.

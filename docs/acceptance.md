@@ -11,6 +11,7 @@ CI 修复后的本机工作区验证见[后续证据](evidence/tauri-followup-20
 `72d79bc` 的 Windows x86/x64 完整 Chrome/Edge GUI/托盘与原生产物已通过，Ubuntu/macOS ARM 原生任务通过。Intel DMG 按用户决定[保留格式并暂缓该宿主](evidence/mac-intel-dmg-deferred-2026-11-16.md)；默认 CI 省略此 lane、明示未验证，后续换 Mac 再复测。
 同次 Windows 产物哈希、两架构各五项用例、四组浏览器七场景及独立 guards/cold-start 清理见[固定证据](evidence/tauri-windows-acceptance-2026-11-16.json)；x86 在 x64 Windows 的 WoW64 环境验证。
 `e1f8b35` 的[完整启用流水线](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43842454583)六项任务全部通过，源码 `dirty:false`；共享检查 582 项通过、13 项按平台/入口跳过，开发检查 59 项通过。任务及产物摘要见[本轮 CI 快照](evidence/tauri-active-ci-2026-11-16.json)。Intel DMG 的暂缓不计为通过。
+记录提交 `88f49a0` 的重跑另暴露 Windows 夹具删除 `EBUSY` 和 Mac ARM 取消启动的 `kill EPERM`。业务与清理结果按提交区分；修复采用有界状态核对和目录删除重试，不把权限未知解释为退出，不移除原进程/MCP 退出断言。新原生结果继续单列，不能用上一提交绿灯替代。
 
 迁移基线日期：2026-11-07；最新浏览器自动化证据：2026-11-14（Asia/Shanghai）。适用独立项目 `0.1.0`、公共 DSH `0.1.6-alpha.2` 及所附兼容补丁。需求编号见[requirements](requirements.md)，设计见[design](design.md)，启动和配置见[configuration](configuration.md)。本文是证据清单，不把已实现或单元测试通过等同于完整产品验收。
 

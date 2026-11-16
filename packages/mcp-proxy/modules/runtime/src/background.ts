@@ -75,16 +75,18 @@ export async function startBackgroundService(spec: BackgroundServiceSpec, signal
     if (child?.pid !== undefined && completion !== undefined) {
       const owned = child
       const until = performance.now() + spec.shutdownTimeoutMs
+      let fallbackSignal: 'SIGTERM' | undefined
       if (!finished) {
         try { await requestLocalStop(spec.address, Math.min(spec.controlTimeoutMs, spec.shutdownTimeoutMs), child.pid) } catch (_error) {
           // No matching responsive control owner; the service's process containment owns descendants.
-          signalOwnedChild(child, 'SIGTERM')
+          // Settle owns the presence check and all signal-permission reconciliation.
+          fallbackSignal = 'SIGTERM'
         }
       }
       await settleBackgroundOwner({ root: completion, rootExited: () => finished,
         alive: () => process.platform === 'win32' ? !finished : groupAlive(owned.pid),
         signal: signal => signalOwnedChild(owned, signal),
-      }, { graceMs: Math.max(0, until - performance.now()), reapMs: spec.shutdownTimeoutMs, pollMs: spec.pollIntervalMs })
+      }, { graceMs: Math.max(0, until - performance.now()), reapMs: spec.shutdownTimeoutMs, pollMs: spec.pollIntervalMs, fallbackSignal })
     }
     if (child === undefined && error instanceof Error && error.message === 'Local MCP service is already running') throw error
     throw new Error('Local MCP background startup failed')

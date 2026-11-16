@@ -19,3 +19,7 @@ The multi-step native upgrade regression has a 90-second aggregate budget;
 direct native probes preserve individual 5-second install/uninstall deadlines.
 Native profile acceptance creates owner-only identity files (`0600`), matching
 the real DSH credential provider on macOS and Linux.
+Background cancellation treats `EPERM` as unknown presence, retaining custody within
+the cleanup deadline until authoritative absence and the direct-child join agree.
+Unknown scopes are not signalled; a denied signal is not retried. Persistent uncertainty fails.
+Product fixtures retry transient directory locks only after service/MCP exit assertions pass.

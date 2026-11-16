@@ -65,7 +65,7 @@ async function fixture(acknowledge: boolean, projectEnvironment = false) {
       await state.proof
       await new Promise<void>((done) => { sockets.close(() => { done() }) })
       await new Promise<void>((done) => { server.close(() => { done() }) })
-      await rm(root, { recursive: true, force: true })
+      await rm(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 })
     } finally { await slot.release?.() }
   })
   slot.release = await acquireServiceSlot()
@@ -179,7 +179,9 @@ it.skipIf(process.env.MCP_PROXY_PRODUCT_TESTS !== '1')('cancels a real profile a
   const children = await test.pids()
   expect(children.some(pid => running(pid))).toBe(true)
   stop.abort()
-  expect(await outcome).toMatchObject({ error: { message: 'Local MCP background startup failed' } })
+  const cancelled = await outcome
+  if ('error' in cancelled && cancelled.error instanceof Error && cancelled.error.message !== 'Local MCP background startup failed') throw cancelled.error
+  expect(cancelled).toMatchObject({ error: { message: 'Local MCP background startup failed' } })
   await expect.poll(() => running(status.pid), { timeout: 10000 }).toBe(false)
   for (const pid of children) await expect.poll(() => running(pid), { timeout: 10000 }).toBe(false)
 }, 300000)

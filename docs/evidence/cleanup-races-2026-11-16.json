@@ -1,0 +1,33 @@
+{
+  "baselineCommit": "88f49a0000da851c978ab085f40085325495c525",
+  "baselineCI": "https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43847376224",
+  "failures": {
+    "windows": {
+      "phase": "fixture teardown after business assertions",
+      "error": "EBUSY removing private profile fixture directory",
+      "serviceAfter": "idle"
+    },
+    "macArm": {
+      "phase": "cancel before catalog acknowledgement",
+      "error": "kill EPERM",
+      "boundary": "initial fallback signal and later group observations both previously escaped cleanup; exact kernel cause was not captured"
+    }
+  },
+  "implementation": {
+    "permission": "unknown presence, not absence; fixed grace plus reap deadline",
+    "completion": "authoritative absence and joined direct child required",
+    "signals": "unknown scopes are not signalled; denied signals are not retried; a lost root anchor cannot authorize a newly visible group after uncertainty",
+    "otherErrors": "propagate",
+    "filesystem": "unchanged process/MCP exit assertions precede bounded Node rm retries"
+  },
+  "localVerification": {
+    "node": "22.23.5",
+    "newCases": "five red failures observed before implementation; seven permission/unknown/fallback cases pass afterward",
+    "focused": { "passed": 41, "skipped": 1 },
+    "default": { "passed": 594, "skipped": 8 },
+    "typecheck": "passed",
+    "windowsLockProbe": "dedicated child CWD reproduced EBUSY; bounded removal completed after that owned child exited"
+  },
+  "nativeVerification": "Use the corresponding fix commit's CI; do not inherit the previous commit's result. Mac/Linux packaging is performed on GitHub Actions native runners, not this Windows host.",
+  "intelDMG": "retained and deferred per user decision; unchanged by these cleanup fixes"
+}

@@ -11,7 +11,7 @@ export interface BackgroundOwner {
   signal(signal: NodeJS.Signals): void
 }
 /** Resolved grace, forced-reap and observation budgets. */
-export interface BackgroundCleanupLimits { readonly graceMs: number; readonly reapMs: number; readonly pollMs: number }
+export interface BackgroundCleanupLimits { readonly graceMs: number; readonly reapMs: number; readonly pollMs: number; readonly fallbackSignal?: 'SIGTERM' }
 /**
  * Resolve background startup ownership before detaching the service.
  * @param owner - exact process scope created during startup.
@@ -20,16 +20,36 @@ export interface BackgroundCleanupLimits { readonly graceMs: number; readonly re
  */
 export async function settleBackgroundOwner(owner: BackgroundOwner, limits: BackgroundCleanupLimits): Promise<void> {
   const grace = performance.now() + limits.graceMs
+  const deadline = grace + limits.reapMs
   let reap: number | undefined
-  for (;;) {
-    const alive = owner.alive()
-    if (!alive && owner.rootExited()) { await owner.root; return }
-    if (reap === undefined && (owner.rootExited() || performance.now() >= grace)) {
-      owner.signal('SIGKILL')
-      reap = performance.now() + limits.reapMs
-      continue
+  let uncertain = false, signalDenied = false, forced = false, fallback = false
+  let permissionError: unknown
+  const permissionDenied = (error: unknown) => typeof error === 'object' && error !== null && 'code' in error && error.code === 'EPERM'
+  const signal = (value: NodeJS.Signals) => {
+    try { owner.signal(value) } catch (error) {
+      if (!permissionDenied(error)) throw error
+      permissionError = error; uncertain = true; signalDenied = true
     }
-    if (reap !== undefined && performance.now() >= reap) throw new Error('Local MCP background cleanup failed')
+  }
+  for (;;) {
+    let alive: boolean | undefined
+    try { alive = owner.alive() } catch (error) {
+      if (!permissionDenied(error)) throw error
+      permissionError = error; uncertain = true
+    }
+    const exited = owner.rootExited(), now = performance.now()
+    // EPERM is unknown, not absence. Only a later authoritative observation can finish custody.
+    if (alive === false && exited) { await owner.root; return }
+    if (now >= (reap ?? deadline)) throw new Error('Local MCP background cleanup failed', { cause: permissionError })
+    if (!fallback) {
+      fallback = true
+      if (limits.fallbackSignal && alive === true && !uncertain) signal(limits.fallbackSignal)
+    }
+    if (reap === undefined && (exited || now >= grace)) reap = Math.min(deadline, now + limits.reapMs)
+    // A denied signal is never retried. After uncertain presence, a reaped leader no longer anchors the group id.
+    if (reap !== undefined && alive === true && !forced && !signalDenied && (!uncertain || !exited)) {
+      forced = true; signal('SIGKILL')
+    }
     await delay(limits.pollMs)
   }
 }
