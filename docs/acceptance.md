@@ -8,6 +8,8 @@
 本轮已在本机生成 Windows x86/x64 安装包并通过两种架构各五项产物用例；macOS/Linux 与 Tauri 浏览器/托盘结果按本轮 CI 单独记录。
 CI 修复后的本机工作区验证见[后续证据](evidence/tauri-followup-2026-11-16.json)：581 项默认测试、7 项 Rust 测试及两架构原生产物通过；保留既有 URI 的真实安装/卸载通过。新增“注册后普通卸载”、直接 DMG 及 Unix 进程清理按新 CI 验证，不能沿用旧安装测试结果。
 后续 `7bd8040` CI 已通过 Ubuntu、macOS ARM、两种 Windows 安装/卸载和原生产物，以及每浏览器三环境九次冷启动；Intel 镜像与 Chrome GUI 展示失败。GUI 盘符配置根因、本地自然启动修复与下一轮待验范围见[启动后续证据](evidence/tauri-startup-followup-2026-11-16.json)。
+`72d79bc` 的 Windows x86/x64 完整 Chrome/Edge GUI/托盘与原生产物已通过，Ubuntu/macOS ARM 原生任务通过。Intel DMG 按用户决定[保留格式并暂缓该宿主](evidence/mac-intel-dmg-deferred-2026-11-16.md)；默认 CI 省略此 lane、明示未验证，后续换 Mac 再复测。
+同次 Windows 产物哈希、两架构各五项用例、四组浏览器七场景及独立 guards/cold-start 清理见[固定证据](evidence/tauri-windows-acceptance-2026-11-16.json)；x86 在 x64 Windows 的 WoW64 环境验证。
 
 迁移基线日期：2026-11-07；最新浏览器自动化证据：2026-11-14（Asia/Shanghai）。适用独立项目 `0.1.0`、公共 DSH `0.1.6-alpha.2` 及所附兼容补丁。需求编号见[requirements](requirements.md)，设计见[design](design.md)，启动和配置见[configuration](configuration.md)。本文是证据清单，不把已实现或单元测试通过等同于完整产品验收。
 

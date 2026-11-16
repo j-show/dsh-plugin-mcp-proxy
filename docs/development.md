@@ -5,8 +5,9 @@ Rust/rustup 及对应宿主的 [Tauri 原生前置依赖](https://v2.tauri.app/s
 不需要其他源码仓库、生产 DSH 或模型账户。Windows 打包需要 MSVC、Windows SDK、系统 tar
 和 .NET Framework 4.x 编译器（仅用于既有 URI 桥接与 UIA 测试）；不需要 PowerShell。
 macOS 需要 Xcode/Command Line Tools；Ubuntu 以 22.04 x64 为基线，需要 WebKitGTK 4.1、GTK、AppIndicator 等原生依赖。
-macOS 本地镜像创建默认不提权。隔离的 Intel CI 显式设置 `MCP_PROXY_DMG_PRIVILEGED=1`，
-只用 `/usr/bin/sudo -n /usr/bin/hdiutil` 创建自有镜像，以验证 headless 授权因素；没有非交互授权则明确失败，不修改系统服务。
+macOS 镜像创建不提权。Intel CI 宿主的镜像收尾问题按用户决定[记录并暂缓](evidence/mac-intel-dmg-deferred-2026-11-16.md)；
+默认 CI 仍验证 Windows x86/x64、macOS ARM 和 Ubuntu。换 Mac 后执行 `build:mac:intel`、对应的 `test:installer`／`test:product`；
+也可手工 workflow 设置 `mac_intel_runner` 为新的 Mac x64 runner 标签，显式恢复该 lane。跳过状态不代表 Intel 产物已通过。
 
 ```sh
 pnpm install --frozen-lockfile

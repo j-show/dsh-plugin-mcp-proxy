@@ -3,6 +3,12 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+    inputs:
+      mac_intel_runner:
+        description: 'Optional Mac x64 runner label for retry; empty keeps Intel DMG deferred'
+        required: false
+        default: ''
+        type: string
 permissions:
   contents: read
 concurrency:
@@ -15,6 +21,8 @@ jobs:
   shared:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
+    outputs:
+      native_matrix: ${{ steps.native_matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,6 +32,11 @@ jobs:
         with:
           version: 10.0.0
       - run: pnpm install --frozen-lockfile
+      - name: Select native validation scope
+        id: native_matrix
+        env:
+          MCP_PROXY_MAC_INTEL_RUNNER: ${{ inputs.mac_intel_runner }}
+        run: node --import tsx/esm scripts/ci-matrix.ts
       - run: pnpm build:shared
       - run: pnpm typecheck
       - run: pnpm test
@@ -36,6 +49,7 @@ jobs:
             .artifacts/shared/
             packages/*/modules/*/lib/
             packages/dsh-plugin/lib/
+            .artifacts/ci/native-matrix.json
           if-no-files-found: error
           retention-days: 7
   package-manager:
@@ -59,24 +73,7 @@ jobs:
     needs: shared
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - os: windows-2025
-            build: build:win
-            target: win-64
-            rust: i686-pc-windows-msvc x86_64-pc-windows-msvc
-          - os: macos-15-intel
-            build: build:mac:intel
-            target: mac-intel
-            rust: x86_64-apple-darwin
-          - os: macos-15
-            build: build:mac:arm
-            target: mac-arm
-            rust: aarch64-apple-darwin
-          - os: ubuntu-22.04
-            build: build:linux
-            target: linux
-            rust: x86_64-unknown-linux-gnu
+      matrix: ${{ fromJSON(needs.shared.outputs.native_matrix) }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 120
     steps:
@@ -102,8 +99,6 @@ jobs:
           name: shared-${{ github.sha }}
           path: .
       - run: pnpm ${{ matrix.build }}
-        env:
-          MCP_PROXY_DMG_PRIVILEGED: ${{ matrix.target == 'mac-intel' && '1' || '0' }}
       - run: pnpm test:rust
       - run: pnpm build:mcp-plugin
       - name: Verify installed package payload

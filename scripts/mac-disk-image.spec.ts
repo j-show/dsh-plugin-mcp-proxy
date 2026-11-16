@@ -5,13 +5,6 @@ vi.mock('node:fs/promises',()=>({cp:vi.fn(async()=>{}),mkdir:vi.fn(async()=>{}),
 import {createMacDiskImage} from './mac-disk-image.ts'
 beforeEach(()=>{mocked.execute.mockClear()})
 it('keeps normal image creation unprivileged',async()=>{
-  await createMacDiskImage('/owned/app','/owned/result.dmg','/owned',false)
+  await createMacDiskImage('/owned/app','/owned/result.dmg','/owned')
   expect(mocked.execute.mock.calls[0]?.[0]).toBe('hdiutil')
-})
-it('elevates only the absolute native image tool through explicit noninteractive opt-in',async()=>{
-  await createMacDiskImage('/owned/app','/owned/result.dmg','/owned',true)
-  const call=mocked.execute.mock.calls[0]!
-  expect(call[0]).toBe('/usr/bin/sudo')
-  expect(call[1].slice(0,3)).toEqual(['-n','/usr/bin/hdiutil','create'])
-  expect(call[1]).toContain('/owned/result.dmg')
 })
