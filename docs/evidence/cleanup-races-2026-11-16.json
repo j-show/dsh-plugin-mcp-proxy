@@ -23,11 +23,30 @@
   "localVerification": {
     "node": "22.23.5",
     "newCases": "five red failures observed before implementation; seven permission/unknown/fallback cases pass afterward",
-    "focused": { "passed": 41, "skipped": 1 },
-    "default": { "passed": 594, "skipped": 8 },
+    "focused": {
+      "passed": 41,
+      "skipped": 1
+    },
+    "default": {
+      "passed": 594,
+      "skipped": 8
+    },
     "typecheck": "passed",
     "windowsLockProbe": "dedicated child CWD reproduced EBUSY; bounded removal completed after that owned child exited"
   },
   "nativeVerification": "Use the corresponding fix commit's CI; do not inherit the previous commit's result. Mac/Linux packaging is performed on GitHub Actions native runners, not this Windows host.",
-  "intelDMG": "retained and deferred per user decision; unchanged by these cleanup fixes"
+  "intelDMG": "retained and deferred per user decision; unchanged by these cleanup fixes",
+  "rustFollowup": {
+    "baselineCommit": "0bb4a8befbfb6b088a2e11585ab359557289d754",
+    "ci": "https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43852720178",
+    "macArmDmg": "built successfully",
+    "failure": "Rust descendant-drain regression: Cannot inspect owned supervisor group",
+    "policy": "Unix EPERM is unknown; absolute grace/reap budget, no denied-signal retry, uncertainty persists across exit retries and Drop",
+    "absence": "signal ESRCH also latches terminal absence before PGID reuse",
+    "localWindowsRust": {
+      "passed": 15,
+      "skipped": 0
+    },
+    "nativeResult": "Requires corresponding follow-up commit CI; not inferred from local Windows tests"
+  }
 }

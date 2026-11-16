@@ -7,6 +7,7 @@ use std::{
 
 pub struct SupervisorOwner {
     drained: AtomicBool,
+    uncertain: AtomicBool,
     #[cfg(windows)]
     job: usize,
     #[cfg(unix)]
@@ -28,6 +29,7 @@ impl SupervisorOwner {
             Ok(Self {
                 group: child.id() as i32,
                 drained: AtomicBool::new(false),
+                uncertain: AtomicBool::new(false),
             })
         }
         #[cfg(windows)]
@@ -55,6 +57,7 @@ impl SupervisorOwner {
                 Ok(Self {
                     job: job as usize,
                     drained: AtomicBool::new(false),
+                    uncertain: AtomicBool::new(false),
                 })
             }
         }
@@ -98,17 +101,20 @@ impl SupervisorOwner {
             Ok(group == self.group)
         }
     }
-    fn alive(&self) -> Result<bool, String> {
+    fn alive(&self) -> Result<Option<bool>, String> {
         if self.drained.load(Ordering::SeqCst) {
-            return Ok(false);
+            return Ok(Some(false));
         }
         let alive = self.probe_alive()?;
-        if !alive {
+        if alive == Some(false) {
             self.drained.store(true, Ordering::SeqCst);
+        }
+        if alive.is_none() {
+            self.uncertain.store(true, Ordering::SeqCst);
         }
         Ok(alive)
     }
-    fn probe_alive(&self) -> Result<bool, String> {
+    fn probe_alive(&self) -> Result<Option<bool>, String> {
         #[cfg(windows)]
         {
             use windows_sys::Win32::System::JobObjects::*;
@@ -125,13 +131,15 @@ impl SupervisorOwner {
             {
                 return Err("Cannot inspect owned supervisor processes".into());
             }
-            Ok(info.ActiveProcesses != 0)
+            Ok(Some(info.ActiveProcesses != 0))
         }
         #[cfg(unix)]
         {
             if unsafe { kill(-self.group, 0) } != 0 {
-                if std::io::Error::last_os_error().raw_os_error() == Some(3) {
-                    return Ok(false);
+                match std::io::Error::last_os_error().raw_os_error() {
+                    Some(3) => return Ok(Some(false)),
+                    Some(1) => return Ok(None),
+                    _ => {}
                 }
                 return Err("Cannot inspect owned supervisor group".into());
             }
@@ -162,18 +170,21 @@ impl SupervisorOwner {
                     if fields.get(2).and_then(|s| s.parse::<i32>().ok()) == Some(self.group)
                         && fields.first() != Some(&"Z")
                     {
-                        return Ok(true);
+                        return Ok(Some(true));
                     }
                 }
-                Ok(false)
+                Ok(Some(false))
             }
             #[cfg(not(target_os = "linux"))]
             {
-                Ok(true)
+                Ok(Some(true))
             }
         }
     }
-    fn terminate(&self) -> Result<(), String> {
+    fn terminate(&self) -> Result<bool, String> {
+        if self.drained.load(Ordering::SeqCst) {
+            return Ok(true);
+        }
         #[cfg(windows)]
         if unsafe { windows_sys::Win32::System::JobObjects::TerminateJobObject(self.job as _, 1) }
             == 0
@@ -181,35 +192,65 @@ impl SupervisorOwner {
             return Err("Cannot stop owned supervisor processes".into());
         }
         #[cfg(unix)]
-        if unsafe { kill(-self.group, 9) } != 0
-            && std::io::Error::last_os_error().raw_os_error() != Some(3)
-        {
-            return Err("Cannot stop owned supervisor group".into());
+        if unsafe { kill(-self.group, 9) } != 0 {
+            return self.unix_termination_error(std::io::Error::last_os_error().raw_os_error());
         }
-        Ok(())
+        Ok(true)
     }
-    fn wait(&self, timeout: Duration) -> Result<bool, String> {
-        let until = Instant::now() + timeout;
-        loop {
-            if !self.alive()? {
-                return Ok(true);
+    #[cfg(any(unix, test))]
+    fn unix_termination_error(&self, error: Option<i32>) -> Result<bool, String> {
+        match error {
+            Some(3) => {
+                self.drained.store(true, Ordering::SeqCst);
+                Ok(true)
             }
-            if Instant::now() >= until {
-                return Ok(false);
+            Some(1) => {
+                self.uncertain.store(true, Ordering::SeqCst);
+                Ok(false)
             }
-            std::thread::sleep(Duration::from_millis(20));
+            _ => Err("Cannot stop owned supervisor group".into()),
         }
     }
     pub fn drain(&self, grace: Duration) -> Result<(), String> {
-        if self.wait(grace)? {
+        drain_scope(
+            || self.alive(),
+            || self.terminate(),
+            grace,
+            Duration::from_secs(5),
+            self.uncertain.load(Ordering::SeqCst),
+        )
+    }
+}
+// Called only after the supervisor's direct-child exit has been confirmed.
+fn drain_scope(
+    mut probe: impl FnMut() -> Result<Option<bool>, String>,
+    mut terminate: impl FnMut() -> Result<bool, String>,
+    grace: Duration,
+    reap: Duration,
+    mut uncertain: bool,
+) -> Result<(), String> {
+    let force_at = Instant::now() + grace;
+    let deadline = force_at + reap;
+    let mut attempted = false;
+    loop {
+        let presence = probe()?;
+        if presence == Some(false) {
             return Ok(());
         }
-        self.terminate()?;
-        if self.wait(Duration::from_secs(5))? {
-            Ok(())
-        } else {
-            Err("Owned supervisor processes still running".into())
+        if presence.is_none() {
+            uncertain = true;
         }
+        let now = Instant::now();
+        if now >= deadline {
+            return Err("Owned supervisor processes still running or unverified".into());
+        }
+        if now >= force_at && !attempted && !uncertain && presence == Some(true) {
+            attempted = true;
+            if !terminate()? {
+                uncertain = true;
+            }
+        }
+        std::thread::sleep(Duration::from_millis(20));
     }
 }
 #[cfg(unix)]
@@ -225,7 +266,7 @@ impl Drop for SupervisorOwner {
         }
         #[cfg(unix)]
         {
-            if self.alive() == Ok(true) {
+            if self.alive() == Ok(Some(true)) && !self.uncertain.load(Ordering::SeqCst) {
                 let _ = self.terminate();
             }
         }
@@ -235,6 +276,113 @@ impl Drop for SupervisorOwner {
 mod tests {
     use super::*;
     use std::io::{BufRead, BufReader, Read, Write};
+    #[test]
+    fn signal_side_absence_is_terminal_before_any_reused_group_can_be_observed() {
+        let owner = SupervisorOwner {
+            drained: AtomicBool::new(false),
+            uncertain: AtomicBool::new(false),
+            #[cfg(windows)]
+            job: 0,
+            #[cfg(unix)]
+            group: i32::MAX,
+        };
+        assert_eq!(owner.unix_termination_error(Some(3)), Ok(true));
+        assert!(owner.drained.load(Ordering::SeqCst));
+        assert_eq!(owner.alive(), Ok(Some(false)));
+        assert_eq!(owner.terminate(), Ok(true));
+    }
+    #[test]
+    fn unknown_presence_waits_for_authoritative_absence_without_signalling() {
+        let observations = std::cell::Cell::new(0);
+        drain_scope(
+            || {
+                observations.set(observations.get() + 1);
+                Ok(if observations.get() == 1 {
+                    None
+                } else {
+                    Some(false)
+                })
+            },
+            || panic!("unknown scope must not be signalled"),
+            Duration::ZERO,
+            Duration::from_millis(100),
+            false,
+        )
+        .unwrap();
+        assert!(observations.get() > 1);
+    }
+    #[test]
+    fn persistent_unknown_presence_expires_without_signalling() {
+        assert!(drain_scope(
+            || Ok(None),
+            || panic!("unknown scope must not be signalled"),
+            Duration::ZERO,
+            Duration::from_millis(30),
+            false
+        )
+        .is_err());
+    }
+    #[test]
+    fn newly_visible_group_after_uncertainty_is_not_signalled() {
+        let observations = std::cell::Cell::new(0);
+        assert!(drain_scope(
+            || {
+                observations.set(observations.get() + 1);
+                Ok(if observations.get() == 1 {
+                    None
+                } else {
+                    Some(true)
+                })
+            },
+            || panic!("unanchored scope must not be signalled"),
+            Duration::ZERO,
+            Duration::from_millis(30),
+            false
+        )
+        .is_err());
+    }
+    #[test]
+    fn denied_signal_is_not_retried_and_requires_later_absence() {
+        let present = std::cell::Cell::new(true);
+        let signals = std::cell::Cell::new(0);
+        drain_scope(
+            || Ok(Some(present.get())),
+            || {
+                signals.set(signals.get() + 1);
+                present.set(false);
+                Ok(false)
+            },
+            Duration::ZERO,
+            Duration::from_millis(100),
+            false,
+        )
+        .unwrap();
+        assert_eq!(signals.get(), 1);
+    }
+    #[test]
+    fn previous_uncertainty_remains_in_force_on_exit_retry() {
+        assert!(drain_scope(
+            || Ok(Some(true)),
+            || panic!("retry cannot recover a lost anchor"),
+            Duration::ZERO,
+            Duration::from_millis(30),
+            true
+        )
+        .is_err());
+    }
+    #[test]
+    fn other_probe_failures_are_preserved() {
+        assert_eq!(
+            drain_scope(
+                || Err("inspection failed".into()),
+                || panic!("failed scope must not be signalled"),
+                Duration::ZERO,
+                Duration::from_millis(100),
+                false
+            ),
+            Err("inspection failed".into())
+        );
+    }
     #[test]
     fn owned_child_fixture() {
         match std::env::var("MCP_PROXY_OWNER_FIXTURE").as_deref() {
@@ -288,8 +436,8 @@ mod tests {
         }
         child.kill().unwrap();
         child.wait().unwrap();
-        assert!(owner.alive().unwrap());
+        assert_eq!(owner.alive().unwrap(), Some(true));
         owner.drain(Duration::from_millis(40)).unwrap();
-        assert!(!owner.alive().unwrap());
+        assert_eq!(owner.alive().unwrap(), Some(false));
     }
 }

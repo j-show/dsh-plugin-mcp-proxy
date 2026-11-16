@@ -6,6 +6,7 @@
 - Keep repository-root docs/requirements.md, docs/design.md and docs/acceptance.md current. Do not infer cross-login singleton acceptance from same-user tests.
 - Tauri owns windows, tray and the narrow IPC bridge. The bundled Node 22 supervisor owns the existing DSH profile; do not reimplement routing or MCP semantics in the renderer or Rust shell.
 - Establish supervisor containment before its first start RPC. Recovery uses only the verified owner event, never a rejected or replacement snapshot; keep adopted external services separate from the kernel-owned process scope.
+- Rust group draining also treats Unix EPERM as unknown within the fixed grace/reap budget. Only authoritative absence completes cleanup; persist uncertainty across exit retries and never signal an unanchored group after uncertainty, including Drop.
 - An adopted process probe proves exit only on ESRCH. Permission/inspection errors keep shutdown failed and retryable; never treat them as successful cleanup.
 - Verify the embedded runtime inventory before starting Node, including administrative CLI launches. Node process arguments use ordinary Windows paths, not verbatim UNC prefixes.
 - frontendDist must resolve to an embedded Directory; use project-relative paths so Windows drive letters cannot become URLs. Never allow file origins to work around a blank GUI. Debug navigation diagnostics contain fixed classifications only.

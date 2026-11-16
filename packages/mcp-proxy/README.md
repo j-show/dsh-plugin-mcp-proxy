@@ -17,6 +17,7 @@ tray Exit stops owned resources. Command-line operations remain `--config`, `--s
 The Windows uninstaller removes receipt-owned URI state before its payload; failures abort uninstall.
 Supervisor crash recovery waits for the original service and owned descendants, preserving replacement owners.
 An unavailable process probe keeps Exit failed and retryable; permission errors do not prove that a service exited.
+The Rust descendant reaper likewise waits through uncertain Unix group observations within its deadline, without retrying denied signals or killing a possibly reused group.
 
 Default data is under `%LOCALAPPDATA%/McpProxy/data` on Windows,
 `~/Library/Application Support/McpProxy/data` on Mac and
