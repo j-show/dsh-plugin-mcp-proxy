@@ -46,6 +46,7 @@ flowchart TB
 Tauri 安装包内置官方 Node 22、真实 DSH CLI 和选定运行依赖，Windows 可补装 WebView2。
 Rust 启动 Node 前按编译时内嵌摘要校验资源清单及所有文件；开发模式和原生产物验收不能混淆，验收不修复损坏运行时。
 配置、身份、日志和工作文件在独立用户目录保存；Windows 保留原有数据位置。
+前端目录相对 `src-tauri` 配置并嵌入程序。Tauri 的 URL/目录配置判别可能把 Windows 绝对盘符解析为 URL；GUI 启动因此要求 Directory，导航来源限制不允许以 `file:` 绕过。
 
 Rust 通过私有 stdio 监督随包 Node 进程，Node 再启动固定 `mcp-proxy` profile；不在 WebView 或 Rust 重写 agent/MCP。
 公共 app-boot API 初始化 profile，startup 在预算内检查必需提供方。退出等待自有进程清理，监督进程失联使用既有 DSH 信号关闭路径。

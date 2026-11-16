@@ -1,0 +1,72 @@
+{
+  "sourceKind": "local debug working tree after 7bd8040 plus immutable CI results for 7bd8040; not full release/GUI acceptance for the next commit",
+  "ci": {
+    "commit": "7bd80402c1ab3ac00e682ad2e3fdcd44a09df24d",
+    "url": "https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43820615268",
+    "linux": "full native job passed",
+    "macArm": "full native job passed",
+    "windows": {
+      "installers": "both architectures registered owned URI and ordinary uninstaller restored integration",
+      "product": "five cases each architecture; zero skips",
+      "coldStartup": [
+        {
+          "browser": "chrome",
+          "environments": 3,
+          "independentBrowserProfiles": 9,
+          "cleanup": true
+        },
+        {
+          "browser": "edge",
+          "environments": 3,
+          "independentBrowserProfiles": 9,
+          "cleanup": true
+        }
+      ],
+      "gui": "failed first Chrome connected GUI presentation; Win32 GUI not reached"
+    },
+    "macIntel": "app compiled; unprivileged image creation timed out"
+  },
+  "localGui": {
+    "mode": "debug; qualified Node resources from prior local build; not a fresh release artifact",
+    "before": {
+      "frontendDist": "absolute Windows drive string",
+      "navigation": "file blocked",
+      "page": "about:blank",
+      "bridge": "undefined",
+      "scripts": 0
+    },
+    "after": {
+      "frontendDist": "../../../.artifacts/shared/desktop",
+      "kind": "Directory",
+      "origin": "http://tauri.localhost/",
+      "bridge": "object",
+      "translatedControls": true,
+      "sharedBootstrapSha256": "4235904529ebd4e21e64c7329d01bc8323b9bf2ee3b184e124f086f6380cc8f0",
+      "protocolRegistration": false,
+      "exitCode": 0,
+      "serviceBefore": "idle",
+      "serviceAfter": "idle",
+      "manualNavigation": false
+    }
+  },
+  "regressions": {
+    "rust": {
+      "passed": 8,
+      "skipped": 0
+    },
+    "frontendDirectory": "relative directory and real Tauri deserializer checks",
+    "adoptedProcess": "EPERM false-success reproduced; only ESRCH permits exit; retry checked",
+    "intelImage": "explicit noninteractive native-tool opt-in planned for next CI; outcome pending"
+  },
+  "localChecks": {
+    "default": {
+      "passed": 585,
+      "skipped": 8
+    },
+    "rust": {
+      "passed": 8,
+      "skipped": 0
+    },
+    "typecheck": "passed"
+  }
+}

@@ -55,6 +55,8 @@ postinstall 只规范化补丁元数据，保留相同依赖版本和完整性�
 平台聚合命令只编译一次共享内容，并复用同一宿主的依赖部署；各目标分别绑定官方 Node **22.23.5**、
 对应原生依赖、运行时文件清单和许可证。验收按成功构建记录取安装包/程序/运行时，拒绝损坏或混用产物。
 macOS 保留同次打包的 `.app`，直接用 `hdiutil` 创建只读 DMG，不运行 Finder 布局脚本；验收校验挂载后的程序和运行时。原生产物测试使用 `0600` 身份文件，保留 POSIX 凭据权限检查。
+Intel CI 显式设置 `MCP_PROXY_DMG_PRIVILEGED=1`，仅通过 `sudo -n` 授权系统镜像工具；本地默认不提权。
+界面通过项目相对目录嵌入应用，GUI 启动拒绝 URL 型前端配置，避免 Windows 盘符被误识别为文件导航。
 `build:mcp-proxy` 保留为当前宿主入口，`--connection-presets <file>` 可提供公开连接/CA 预设。
 `build:mcp-plugin` 独立生成 `release/mcp-plugin/` 下的服务端归档、安装器、元数据、兼容补丁和许可证。
 

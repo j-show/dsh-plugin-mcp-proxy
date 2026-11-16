@@ -59,6 +59,8 @@ an immutable runtime inventory and third-party notices. Installers and executabl
 pairs are recorded together; a changed runtime is rejected rather than repaired during acceptance.
 Mac builds retain the `.app` alongside DMG generation so the recorded executable comes from the actual bundle.
 The read-only DMG is created directly with `hdiutil`, without Finder layout scripts.
+Intel CI explicitly uses `MCP_PROXY_DMG_PRIVILEGED=1` for noninteractive image-tool authorization; local builds remain unprivileged by default.
+Frontend assets use a project-relative Tauri directory and are embedded in the application; URL frontends are rejected at GUI startup.
 Application version and npm scripts/dependencies are controlled by the root `package.json`;
 Rust dependencies are locked in `Cargo.toml`/`Cargo.lock`.
 

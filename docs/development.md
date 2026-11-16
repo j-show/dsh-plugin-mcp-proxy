@@ -5,6 +5,8 @@ Rust/rustup 及对应宿主的 [Tauri 原生前置依赖](https://v2.tauri.app/s
 不需要其他源码仓库、生产 DSH 或模型账户。Windows 打包需要 MSVC、Windows SDK、系统 tar
 和 .NET Framework 4.x 编译器（仅用于既有 URI 桥接与 UIA 测试）；不需要 PowerShell。
 macOS 需要 Xcode/Command Line Tools；Ubuntu 以 22.04 x64 为基线，需要 WebKitGTK 4.1、GTK、AppIndicator 等原生依赖。
+macOS 本地镜像创建默认不提权。隔离的 Intel CI 显式设置 `MCP_PROXY_DMG_PRIVILEGED=1`，
+只用 `/usr/bin/sudo -n /usr/bin/hdiutil` 创建自有镜像，以验证 headless 授权因素；没有非交互授权则明确失败，不修改系统服务。
 
 ```sh
 pnpm install --frozen-lockfile

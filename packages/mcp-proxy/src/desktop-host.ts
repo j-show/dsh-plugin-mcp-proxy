@@ -189,7 +189,10 @@ export class DesktopHost {
         status: () => api.requestLocalStatus(awaitAddress, 1000).catch(() => undefined),
         stop: pid => api.requestLocalStop(awaitAddress, 5000, pid), exited: () => {
           if (this.child) return this.child.exitCode !== null || this.child.signalCode !== null
-          try { process.kill(expectedPid, 0); return false } catch { return true }
+          try { process.kill(expectedPid, 0); return false } catch (error) {
+            if ((error as NodeJS.ErrnoException).code === 'ESRCH') return true
+            throw error
+          }
         } })
     } catch (error) { this.exiting = false; this.publish('stopFailed'); this.poll(); throw error }
   }

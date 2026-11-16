@@ -1,4 +1,5 @@
 /** Explicit native build plans. Never silently omit a requested target. */
+import {relative} from 'node:path'
 export interface AppTarget { id: string; platform: NodeJS.Platform; arch: 'ia32' | 'x64' | 'arm64'; triple: string; bundle: 'nsis' | 'dmg' | 'deb' }
 export const appTargets: Readonly<Record<string, AppTarget>> = {
   'win-32': { id: 'win-32', platform: 'win32', arch: 'ia32', triple: 'i686-pc-windows-msvc', bundle: 'nsis' },
@@ -8,6 +9,8 @@ export const appTargets: Readonly<Record<string, AppTarget>> = {
   linux: { id: 'linux', platform: 'linux', arch: 'x64', triple: 'x86_64-unknown-linux-gnu', bundle: 'deb' },
 }
 export function bundleKinds(target: AppTarget): string[] { return target.bundle==='dmg'?['app']:[target.bundle] }
+/** Tauri parses Windows drive-letter strings as URLs, so use a project-relative asset directory. */
+export function frontendDirectory(project:string,directory:string):string{return relative(project,directory).replaceAll('\\','/')}
 export function appBuildPlan(name: string, platform: NodeJS.Platform): AppTarget[] {
   if (name === 'host') name = platform === 'win32' ? (process.arch === 'ia32' ? 'win-32' : 'win-64')
     : platform === 'darwin' ? (process.arch === 'arm64' ? 'mac-arm' : 'mac-intel') : 'linux'

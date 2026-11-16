@@ -56,6 +56,40 @@ fn trusted_url(url: &tauri::Url) -> bool {
     (url.scheme() == "tauri" && url.host_str() == Some("localhost"))
         || (["http", "https"].contains(&url.scheme()) && url.host_str() == Some("tauri.localhost"))
 }
+fn embedded_frontend(frontend: &Option<tauri::utils::config::FrontendDist>) -> bool {
+    matches!(
+        frontend,
+        Some(tauri::utils::config::FrontendDist::Directory(_))
+    )
+}
+fn navigation(url: &tauri::Url) -> bool {
+    let allowed = trusted_url(url);
+    if cfg!(debug_assertions) {
+        let scheme = match url.scheme() {
+            "http" => "http",
+            "https" => "https",
+            "tauri" => "tauri",
+            "about" => "about",
+            "data" => "data",
+            "file" => "file",
+            "javascript" => "javascript",
+            "blob" => "blob",
+            "chrome-error" => "chrome-error",
+            _ => "other",
+        };
+        let host = match url.host_str() {
+            Some("localhost") => "localhost",
+            Some("tauri.localhost") => "tauri-localhost",
+            None => "none",
+            _ => "other",
+        };
+        diagnostics::record(&format!(
+            "navigation-{}-{scheme}-{host}",
+            if allowed { "allowed" } else { "blocked" }
+        ));
+    }
+    allowed
+}
 fn trusted(window: &WebviewWindow) -> Result<(), String> {
     if window.label() != "main"
         || !trusted_url(&window.url().map_err(|_| "Unavailable desktop origin")?)
@@ -278,6 +312,10 @@ fn main() {
     }
     let application = builder
         .setup(move |app| {
+            if !admin && !embedded_frontend(&app.config().build.frontend_dist) {
+                diagnostics::record("frontend must embed local assets");
+                return Err("Desktop frontend must embed local assets".into());
+            }
             let root = resources(app.handle())?;
             integrity::verify(&root).map_err(|error| {
                 diagnostics::record(&format!("runtime-integrity: {error}"));
@@ -329,7 +367,7 @@ fn main() {
                     .inner_size(1000.0, 750.0)
                     .min_inner_size(780.0, 560.0)
                     .visible(!hidden)
-                    .on_navigation(trusted_url);
+                    .on_navigation(navigation);
             #[cfg(windows)]
             {
                 let local = std::env::var_os("LOCALAPPDATA").ok_or("LOCALAPPDATA is required")?;
@@ -451,6 +489,24 @@ mod tests {
             "https://tauri.localhost.example.com",
         ] {
             assert!(!trusted_url(&tauri::Url::parse(value).unwrap()));
+        }
+    }
+    #[test]
+    fn frontend_configuration_requires_embedded_directories_not_windows_drive_urls() {
+        let parse = |value: &str| {
+            Some(
+                serde_json::from_value::<tauri::utils::config::FrontendDist>(json!(value)).unwrap(),
+            )
+        };
+        assert!(embedded_frontend(&parse(
+            "../../../.artifacts/shared/desktop"
+        )));
+        for value in [
+            r"D:\checkout\.artifacts\shared\desktop",
+            "file:///tmp/desktop",
+            "https://example.com/desktop",
+        ] {
+            assert!(!embedded_frontend(&parse(value)));
         }
     }
     #[test]

@@ -16,6 +16,7 @@ tray Exit stops owned resources. Command-line operations remain `--config`, `--s
 `DSH_HOME` selects a custom profile home; URI registration never replaces unknown owners.
 The Windows uninstaller removes receipt-owned URI state before its payload; failures abort uninstall.
 Supervisor crash recovery waits for the original service and owned descendants, preserving replacement owners.
+An unavailable process probe keeps Exit failed and retryable; permission errors do not prove that a service exited.
 
 Default data is under `%LOCALAPPDATA%/McpProxy/data` on Windows,
 `~/Library/Application Support/McpProxy/data` on Mac and
