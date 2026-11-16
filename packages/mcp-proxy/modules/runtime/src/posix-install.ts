@@ -17,6 +17,7 @@ export interface PosixInstallSpec {
   readonly node: string
   readonly cli: string
   readonly settings: string
+  readonly desktop?: boolean
 }
 type Run = (file: string, args: readonly string[]) => Promise<string>
 const desktopId = 'dsh-mcp-proxy.desktop'
@@ -144,8 +145,9 @@ function argument(value: string): string {
 }
 
 function desktop(spec: PosixInstallSpec): string {
-  const args = [argument('/usr/bin/env'), argument(`DSH_HOME=${spec.home}`), argument(spec.node), argument(spec.cli),
-    '--profile', argument(spec.profile), '--config', argument(spec.settings), '--associate', '%u']
+  const args = [argument('/usr/bin/env'), argument(`DSH_HOME=${spec.home}`), argument(spec.node),
+    ...(spec.desktop ? ['--config', argument(spec.settings), '%u']
+      : [argument(spec.cli), '--profile', argument(spec.profile), '--config', argument(spec.settings), '--associate', '%u'])]
   return `[Desktop Entry]\nType=Application\nName=mcp-proxy\nNoDisplay=true\nTerminal=false\nExec=${args.join(' ')}\nMimeType=${scheme};\n`
 }
 

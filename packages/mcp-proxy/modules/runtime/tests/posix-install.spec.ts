@@ -41,6 +41,16 @@ it('uses POSIX locations when the launcher also supplies Windows registration me
   expect(await readFile(filename, 'utf8')).toContain('--associate %u')
 })
 
+it('launches the Tauri desktop directly and preserves a single URI field for Linux', async () => {
+  const {spec,run} = await setup()
+  const launcher = await installPosixUri({...spec,desktop:true},5000,new AbortController().signal,run)
+  const text = await readFile(launcher,'utf8')
+  expect(text).toContain('--config')
+  expect(text).not.toContain('--associate')
+  expect(text).not.toContain('--profile')
+  expect(text.match(/%u/g)).toHaveLength(1)
+})
+
 it('refuses a foreign Linux launcher and preserves it on uninstall', async () => {
   const { spec, run } = await setup()
   await mkdir(join(spec.dataHome, 'applications'), { recursive: true })

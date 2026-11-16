@@ -5,6 +5,9 @@ release/
 coverage/
 .review/
 *.tsbuildinfo
+**/target/
+packages/mcp-proxy/src-tauri/generated/
+packages/mcp-proxy/src-tauri/gen/
 .env
 *.log
 .env.*

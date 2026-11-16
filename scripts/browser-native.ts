@@ -2,6 +2,7 @@
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { join, resolve } from 'node:path'
+import { access } from 'node:fs/promises'
 import { eventually } from './browser-cdp.ts'
 const execute = promisify(execFile)
 function uncertainInput(error: unknown, operation: string): boolean {
@@ -53,7 +54,8 @@ export async function confirmNativeAction(operation: string, action: () => Promi
 }
 export interface NativeWindow { pid: number; started: string; visible: boolean; image: string; handle: string; owned: boolean }
 export async function compileDesktopProbe(directory: string): Promise<string> {
-  const framework = join(process.env.WINDIR ?? '', 'Microsoft.NET/Framework64/v4.0.30319')
+  let framework = join(process.env.WINDIR ?? '', 'Microsoft.NET/Framework64/v4.0.30319')
+  try { await access(join(framework,'csc.exe')) } catch { framework = join(process.env.WINDIR ?? '', 'Microsoft.NET/Framework/v4.0.30319') }
   const output = join(directory, 'desktop-probe.exe')
   await execute(join(framework, 'csc.exe'), ['/nologo', '/codepage:65001', '/target:exe', `/out:${output}`,
     '/reference:System.Web.Extensions.dll', '/reference:System.Core.dll', '/reference:System.Drawing.dll',

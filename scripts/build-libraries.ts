@@ -1,5 +1,5 @@
 /** Compile and bundle only this project's modules against published DSH APIs. */
-import { readFile } from 'node:fs/promises'
+import { readFile, readdir, unlink } from 'node:fs/promises'
 import { join } from 'node:path'
 import { build } from 'tsdown'
 import { runMcpBuildCommand } from './run-mcp-build-command.ts'
@@ -14,6 +14,10 @@ export async function buildLibraries(root: string, development = false): Promise
     const owner = modules[index]
     if (owner === undefined) throw new Error('Missing build module')
     const directory = join(root, owner.directory)
+    // Bundles can change chunk names; retain declarations/native helpers but not stale JS.
+    for (const file of await readdir(join(directory,'lib'),{withFileTypes:true}).catch(() => [])) {
+      if (file.isFile() && /\.(?:m?js|cjs)(?:\.map)?$/.test(file.name)) await unlink(join(directory,'lib',file.name))
+    }
     const manifest = JSON.parse(await readFile(join(directory, 'package.json'), 'utf8')) as {
       dependencies?: Record<string, string>; peerDependencies?: Record<string, string>
     }

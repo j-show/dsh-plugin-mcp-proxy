@@ -198,7 +198,7 @@ function win32Structs(): { PVOID: KoffiType; PROCESSENTRY32W: ReturnType<Koffi['
   if (cachedStructs !== undefined) return cachedStructs
   const koffi = requireKoffi()
   const PVOID = koffi.pointer('void')
-  // koffi PROCESSENTRY32W layout (tlhelp32.h); the size assert pins the x64 layout.
+  // PROCESSENTRY32W follows the pointer width of the executing Node process.
   const PROCESSENTRY32W = koffi.struct('PROCESSENTRY32W', {
     dwSize: 'uint32',
     cntUsage: 'uint32',
@@ -217,8 +217,9 @@ function win32Structs(): { PVOID: KoffiType; PROCESSENTRY32W: ReturnType<Koffi['
     dwHighDateTime: 'uint32',
   })
   /* v8 ignore start -- a layout-mismatch guard fires only on ABI breakage; the windows-native suites exercise the real struct. */
-  if (PROCESSENTRY32W.size !== 568) {
-    throw new Error(`PROCESSENTRY32W layout mismatch: koffi computed ${PROCESSENTRY32W.size}, Windows headers say 568`)
+  const processEntrySize = process.arch === 'ia32' ? 556 : 568
+  if (PROCESSENTRY32W.size !== processEntrySize) {
+    throw new Error(`PROCESSENTRY32W layout mismatch: koffi computed ${PROCESSENTRY32W.size}, Windows headers say ${processEntrySize}`)
   }
   /* v8 ignore stop */
   cachedStructs = { PVOID, PROCESSENTRY32W, FILETIME }

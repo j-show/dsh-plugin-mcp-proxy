@@ -1,24 +1,25 @@
-/** Project-owned Windows development state; never uses a consumer checkout or user profile. */
+/** Project-owned development state; never uses a consumer checkout or user profile. */
 import { access, lstat, mkdir, readFile, readdir, realpath, symlink, writeFile } from 'node:fs/promises'
 import { constants } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join, resolve } from 'node:path'
 import { promisify } from 'node:util'
 import { execFile } from 'node:child_process'
+import { generateDevelopmentTls } from './development-tls.ts'
+export { generateDevelopmentTls } from './development-tls.ts'
 
 export const DEVELOPMENT_ORIGIN = 'https://localhost:3443'
 const execute = promisify(execFile)
-export interface DevelopmentTools { readonly node: string; readonly pnpm: string; readonly powershell: boolean; readonly tar: boolean; readonly compiler: boolean; readonly license: boolean }
+export interface DevelopmentTools { readonly node: string; readonly pnpm: string; readonly tar: boolean; readonly compiler: boolean; readonly license: boolean }
 /** Pure preflight diagnostics, also usable before installing dependencies. */
-export function developmentIssues(tools: DevelopmentTools, packaging: boolean): string[] {
+export function developmentIssues(tools: DevelopmentTools, packaging: boolean, platform: NodeJS.Platform = process.platform): string[] {
   const issues: string[] = []
   const [, major, minor] = /^v(\d+)\.(\d+)/.exec(tools.node) ?? []
-  if (!(Number(major) >= 24 || (Number(major) === 22 && Number(minor) >= 19))) issues.push('Use Node 22.19+ or Node 24+.')
-  if (tools.pnpm !== '11.7.0') issues.push('Use pnpm 11.7.0.')
-  if (!tools.powershell) issues.push('Install PowerShell 7 (pwsh).')
+  if (Number(major) !== 22 || Number(minor) < 19) issues.push('Use Node 22.19+.')
+  const pnpm = /^(\d+)\.\d+\.\d+(?:\+[A-Za-z0-9.-]+)?$/.exec(tools.pnpm)
+  if (!pnpm || !Number.isSafeInteger(Number(pnpm[1])) || Number(pnpm[1]) < 10) issues.push('Use pnpm >=10.')
   if (packaging && !tools.tar) issues.push('Install tar.')
-  if (packaging && !tools.compiler) issues.push('Enable the Windows .NET Framework 4.x compiler.')
-  if (packaging && !tools.license) issues.push('Supply the Node distribution LICENSE.')
+  if (packaging && platform === 'win32' && !tools.compiler) issues.push('Enable the Windows .NET Framework 4.x compiler.')
   return issues
 }
 
@@ -48,12 +49,6 @@ async function exists(path: string): Promise<boolean> {
     if (error instanceof Error && 'code' in error && error.code === 'ENOENT') return false
     throw error
   }
-}
-
-/** Generate private local TLS material without adding a certificate to any trust store. */
-export async function generateDevelopmentTls(directory: string): Promise<void> {
-  await execute('pwsh', ['-NoLogo', '-NoProfile', '-NonInteractive', '-File',
-    join(import.meta.dirname, 'development-tls.ps1'), '-Directory', directory], { windowsHide: true, timeout: 30000 })
 }
 
 /** Claim an empty development directory, preserving all existing settings on retries. */

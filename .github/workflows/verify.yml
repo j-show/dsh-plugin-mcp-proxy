@@ -1,4 +1,4 @@
-name: Windows verification
+name: Cross-platform verification
 on:
   push:
   pull_request:
@@ -8,30 +8,133 @@ permissions:
 concurrency:
   group: verify-${{ github.ref }}
   cancel-in-progress: true
+defaults:
+  run:
+    shell: bash
 jobs:
-  verify:
-    runs-on: windows-2025
-    timeout-minutes: 60
+  shared:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.7.0
       - uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
-      - name: Install public locked dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Require a real interactive Windows desktop and both browsers
-        run: pnpm test:browser --preflight
-      - name: Check, package and test native products
-        shell: pwsh
-        run: ./scripts/verify.ps1 -Mode release
-      - name: Retain verification and artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
+      - uses: pnpm/action-setup@v4
         with:
-          name: windows-${{ github.sha }}
+          version: 10.0.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:shared
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm dev:check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shared-${{ github.sha }}
+          include-hidden-files: true
+          path: |
+            .artifacts/shared/
+            packages/*/modules/*/lib/
+            packages/dsh-plugin/lib/
+          if-no-files-found: error
+          retention-days: 7
+  package-manager:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        pnpm: ['11', '12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ matrix.pnpm }}
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test scripts/pnpm-compat.spec.ts scripts/development.spec.ts
+  native:
+    needs: shared
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2025
+            build: build:win
+            target: win-64
+            rust: i686-pc-windows-msvc x86_64-pc-windows-msvc
+          - os: macos-15-intel
+            build: build:mac:intel
+            target: mac-intel
+            rust: x86_64-apple-darwin
+          - os: macos-15
+            build: build:mac:arm
+            target: mac-arm
+            rust: aarch64-apple-darwin
+          - os: ubuntu-22.04
+            build: build:linux
+            target: linux
+            rust: x86_64-unknown-linux-gnu
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '11'
+      - name: Install Linux native dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential pkg-config libssl-dev libxdo-dev libayatana-appindicator3-dev librsvg2-dev patchelf xvfb
+      - name: Install Rust targets
+        run: rustup target add ${{ matrix.rust }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: packages/mcp-proxy/src-tauri
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: shared-${{ github.sha }}
+          path: .
+      - run: pnpm ${{ matrix.build }}
+      - run: pnpm test:rust
+      - run: pnpm build:mcp-plugin
+      - name: Verify installed package payload
+        if: runner.os != 'Linux'
+        run: pnpm test:installer --target ${{ matrix.target }}
+      - name: Verify extracted Debian payload
+        if: runner.os == 'Linux'
+        run: xvfb-run -a pnpm test:installer --target linux
+      - name: Verify Win32 installer independently
+        if: runner.os == 'Windows'
+        run: pnpm test:installer --target win-32
+      - name: Test native product
+        if: runner.os != 'Linux'
+        run: pnpm test:product --target ${{ matrix.target }}
+      - name: Test Linux native product on a real X server
+        if: runner.os == 'Linux'
+        run: xvfb-run -a pnpm test:product --target linux
+      - name: Test the Win32 product independently
+        if: runner.os == 'Windows'
+        run: pnpm test:product --target win-32
+      - name: Require the interactive Windows desktop
+        if: runner.os == 'Windows'
+        run: pnpm test:browser --preflight
+      - name: Test both browsers and the Tauri lifecycle
+        if: runner.os == 'Windows'
+        run: pnpm test:browser --target win-64
+      - name: Test the Win32 GUI with both browsers
+        if: runner.os == 'Windows'
+        run: pnpm test:browser --target win-32
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-${{ matrix.target }}-${{ github.sha }}
+          include-hidden-files: true
           path: |
             .artifacts/ci/
             release/

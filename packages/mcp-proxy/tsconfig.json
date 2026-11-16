@@ -13,8 +13,5 @@
     {
       "path": "modules/runtime/tsconfig.json"
     }
-  ],
-  "exclude": [
-    "src/client/renderer.ts"
   ]
 }

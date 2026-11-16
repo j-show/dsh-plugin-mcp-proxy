@@ -12,6 +12,8 @@ import { buildLibraries } from './build-libraries.ts'
 import { prepareMcpBuildRuntime, mcpBuildEnvironment, mcpBuildRuntimeDownload } from './mcp-build-runtime.ts'
 import { runMcpBuildCommand } from './run-mcp-build-command.ts'
 import { packageMcpProxy } from './package-mcp-proxy.ts'
+import { buildApplications } from './build-app.ts'
+import { buildShared } from './build-shared.ts'
 import { developmentPaths, initializeDevelopment, initializeDevelopmentProfiles, developmentIssues, developmentDshCli, DEVELOPMENT_ORIGIN } from './development.ts'
 import { createDevelopmentProxy } from './development-proxy.ts'
 
@@ -32,10 +34,11 @@ async function doctor(): Promise<void> {
   const pnpm = process.env.npm_execpath
   const version = pnpm ? (await execute(process.execPath, [pnpm, '--version'], { timeout: 15000, windowsHide: true })).stdout.trim() : ''
   const issues = developmentIssues({ node: process.version, pnpm: version,
-    powershell: await available('pwsh', ['-NoProfile', '-Command', 'if ($PSVersionTable.PSVersion.Major -lt 7) { exit 1 }']),
-    tar: await available('tar', ['--version']), compiler: await fileExists(join(process.env.WINDIR ?? '', 'Microsoft.NET/Framework64/v4.0.30319/csc.exe')),
+    tar: await available('tar', ['--version']), compiler: await fileExists(join(process.env.WINDIR ?? '', 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'))
+      || await fileExists(join(process.env.WINDIR ?? '', 'Microsoft.NET/Framework/v4.0.30319/csc.exe')),
     license: mcpBuildRuntimeDownload(process.platform, process.version) !== undefined || await fileExists(values['node-license'] ?? join(dirname(process.execPath), 'LICENSE')) }, values.packaging ?? false)
-  if (process.platform !== 'win32' || process.arch !== 'x64') issues.push('Native development and packaging require Windows x64.')
+  if (!['win32','darwin','linux'].includes(process.platform)) issues.push('Native development requires Windows, macOS or Linux.')
+  if (values.packaging && !await available('cargo',['--version'])) issues.push('Install Rust/Cargo and the platform Tauri prerequisites.')
   for (const name of ['tsx', 'typescript', 'vitest', '@deepseek-ai/dsh', '@deepseek-ai/dsh-app-boot']) {
     try { require.resolve(name + '/package.json') } catch { issues.push(`Run pnpm install --frozen-lockfile (missing ${name}).`) }
   }
@@ -54,11 +57,14 @@ function environment(home: string): NodeJS.ProcessEnv {
 /** Only stop the process started by this command; never issue a machine-wide stop to an unknown owner. */
 async function foreground(executable: string, args: string[], home: string, log: string): Promise<void> {
   const output = createWriteStream(join(p.logs, log), { flags: 'a', mode: 0o600 })
-  const child = spawn(executable, args, { cwd: p.workspace, env: environment(home), windowsHide: true, shell: false, stdio: ['inherit', 'pipe', 'pipe', 'ipc'] })
+  const desktop = log === 'desktop.log'
+  const child = spawn(executable, args, { cwd: p.workspace, env: { ...environment(home), MCP_PROXY_INSPECT: values.inspect ? '1' : undefined }, windowsHide: !desktop, shell: false,
+    stdio: desktop ? ['pipe','pipe','pipe'] : ['inherit', 'pipe', 'pipe', 'ipc'] })
   child.stdout?.pipe(output, { end: false }); child.stderr?.pipe(output, { end: false })
   child.stdout?.on('data', (chunk: Buffer) => { process.stdout.write(log === 'server.log' ? chunk.toString().replaceAll('http://127.0.0.1:3081/', DEVELOPMENT_ORIGIN + '/') : chunk) })
   child.stderr?.pipe(process.stderr)
   const stop = () => {
+    if (desktop) { child.stdin?.write('mcp-development-stop\n'); return }
     if (child.connected) child.send('mcp-development-stop', error => { if (error) process.stderr.write('Graceful shutdown request failed; inspect the owned development process.\n') })
   }
   process.once('SIGINT', stop); process.once('SIGTERM', stop)
@@ -86,11 +92,11 @@ async function run(): Promise<void> {
   if (executable) {
     await runMcpBuildCommand(executable, ['--import', 'tsx/esm', ...process.argv.slice(1)], root, mcpBuildEnvironment(executable, process.env)); return
   }
-  if (process.platform !== 'win32' || process.arch !== 'x64') throw new Error('Native development requires Windows x64')
+  if (!['win32','darwin','linux'].includes(process.platform)) throw new Error('Native development requires Windows, macOS or Linux')
   await initializeDevelopment(root)
   await initializeDevelopmentProfiles(root, p)
   if (command === 'init') { process.stdout.write(`Development state ready: ${p.root}\n`); return }
-  if (command === 'build') { await buildLibraries(root, true); return }
+  if (command === 'build') { await buildShared(root, true); return }
   if (command === 'check') {
     await runMcpBuildCommand(process.execPath, [join(root, 'node_modules/vitest/vitest.mjs'), 'run',
       'scripts/development.spec.ts', 'scripts/development-proxy.spec.ts', 'scripts/development-signals.spec.ts', 'scripts/download-runtime.spec.ts', 'packages/mcp-proxy/modules/local/tests/tunnel.spec.ts',
@@ -118,18 +124,9 @@ async function run(): Promise<void> {
     await foreground(process.execPath, [...(values.inspect ? ['--inspect=127.0.0.1:9232'] : []), '--import', signalPreload, '--enable-source-maps', developmentDshCli(root),
       '--profile', 'mcp-proxy', '--config', p.settings], p.localHome, 'runtime.log'); return
   }
-  const require = createRequire(join(root, 'packages/mcp-proxy/package.json'))
-  const electron = dirname(require.resolve('electron/package.json'))
-  if (!await fileExists(join(electron, 'dist/electron.exe'))) await runMcpBuildCommand(process.execPath, [join(electron, 'install.js')], root)
-  await runMcpBuildCommand(process.execPath, ['--import', 'tsx/esm', 'packages/mcp-proxy/modules/runtime/scripts/build-native-uri.mjs'], root)
-  const output = join(p.root, 'desktop-' + Date.now())
-  await mkdir(output)
-  const runtime = join(output, 'runtime')
-  await packageMcpProxy({ repository: root, output: runtime, nodeExecutable: process.execPath, nodeLicense: resolve(values['node-license'] ?? join(dirname(process.execPath), 'LICENSE')) })
-  await runMcpBuildCommand(process.execPath, ['--import', 'tsx/esm', 'packages/mcp-proxy/scripts/package-electron.ts',
-    '--runtime', runtime, '--electron-dist', join(electron, 'dist'), '--out', join(output, 'electron'), '--connection-presets', p.presets, '--development'], root)
-  const exe = join(output, 'electron/distribution/win-unpacked/mcp-proxy.exe')
+  const products = await buildApplications(root,'host',true,true,p.presets)
+  const exe = products[0]!.executable
   await writeFile(join(p.root, 'desktop-path.txt'), exe + '\n')
-  await foreground(exe, values.inspect ? ['--inspect=127.0.0.1:9231'] : [], p.localHome, 'desktop.log')
+  await foreground(exe, ['--config',p.settings], p.localHome, 'desktop.log')
 }
 void run().catch((error: unknown) => { process.stderr.write(`${error instanceof Error ? error.message : 'Development command failed'}\n`); process.exitCode = 1 })

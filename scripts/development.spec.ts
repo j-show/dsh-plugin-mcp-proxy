@@ -11,8 +11,18 @@ async function fixture() {
 }
 
 it('reports unsupported tools and packaging prerequisites without changing the host', () => {
-  expect(developmentIssues({ node: 'v20.0.0', pnpm: '10.0.0', powershell: false, tar: false, compiler: false, license: false }, true))
-    .toEqual(expect.arrayContaining(['Use Node 22.19+ or Node 24+.', 'Use pnpm 11.7.0.', 'Install PowerShell 7 (pwsh).', 'Install tar.', 'Enable the Windows .NET Framework 4.x compiler.', 'Supply the Node distribution LICENSE.']))
+  expect(developmentIssues({ node: 'v20.0.0', pnpm: '9.15.0', tar: false, compiler: false, license: false }, true, 'win32'))
+    .toEqual(expect.arrayContaining(['Use Node 22.19+.', 'Use pnpm >=10.', 'Install tar.', 'Enable the Windows .NET Framework 4.x compiler.']))
+})
+
+it('accepts pnpm 10 and later releases without requiring an exact package-manager version', () => {
+  const tools = { node: 'v22.23.5', tar: true, compiler: true, license: true }
+  for (const pnpm of ['10.0.0', '10.26.0', '11.7.0', '12.0.0']) {
+    expect(developmentIssues({ ...tools, pnpm }, false)).toEqual([])
+  }
+  for (const pnpm of ['', '9.15.0', '10', '10.0.0-beta.1', 'not-a-version']) {
+    expect(developmentIssues({ ...tools, pnpm }, false)).toContain('Use pnpm >=10.')
+  }
 })
 
 it('initializes owned state and preserves settings and credentials on repeat', async () => {

@@ -2,102 +2,100 @@
 
 English | [中文](README.zh.md)
 
-A Windows desktop connector for local MCP servers and a separately installable DSH server plugin. The desktop application connects to multiple DSH services, shares one local MCP list, and routes every call and callback to its originating DSH connection. It adds no file tools: configured downstream MCP servers perform local operations.
+A Tauri desktop connector for local MCP servers and a separately installable DSH plugin.
+The application shares one MCP list across multiple DSH connections while retaining call,
+callback, cancellation and device ownership. Downstream MCPs perform file operations.
+The Rust desktop shell supervises the existing Node/DSH core; the renderer receives only a narrow management bridge.
 
-## Requirements and continued development
+```mermaid
+flowchart LR
+    Web[Authenticated DSH Web] -->|URI| Desktop[Tauri window and tray]
+    Desktop --> Supervisor[Bundled Node 22 supervisor]
+    Supervisor --> Runtime[Owned DSH profile]
+    Runtime <-->|HTTPS and WSS| Plugin[DSH plugin]
+    Runtime --> MCP[Configured MCP services]
+```
 
-| Document | Contents |
-| --- | --- |
-| [Current requirements](docs/requirements.md) | Confirmed B1–B28, extraction requirements, supported MCP capabilities and exclusions |
-| [Current design](docs/design.md) | Pairing, per-Turn and per-origin ownership, cancellation, callbacks and recovery |
-| [Configuration and operations](docs/configuration.md) | Installation, complete examples, limits, disable/remove and diagnostics |
-| [Acceptance and remaining work](docs/acceptance.md) | Requirement coverage, recorded evidence, reproduction and outstanding implementation/validation |
-| [Complete historical baseline](docs/history/README.md) | Original confirmed requirements and Plan A in both languages, later decisions and import hashes |
-
-The current detailed guides are maintained in Chinese; the historical baseline includes both languages. Start continued development from a requirement ID and acceptance item without another checkout or chat history. Implemented behavior, automated coverage and product acceptance are separate: full joint acceptance remains outstanding. MCP support is limited to the documented transports and capabilities; resources/prompts are excluded.
+Start with [requirements](docs/requirements.md), [design](docs/design.md),
+[configuration](docs/configuration.md) and [acceptance](docs/acceptance.md).
+The [Tauri migration record](docs/migrations/tauri-2026-11-16.md) distinguishes implementation and verified platforms.
+Historical Electron evidence does not establish Tauri acceptance.
 
 ## Develop
 
-Follow the [Windows development and debugging guide](docs/development.md) for a new
-machine, isolated DSH profiles, local TLS and source breakpoints. See
-[CONTRIBUTING](CONTRIBUTING.md) and [security reporting](SECURITY.md).
-After installing dependencies, run `pnpm dev:doctor` and `pnpm dev:init`;
-`pnpm dev:server` and `pnpm dev:desktop` start the native development environment.
-Windows CI checks clean installs, tests and both deliverables without production secrets.
-
-After `pnpm build:mcp-proxy`, run `pnpm test:product` on a Windows machine with an
-unused local service slot. It binds the recorded build's EXE/runtime pair, requires
-all five native product cases to pass, and verifies service/data cleanup. Release CI
-runs this automatically after both builds; see the [acceptance guide](docs/acceptance.md).
-
-`pnpm test:browser` runs headed Chrome/Edge, real URI confirmation, TLS pairing and
-GUI/tray lifecycle acceptance against the recorded build. It needs an active Windows
-session, interactive desktop, Explorer tray, both browsers, a free service slot and an
-unoccupied user/system `mcp-proxy://` registration. `--preflight` checks prerequisites
-without taking over an existing installation.
-
-Release CI requires both seven-scenario browser matrices without skips. Disposable
-profiles and test CAs are owned and removed by the run. Reports under `.artifacts/ci`
-exclude tickets, private state and the address bar. See the [acceptance guide](docs/acceptance.md)
-and [implementation evidence](docs/evidence/browser-desktop-e2e-2026-11-13.md) for scope and results.
-Failure reports preserve native dialog structure and the last safe control error.
-Client activation diagnostics include scrubbed errors and observed framework/module revisions.
-Startup investigation requires three fresh DSH installations per browser, each with three
-cold browser processes and new profiles, followed by 20 new-document observations in the
-lifecycle matrix. `pnpm test:browser --startup-only` runs only the cold matrix against the
-current server archive; it leaves existing URI owners and desktop services untouched.
-Each DSH installation uses a separate npm cache. Failed observations stop immediately;
-reports include CDP/Web startup durations, scrubbed errors and cleanup results.
-See the [cold-start investigation](docs/evidence/startup-anomalies-2026-11-14.md) for verified results and unresolved historical failures.
-Exit checks cover the actual tray menu and termination of the GUI, service and owned children.
-Protocol prompts use native app/origin context across browser-specific labels and sentence punctuation.
-
-Use Node.js 22.19+ or 24+ and pnpm 11.7.0. Dependencies come from the public npm registry; no Harness checkout is required.
+Use Node **22.19+** (recommended **22.23.5**), pnpm **>=10**, Rust and the native
+[Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for the build host.
+No consumer checkout or production credentials are required. See [development](docs/development.md) and [CONTRIBUTING](CONTRIBUTING.md).
 
 ```sh
-pnpm install
-pnpm build
-pnpm test
+pnpm install --frozen-lockfile
+pnpm build:shared
 pnpm typecheck
+pnpm test
+pnpm test:rust
 ```
 
-On affected Windows Node 24 versions, release builds and tests automatically prepare a checksum-pinned private Node runtime under `.artifacts/`. They do not change the global Node installation. First use requires network access.
+There is no top-level `build`: native installers are built on their corresponding OS.
+Scripts dispatch through `scripts/tasks.ts`; PowerShell is not a project prerequisite.
+Older pnpm 10 settings are mirrored in `package.json#pnpm`; later managers read
+`pnpm-workspace.yaml`. The postinstall hook preserves a lock format readable by pnpm 10.0 and later, without changing dependency resolutions.
 
-## Build releases
+## Build
 
-```sh
-pnpm build:mcp-proxy
-pnpm build:mcp-plugin
-```
+| Command | Host | Target/output under `release/mcp-proxy/` |
+| --- | --- | --- |
+| `pnpm build:win:32` | Windows | `win-32/` — x86 NSIS installer and x86 Node |
+| `pnpm build:win:64` | Windows | `win-64/` — x64 NSIS installer and x64 Node |
+| `pnpm build:win` | Windows | Both Windows architectures |
+| `pnpm build:mac:intel` | macOS | `mac-intel/` — Intel DMG |
+| `pnpm build:mac:arm` | macOS | `mac-arm/` — Apple Silicon DMG |
+| `pnpm build:mac` | macOS | Both Mac architectures |
+| `pnpm build:linux` | Ubuntu x64 | `linux/` — Debian package; Ubuntu 22.04 baseline |
 
-The first command requires Windows x64 and produces `release/mcp-proxy/mcp-proxy.exe`, including Electron and all runtime dependencies. The second produces `release/mcp-plugin/`, containing one installable plugin tarball, `install.mjs`, release metadata and the compatibility patch. Intermediates remain under `.artifacts/`. `--skip-build` reuses compiled libraries. The EXE builder also accepts `--electron-dist`, `--node-license` and `--connection-presets` for explicit build inputs.
+Platform aggregates reuse one verified shared build and same-OS dependency closure.
+Every target carries checksum-pinned Node **22.23.5**, matching native dependencies,
+an immutable runtime inventory and third-party notices. Installers and executable/runtime
+pairs are recorded together; a changed runtime is rejected rather than repaired during acceptance.
+Application version and npm scripts/dependencies are controlled by the root `package.json`;
+Rust dependencies are locked in `Cargo.toml`/`Cargo.lock`.
 
-Builds also emit a small Node-profile runtime archive under `release/mcp-proxy/` for artifact-only consumer integration tests. It is not another Windows end-user installation step. Product tests are opt-in with `MCP_PROXY_PRODUCT_TESTS=1` and require an unused machine service slot; their source lists the qualified Electron artifact inputs.
+`pnpm build:mcp-proxy` is the current-host compatibility entry. Optional public deployment
+presets remain available through `--connection-presets <file>`. `pnpm build:mcp-plugin`
+builds the independent DSH archive, installer, compatibility patch and licenses under
+`release/mcp-plugin/`. Internal modules are bundled, not published separately.
 
 ## Install and use
 
-Open `mcp-proxy.exe` on the computer running the downstream MCPs. It starts its service and registers `mcp-proxy://` automatically. Add MCP commands or HTTP/SSE endpoints in its GUI. From each DSH Web page, select “Connect this computer”. The connector automatically accepts a valid activation; the GUI allows per-DSH disconnection. Closing its window hides it to the tray. Tray Exit stops the owned service without another confirmation.
+Install the package for the machine/architecture. Windows installers can download and
+install missing WebView2; Node is included and does not require a user installation.
+Open the application, add MCP commands or HTTP/SSE endpoints, then choose “Connect this computer” in DSH Web.
+Closing the window hides it; tray Exit waits for owned service/MCP cleanup without a second confirmation.
+URI registration preserves unknown owners. Configuration, identity and user files are separate from installed binaries.
 
-The plugin targets DSH `0.1.6-alpha.2`. Stop the server and run the release installer against the **DSH package-manager installation root**, not its profile directory:
+For the server, stop DSH **0.1.6-alpha.2**, then run against its package-manager installation root:
 
 ```sh
 node release/mcp-plugin/install.mjs --dsh-root <dsh-installation-root>
 ```
 
-Set `DSH_HOME` when using a custom profile home. `--profile` defaults to `web`; `--dsh-cli` selects a relative CLI entry for a DSH source installation. The installer verifies the supported DSH version, applies the minimum session-event compatibility patch only when needed, then uses `dsh plugin --profile web add` to install the archive. An existing conflicting session patch requires an explicit merge; it is never overwritten. Set `MCP_PROXY_ORIGIN` to the deployment's public HTTPS origin before starting DSH. Keep the existing authentication system and TLS termination.
+Set `DSH_HOME` for a custom profile home and `MCP_PROXY_ORIGIN` to the public HTTPS deployment origin.
+The installer preserves the existing authentication system and applies the documented
+four-event Session patch when needed. Client builds additionally pin a Win32 ABI compatibility
+patch for the fixed SDK; x64 widths and protocol semantics remain unchanged.
 
-The patch adds only the four MCP event names to the fixed DSH version's known-event set. It preserves refusal of unknown required events and does not mark binding events ignorable. Applying the patch to this repository's development dependencies alone does not patch a separately installed DSH server.
+## Verify
 
-## Layout
+`pnpm verify` runs shared/core checks; `pnpm verify --release` additionally packages
+the host platforms and runs native acceptance. `pnpm test:product --target win-32`
+or `win-64` binds an explicit build and requires all five Windows native cases; Mac/Linux run three profile cases.
+`pnpm test:installer --target <target>` checks actual installed/extracted package payloads and cleanup.
 
-```text
-packages/mcp-proxy/       Electron GUI, local runtime, local MCP clients and protocol
-packages/dsh-plugin/      Unified server entry, adapters, browser UI and compatibility patch
-scripts/                 Independent build, test and release installation tools
-```
+Windows browser acceptance uses `pnpm test:browser --preflight`, followed by
+`pnpm test:browser --target win-64` or `win-32`. It requires a real active desktop,
+Chrome and Edge, Explorer, a free service slot and no existing URI registration.
+Cold startup, pairing, both GUI pages, hide/restore, second launch, reconnect,
+tray exit and owned cleanup remain mandatory. Preflight refusal and skipped cases are not passes.
+Reports are in `.artifacts/ci`; profiles, credentials, private TLS keys and raw server logs are never uploaded.
 
-Internal modules are private workspace packages bundled into the two deliverables; they are not separate installation steps. The [architecture overview](docs/architecture.md) links to the detailed guides above.
-
-## License
-
-Original additions use [Apache-2.0](LICENSE). Adapted DeepSeek Harness code retains its [MIT notice](LICENSE-MIT-UPSTREAM); see [third-party notices](THIRD_PARTY_NOTICES.md). macOS/Linux desktop distributions, code signing and publication are outside the current delivery.
+Original additions use [Apache-2.0](LICENSE); adapted upstream code retains its [MIT notice](LICENSE-MIT-UPSTREAM).
+See [third-party notices](THIRD_PARTY_NOTICES.md). Signing, notarization, release publication and the remaining product matrix require their own verification.

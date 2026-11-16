@@ -44,6 +44,16 @@ it('builds and registers a macOS application owning open-location Apple events',
   await expect(readFile(join(app, 'Contents/Info.plist'))).rejects.toMatchObject({ code: 'ENOENT' })
 })
 
+it('detaches a persistent Tauri desktop while forwarding the URI as a safely quoted argument', async () => {
+  const {spec,calls,run} = await setup()
+  await installMacosUri({...spec,desktop:true},5000,new AbortController().signal,run)
+  const script = calls.find(call => call.file === '/usr/bin/osacompile')!.args.at(-1)!
+  expect(script).toContain('--config')
+  expect(script).not.toContain('--associate')
+  expect(script).toContain('quoted form of incomingUrl')
+  expect(script).toContain('>/dev/null 2>&1 &')
+})
+
 it('keeps a compiled application after registration failure for a safe retry', async () => {
   const { spec, run } = await setup()
   let fail = true

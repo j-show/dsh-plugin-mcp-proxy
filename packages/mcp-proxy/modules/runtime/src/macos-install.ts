@@ -207,10 +207,11 @@ async function defaultHandler(run: Run): Promise<string | undefined> {
 
 function appleScript(spec: Spec): string {
   const quote = (text: string): string => "'" + text.replace(/'/g, "'\\''") + "'"
-  const command = ['/usr/bin/env', `DSH_HOME=${spec.home}`, spec.node, spec.cli,
-    '--profile', spec.profile, '--config', spec.settings, '--associate'].map(quote).join(' ') + ' '
+  const command = ['/usr/bin/env', `DSH_HOME=${spec.home}`, spec.node,
+    ...(spec.desktop ? ['--config', spec.settings] : [spec.cli, '--profile', spec.profile, '--config', spec.settings, '--associate'])].map(quote).join(' ') + ' '
   const literal = '"' + command.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'
-  return `on open location incomingUrl\ntry\ndo shell script (${literal} & quoted form of incomingUrl)\nend try\nend open location\n`
+  const detached = spec.desktop ? ' & " >/dev/null 2>&1 &"' : ''
+  return `on open location incomingUrl\ntry\ndo shell script (${literal} & quoted form of incomingUrl${detached})\nend try\nend open location\n`
 }
 
 function runner(timeoutMs: number, signal: AbortSignal): Run {

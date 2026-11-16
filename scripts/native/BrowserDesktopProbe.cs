@@ -482,7 +482,26 @@ class BrowserDesktopProbe {
       }
       else if(op.StartsWith("ca-"))result=Certificate(op,a[1]);
       else if(op=="alive") {try {var p=Process.GetProcessById(Int32.Parse(a[1]));result=p.StartTime.ToUniversalTime().Ticks.ToString()==a[2];}catch(ArgumentException){result=false;}}
-      else if(op=="identity") {try{var p=Process.GetProcessById(Int32.Parse(a[1]));var image=ProcessImage(p);result=String.IsNullOrEmpty(image)?null:new {pid=p.Id,started=p.StartTime.ToUniversalTime().Ticks.ToString(),image};}catch(ArgumentException){result=null;}}
+        else if(op=="installer-info") {
+          var rows=new List<object>();
+          var views=Environment.Is64BitOperatingSystem?new[]{RegistryView.Registry32,RegistryView.Registry64}:new[]{RegistryView.Registry32};
+          foreach(var hive in new[]{RegistryHive.CurrentUser,RegistryHive.LocalMachine})foreach(var view in views)
+          using(var root=RegistryKey.OpenBaseKey(hive,view))using(var parent=root.OpenSubKey("Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall",false)) {
+            if(parent==null)continue;
+            foreach(var name in parent.GetSubKeyNames())using(var key=parent.OpenSubKey(name,false)) {
+              if(key==null)continue;
+              if(!String.Equals(name,"mcp-proxy",StringComparison.OrdinalIgnoreCase)&&!String.Equals(key.GetValue("DisplayName") as string,"mcp-proxy",StringComparison.OrdinalIgnoreCase))continue;
+              rows.Add(new{scope=hive.ToString(),view=view.ToString(),location=key.GetValue("InstallLocation") as string??"",uninstall=key.GetValue("UninstallString") as string??""});
+            }
+          }
+          bool run,appId;string command;
+          using(var key=Registry.CurrentUser.OpenSubKey("Software\\Microsoft\\Windows\\CurrentVersion\\Run",false))run=key!=null&&key.GetValue("mcp-proxy")!=null;
+          using(var key=Registry.CurrentUser.OpenSubKey("Software\\Classes\\AppUserModelId\\io.github.jshow.mcp-proxy",false))appId=key!=null;
+          using(var key=Registry.ClassesRoot.OpenSubKey("mcp-proxy\\shell\\open\\command",false))command=key==null?"":key.GetValue("") as string??"";
+          string digest;using(var hash=System.Security.Cryptography.SHA256.Create())digest=BitConverter.ToString(hash.ComputeHash(Encoding.UTF8.GetBytes(command))).Replace("-","");
+          result=new{installations=rows,run,appId,uriDigest=digest};
+        }
+        else if(op=="identity") {try{var p=Process.GetProcessById(Int32.Parse(a[1]));var image=ProcessImage(p);result=String.IsNullOrEmpty(image)?null:new {pid=p.Id,started=p.StartTime.ToUniversalTime().Ticks.ToString(),image};}catch(ArgumentException){result=null;}}
       else if(op=="tray-present")result=TrayPresent();
       else if(op=="tray-info")result=TrayInfo();
       else if(op=="gui"||op=="scope-processes") {
@@ -491,7 +510,8 @@ class BrowserDesktopProbe {
         result=rows;
       } else {
         var p=Owned(a);var windows=Windows(p.Id);var own=windows.Where(w=>Title(w)=="mcp-proxy").ToList();
-        if(op=="children") {
+          if(op=="gui-owned")result=windows.Where(w=>Title(w)=="mcp-proxy").Select(w=>Info(p,w)).ToArray();
+          else if(op=="children") {
           var ids=new HashSet<int>();ids.Add(p.Id);var parents=new Dictionary<int,int>();var snap=CreateToolhelp32Snapshot(2,0);
           if(snap==new IntPtr(-1))throw new Exception("Cannot snapshot owned process tree");
           try {var entry=new PE();entry.size=(uint)Marshal.SizeOf(typeof(PE));if(Process32First(snap,ref entry))do{parents[(int)entry.pid]=(int)entry.parent;}while(Process32Next(snap,ref entry));}

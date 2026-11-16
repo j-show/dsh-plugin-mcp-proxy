@@ -6,19 +6,25 @@ import { downloadPrimaryRuntimeAsset } from './download-runtime.ts'
 import { runMcpBuildCommand } from './run-mcp-build-command.ts'
 
 /** Checksum-pinned Node archive from the project runtime lock. */
-interface RuntimeDownload { readonly version: string; readonly url: string; readonly sha256: string }
+export interface RuntimeDownload { readonly version: string; readonly url: string; readonly sha256: string; readonly archive: string }
+export function targetRuntimeDownload(platform: NodeJS.Platform, arch: string): RuntimeDownload {
+  const key = `${platform === 'win32' ? 'win' : platform}-${arch}`
+  const target = (lock.targets as Record<string, { nodeArchive: string; nodeSha256: string }>)[key]
+  if (!target) throw new Error(`Unsupported Node runtime target: ${platform}/${arch}`)
+  return { version: lock.nodeVersion, archive: target.nodeArchive, sha256: target.nodeSha256,
+    url: `https://nodejs.org/dist/v${lock.nodeVersion}/node-v${lock.nodeVersion}-${target.nodeArchive}` }
+}
 
 /**
- * Select a replacement only for the affected Windows Node 24 releases.
+ * Select the locked Node 22 runtime when the host is outside the supported Node 22 range.
  * @param platform - Build host platform.
  * @param version - Build host version including its v prefix.
  * @returns A locked download, or undefined when the current runtime is supported.
  */
-export function mcpBuildRuntimeDownload(platform: NodeJS.Platform, version: string): RuntimeDownload | undefined {
-  if (platform !== 'win32' || !/^v24\.(?:\d|1\d)\./.test(version)) return undefined
-  const target = lock.targets['win-x64']
-  return { version: lock.nodeVersion, sha256: target.nodeSha256,
-    url: `https://nodejs.org/dist/v${lock.nodeVersion}/node-v${lock.nodeVersion}-${target.nodeArchive}` }
+export function mcpBuildRuntimeDownload(platform: NodeJS.Platform, version: string, arch = process.arch): RuntimeDownload | undefined {
+  const match = /^v22\.(\d+)\./.exec(version)
+  if (match && Number(match[1]) >= 19) return undefined
+  return targetRuntimeDownload(platform, arch)
 }
 
 /**
@@ -48,9 +54,9 @@ export async function prepareMcpBuildRuntime(repository: string): Promise<string
   const archive = await downloadPrimaryRuntimeAsset(download.url, download.sha256, cache)
   const directory = await mkdtemp(join(cache, 'runtime-'))
   await runMcpBuildCommand('tar', ['-xf', archive, '-C', directory], repository)
-  const runtime = join(directory, `node-v${download.version}-win-x64`)
+  const runtime = join(directory, `node-v${download.version}-${download.archive.replace(/\.(zip|tar\.gz|tar\.xz)$/, '')}`)
   await access(join(runtime, 'LICENSE'))
-  const executable = join(runtime, 'node.exe')
+  const executable = join(runtime, process.platform === 'win32' ? 'node.exe' : 'bin/node')
   await runMcpBuildCommand(executable, ['-e', `if(process.versions.node !== ${JSON.stringify(download.version)}) process.exit(1)`], repository)
   return executable
 }

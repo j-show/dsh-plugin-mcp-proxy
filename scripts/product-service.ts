@@ -9,7 +9,8 @@ export async function withProductRunLock<T>(run: () => Promise<T>, file = join(t
   return withFileLock(file, run, { waitMs })
 }
 
-export async function assertProductServiceIdle(address = '\\\\.\\pipe\\dsh-mcp-proxy'): Promise<void> {
+export async function assertProductServiceIdle(address?: string): Promise<void> {
+  if (!address) address = process.platform === 'win32' ? '\\\\.\\pipe\\dsh-mcp-proxy' : '/tmp/dsh-mcp-proxy/service.sock'
   const socket = createConnection(address)
   const closed = new Promise<void>(resolve => { socket.once('close', resolve) })
   try {
@@ -24,8 +25,8 @@ export async function withProductServiceCheck<T>(run: () => Promise<T>, check: (
   await check()
   try { return await run() } finally { await check() }
 }
-export function verifyProductResults(value: unknown): void {
+export function verifyProductResults(value: unknown, expected = 5): void {
   if (typeof value !== 'object' || value === null) throw new Error('Missing native product test results')
   const result = value as Record<string, unknown>
-  if (result.success !== true || result.numTotalTests !== 5 || result.numPassedTests !== 5 || result.numFailedTests !== 0 || result.numPendingTests !== 0) throw new Error('All five native product cases must pass with zero skips')
+  if (result.success !== true || result.numTotalTests !== expected || result.numPassedTests !== expected || result.numFailedTests !== 0 || result.numPendingTests !== 0) throw new Error(`All ${expected} native product cases must pass with zero skips`)
 }

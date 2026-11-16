@@ -14,7 +14,8 @@ flowchart TB
     UI[ui 连接状态及人工回答] <--> Browser
   end
   subgraph Desktop[一个 Windows 连通应用]
-    GUI[Electron 主进程 GUI 托盘] -->|窄 IPC| Runtime[固定 dsh profile]
+    GUI[Tauri 窗口与托盘] -->|窄 IPC| Supervisor[随包 Node 22 监督进程]
+    Supervisor --> Runtime[固定 dsh profile]
     URI[原生 URI 入口] -->|私有命名管道| Runtime
     Runtime --> Channels[按 DSH 地址独立通道]
     Channels --> Routes[不可变调用归属]
@@ -27,7 +28,8 @@ flowchart TB
 
 | 实现位置 | 所有权 |
 | --- | --- |
-| `packages/mcp-proxy/src` | Electron 引导、缓存校验、GUI/preload/托盘、真实 profile 启停、URI 安装 |
+| `packages/mcp-proxy/src` | Node 监督进程、管理桥接、真实 profile 启停和共用界面 |
+| `packages/mcp-proxy/src-tauri` | Rust 窗口/托盘、单实例、IPC 来源限制、资源完整性与原生打包 |
 | `packages/mcp-proxy/modules/protocol` | ID、帧校验、身份挑战、目录、关联、调用及回调结算 |
 | `packages/mcp-proxy/modules/local` | MCP SDK 适配、配置解析、共享池、串行调用、roots、管理事务与路由 |
 | `packages/mcp-proxy/modules/runtime` | dsh profile、凭据、机器级控制入口、每 DSH 连接、配对、管理和恢复 |
@@ -39,15 +41,21 @@ flowchart TB
 
 仅两个产品交付。七个内部模块是私有 workspace 单元，随父产物打包。源码只依赖公共固定版本 DSH 包，不从消费项目解析实现。
 
-## Windows 进程、缓存与单实例
+## 桌面进程、运行时与单实例
 
-便携 EXE 内置 Electron、真实 dsh CLI 和选定运行依赖。首次启动在用户缓存暂存、校验文件清单和哈希后发布永久运行目录，再从该目录运行 GUI。配置、身份、日志、用户工作目录不放进版本缓存。早期 Electron 日志在 Chromium 启动前定向到状态目录，不豁免缓存中多出的文件。
+Tauri 安装包内置官方 Node 22、真实 DSH CLI 和选定运行依赖，Windows 可补装 WebView2。
+Rust 启动 Node 前按编译时内嵌摘要校验资源清单及所有文件；开发模式和原生产物验收不能混淆，验收不修复损坏运行时。
+配置、身份、日志和工作文件在独立用户目录保存；Windows 保留原有数据位置。
 
-Electron 主进程通过 Node 模式启动固定 `mcp-proxy` profile，不在 renderer 中执行 agent 或 MCP。通过公共 app-boot API 初始化独立 profile；startup 检查必需提供方在预算内启用。退出等待自有 MCP 进程清理，Windows Job 负责后代进程约束，HTTP/SSE 外部服务不由应用停止。
+Rust 通过私有 stdio 监督随包 Node 进程，Node 再启动固定 `mcp-proxy` profile；不在 WebView 或 Rust 重写 agent/MCP。
+公共 app-boot API 初始化 profile，startup 在预算内检查必需提供方。退出等待自有进程清理，监督进程失联使用既有 DSH 信号关闭路径。
+Windows Job 约束后代进程，x86/x64 使用匹配的结构尺寸；HTTP/SSE 外部服务不由应用停止。
 
-GUI 的 Electron 单实例锁复用窗口。后台服务通过固定机器命名管道 `\\.\pipe\dsh-mcp-proxy` 的首实例所有权排他；不以 PID 超时抢占，也不监听固定本地 TCP 端口。B3 要求跨工作目录、profile 和操作系统登录会话成立；跨 Windows 用户的排他性及管道权限仍需专门产品验收，不能把同用户测试当作已完成证明。
+GUI 的 Tauri 单实例机制复用窗口。后台服务通过固定机器命名管道 `\\.\pipe\dsh-mcp-proxy` 的首实例所有权排他；不以 PID 超时抢占，也不监听固定本地 TCP 端口。B3 要求跨工作目录、profile 和操作系统登录会话成立；跨 Windows 用户的排他性及管道权限仍需专门产品验收，不能把同用户测试当作已完成证明。
 
-窗口关闭隐藏到托盘；托盘单击显示 GUI，菜单列连接状态及退出。退出直接执行清理，不二次确认。renderer 开启 sandbox/contextIsolation、关闭 Node 集成，preload 只暴露经校验的管理操作，主进程校验发送方，禁止任意导航及新窗口。
+窗口关闭隐藏到托盘，菜单显示连接状态与退出，退出不二次确认。WebView 没有 Node API，
+Rust 只接受本地 main 窗口来源的固定管理命令；前端不能派发 native activation 或任意 shell。
+保留 CSP、导航限制、配置校验和管理回复脱敏。托盘交互另按平台原生环境验收。
 
 ## Web 激活、配对及本机关联
 
@@ -136,9 +144,9 @@ roots 在本地初始化阶段即可回答，不要求已有会话。每服务�
 ## 构建及依赖
 
 开发环境通过[原生开发入口](development.md)初始化项目专用状态，复用公共 DSH CLI/profile API。
-开发 sourcemap 与 Electron 入口不进入默认发布流程，生成的身份、证书与 profile 不提交。
+调试 sourcemap 和 Tauri debug 分发不进入默认发布流程，身份、证书与 profile 不提交。
 
-固定依赖版本及完整性由 package.json、pnpm lockfile 和构建运行时锁文件管理。Windows 受影响的主机 Node 版本由构建脚本使用隔离的已校验版本，不修改全局 Node。构建安装依赖需联网，Windows EXE 目标为 x64。
+依赖和完整性由 package.json、pnpm/Cargo lockfile 与构建运行时锁文件管理。项目统一 Node 22；必要时使用隔离的已校验构建 Node，不改全局环境。共享编译只执行一次，各 OS/架构分别部署匹配 Node 与原生依赖，产物清单见迁移记录。
 
 构建本地 EXE 前编译原生 URI helper，物化运行依赖、解除硬链接、验证真实公开模块导入，并生成哈希清单；不携带开发源码或依赖消费仓库解析。服务端归档在独立暂存位置合并私有模块并提升外部依赖，拒绝越界成员路径。额外 Node profile 归档仅供消费侧产物测试。
 

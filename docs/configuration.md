@@ -6,29 +6,35 @@
 
 新设备从零准备工具链与隔离调试环境见[开发指南](development.md)。本页主要说明发布配置和维护操作。
 
-在本项目根目录使用 Node `^22.19 || >=24` 和 pnpm `11.7.0`。首次安装及准备构建依赖需要联网；Windows EXE 打包需要 Windows x64。用户运行最终 EXE 不需要另装 Node，但其 stdio MCP 可能仍需要 Node、Python、可执行程序等下游依赖。
+使用 Node 22.19+、pnpm >=10、Rust 和宿主原生 Tauri 工具链。所有应用携带同一版本 Node 22.23.5；
+用户不需要另装客户端运行时，但下游 MCP 自己需要的 Node、Python 等仍由用户提供。
 
 ```sh
 pnpm install
-pnpm build
+pnpm build:shared
 pnpm typecheck
 pnpm test
-pnpm build:mcp-proxy
+pnpm build:win
 pnpm build:mcp-plugin
 ```
 
 | 输出 | 用途 |
 | --- | --- |
-| `release/mcp-proxy/mcp-proxy.exe` | 唯一面向 Windows 用户的应用入口 |
+| `release/mcp-proxy/win-32/`、`win-64/` | 对应架构 NSIS 安装包；安装后运行 mcp-proxy.exe |
+| `release/mcp-proxy/mac-intel/`、`mac-arm/` | 对应架构 DMG |
+| `release/mcp-proxy/linux/` | Ubuntu x64 deb |
 | `release/mcp-proxy/j-show-mcp-proxy-runtime-0.1.0.tgz` | 额外的 Node profile 归档，仅供产物集成测试，不是用户安装步骤 |
 | `release/mcp-plugin/j-show-dsh-plugin-mcp-proxy-0.1.0.tgz` | 含内部模块和浏览器产物的服务端插件 |
 | `release/mcp-plugin/install.mjs`、`release.json`、补丁、许可证 | 服务端发布安装工具及配套文件，需保留整个目录 |
 
-构建支持 `--skip-build` 复用已编译库。EXE 还支持 `--electron-dist`、`--node-license`、`--connection-presets` 显式输入；这些选项不是用户启动步骤。受影响的 Windows Node 24 版本会自动准备经过校验的隔离构建 Node，不更改全局环境。构建中间产物在 `.artifacts/`，不要提交运行缓存或密钥。
+在对应宿主调用 `build:win:32`／`build:win:64`／`build:win`、`build:mac:intel`／`build:mac:arm`／`build:mac`、`build:linux`。
+没有顶层 `build`，共享产物按指纹及输出清单复用一次；`build:mcp-proxy` 是当前宿主兼容入口。
+`--connection-presets <file>` 保留公开 origin/CA 预设；不再使用 Electron 分发目录或 Node 模式选项。
+中间文件在 `.artifacts/`，不提交运行时、profile 或密钥。Windows 安装器可补装缺失的 WebView2。
 
 ## 本地应用
 
-打开 EXE 即创建缺失的空配置、启动服务并注册 `mcp-proxy://`，不要求用户执行注册表、证书或安装脚本。空服务器列表和空 MCP 列表是正常初始状态。通过 GUI 添加 MCP，再到已登录的 DSH Web“设置 → 本机连接”点击“连接这台电脑”；应用内不再要求允许，浏览器/操作系统自身提示仍可能出现。
+安装后打开应用即创建缺失的空配置、启动服务并注册 `mcp-proxy://`，不要求用户执行注册表、证书或安装脚本。空服务器列表和空 MCP 列表是正常初始状态。通过 GUI 添加 MCP，再到已登录的 DSH Web“设置 → 本机连接”点击“连接这台电脑”；应用内不再要求允许，浏览器/操作系统自身提示仍可能出现。
 
 连接以各 DSH 地址分别展示。GUI 可断开其中一个；该地址持久禁用，直到它的 Web 再次发起新激活。关闭窗口只隐藏到托盘；单击托盘显示 GUI，右键列出状态并可直接退出。退出停止自有服务和 MCP 子进程，不删除用户文件或停止外部 HTTP 服务。
 
@@ -37,11 +43,14 @@ pnpm build:mcp-plugin
 | `%LOCALAPPDATA%/McpProxy/data/settings.json` | 版本化本地配置 |
 | `%LOCALAPPDATA%/McpProxy/data/identity.yaml` | 受凭据提供方管理的私钥材料，不应展示或提交 |
 | `%LOCALAPPDATA%/McpProxy/data/dsh/` | 固定本地 profile、URI 安装记录及所属辅助文件 |
-| `%LOCALAPPDATA%/McpProxy/runtimes/<载荷哈希>/` | 校验后的永久程序缓存，不能手工修改文件清单 |
-| `%LOCALAPPDATA%/McpProxy/bootstrap/`、`bootstrap.log` | 引导状态及早期诊断；其他日志可能在 profile/状态目录，按错误阶段定位 |
+| 安装目录中的 `resources/` | 内置 Node、依赖和不可变清单，不存放用户配置，也不在验收时修复 |
+| `%LOCALAPPDATA%/McpProxy/bootstrap/desktop.log` | 桌面/监督进程阶段诊断，不记录激活票据 |
 | 系统解析的 Documents 下 `mcp-proxy-workspace` | 新配置的默认工作目录；可能随系统文档目录重定向而变化 |
 
 `--config <file>` 可选择已有配置，`DSH_HOME` 可覆盖 profile home。显式配置中的目录和身份路径保留，应用不会把旧配置自动搬到新路径。修改 JSON 前先退出应用并备份；当前 GUI 支持 MCP 增删，没有服务编辑、服务器手工输入或全局工作目录编辑表单。外部修改不承诺自动热加载，重启后生效。
+
+macOS 数据基目录为 `~/Library/Application Support/McpProxy`，Linux 为 `${XDG_DATA_HOME:-~/.local/share}/mcp-proxy`；
+两者的配置/身份位于 `data/`，诊断位于 `bootstrap/desktop.log`。
 
 ### 本地 JSON 示例
 

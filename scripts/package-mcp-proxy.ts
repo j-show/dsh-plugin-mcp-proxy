@@ -8,7 +8,7 @@ import { parseArgs } from 'node:util'
 import { pnpmInvocation } from './pnpm-invocation.ts'
 import { materializeDeploymentLinks, restoreDeploymentDependencies } from './runtime-deployment.ts'
 
-/** Explicit build inputs; the runtime executable and license must belong to the build host. */
+/** Explicit build inputs; the official executable and license must match the requested target. */
 export interface McpProxyPackageOptions {
   readonly repository: string
   readonly output: string
@@ -18,14 +18,13 @@ export interface McpProxyPackageOptions {
 }
 type Run = (command: string, args: readonly string[], cwd: string) => Promise<void>
 /**
- * Reject Windows Node 24 releases without the required TCP and shutdown fixes.
+ * Keep build orchestration on the supported Node 22 line.
  * @param platform - build host platform.
  * @param version - build host's Node version.
  */
-export function assertMcpProxyBuildRuntime(platform: NodeJS.Platform, version: string): void {
-  if (platform === 'win32' && /^v24\.(?:\d|1\d)\./.test(version)) {
-    throw new Error('Windows Node 24 builds require Node 24.20 or later')
-  }
+export function assertMcpProxyBuildRuntime(_platform: NodeJS.Platform, version: string): void {
+  const match = /^v22\.(\d+)\./.exec(version)
+  if (!match || Number(match[1]) < 19) throw new Error('MCP builds require Node 22.19+')
 }
 /**
  * @param options - build inputs and a new output directory.

@@ -3,8 +3,8 @@
 - Build only this repository and declared public npm dependencies. Internal modules stay bundled in the two deliverables.
 - Keep intermediates under .artifacts and deliveries under release. Validate dependency closure before producing an EXE or plugin archive.
 - Development initialization preserves existing settings/identities and refuses unowned or linked paths. Unit trust/proxy checks leave certificate stores unchanged; browser acceptance uses the temporary CA ownership contract below.
-- Portable NSIS builds may use an owned short-path drive alias. Remove only a mapping still pointing to this build directory, including after failure.
-- Native product acceptance reads the successful build receipt, verifies EXE/runtime hashes and inventory, refuses occupied service slots and requires all five cases with zero skips.
+- Package scripts dispatch through tasks.ts under Node 22. Platform aggregates build shared sources once and bind target-specific Node/native dependencies to Tauri installers; reject a different build host OS rather than skipping targets.
+- Native product acceptance reads a target-specific successful build receipt, verifies installer/application/runtime hashes, refuses occupied service slots and requires all five Windows or three POSIX profile cases with zero skips.
 - Before changing browser-*.ts, test-browser.ts or native/BrowserDesktopProbe.cs, read [browser acceptance implementation constraints](../docs/development.md#浏览器验收实现约束). It owns the UIA lookup, input gates, tray scope, negative fixtures, screenshot and cleanup rules.
 - Browser acceptance uses real headed Chrome/Edge and ownership-fenced UIA/Win32 actions. Require active matching desktops, an unoccupied merged URI registration and a free service slot; preserve unknown owners.
 - Keep both seven-scenario matrices and both native safety guards mandatory. Verify exact-build artifact binding and each browser's URI/CA/process/service cleanup; preflight or skipped scenarios cannot satisfy acceptance.

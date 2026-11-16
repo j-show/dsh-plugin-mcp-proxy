@@ -1,7 +1,7 @@
 /** Build-only Windows GUI bridge compilation; supported service launches still use dsh profiles. */
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
-import { mkdir } from 'node:fs/promises'
+import { mkdir, access } from 'node:fs/promises'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -19,9 +19,11 @@ export async function compileWindowsUriHelper(destination: string, timeoutMs: nu
   if (windows === undefined) throw new Error('Windows compiler location unavailable')
   await mkdir(destination, { recursive: true })
   const filename = join(destination, 'mcp-proxy.exe')
+  let compiler = join(windows,'Microsoft.NET/Framework64/v4.0.30319/csc.exe')
+  try { await access(compiler) } catch { compiler = join(windows,'Microsoft.NET/Framework/v4.0.30319/csc.exe') }
   const source = fileURLToPath(new URL('../native/windows/UriLauncher.cs', import.meta.url))
   try {
-    await promisify(execFile)(join(windows, 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'), [
+    await promisify(execFile)(compiler, [
       '/nologo', '/target:winexe', '/reference:System.Runtime.Serialization.dll', `/out:${filename}`, source,
     ], { timeout: timeoutMs, windowsHide: true })
     return filename

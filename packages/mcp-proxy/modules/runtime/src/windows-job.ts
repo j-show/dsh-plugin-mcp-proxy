@@ -8,10 +8,11 @@ export interface CurrentProcessJob {
 }
 
 /** @param api - Public binding table. @param currentProcess - Borrowed current-process handle. @returns Owned crash-protection Job. */
-export function holdCurrentProcessJob(api: Win32ProcessBindings, currentProcess: NativePtr): CurrentProcessJob {
+export function holdCurrentProcessJob(api: Win32ProcessBindings, currentProcess: NativePtr, architecture: NodeJS.Architecture = process.arch): CurrentProcessJob {
   const job = api.createJobObjectW(null, null)
   if (isNullPtr(job)) throwLastError(api, 'CreateJobObjectW')
-  const limits = Buffer.alloc(144)
+  const structureSize = architecture === 'ia32' ? 112 : 144
+  const limits = Buffer.alloc(structureSize)
   limits.writeUInt32LE(0x2000, 16)
   try {
     if (api.setInformationJobObject(job, 9, limits, limits.length) === 0) throwLastError(api, 'SetInformationJobObject')
@@ -29,7 +30,7 @@ export function holdCurrentProcessJob(api: Win32ProcessBindings, currentProcess:
       if (count === 0 || remaining <= 0) throw new Error(`Service Job retains ${count} active processes`)
       await delay(Math.min(options.pollIntervalMs, remaining))
     }
-    const disarmed = Buffer.alloc(144)
+    const disarmed = Buffer.alloc(structureSize)
     if (api.setInformationJobObject(job, 9, disarmed, disarmed.length) === 0) throwLastError(api, 'SetInformationJobObject')
     if (api.closeHandle(job) === 0) throwLastError(api, 'CloseHandle')
   }

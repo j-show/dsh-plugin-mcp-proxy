@@ -1,7 +1,7 @@
 # Contributing
 
 Start with [requirements](docs/requirements.md), [design](docs/design.md) and the
-[Windows development guide](docs/development.md). Use the fixed public DSH version;
+[cross-platform development guide](docs/development.md). Use the fixed public DSH version;
 do not reference another checkout or copy personal profiles, credentials or caches.
 
 1. Prepare the documented Node, pnpm and Windows tools, then install with
@@ -12,7 +12,7 @@ do not reference another checkout or copy personal profiles, credentials or cach
 3. Identify the affected B/M requirement and acceptance scenario. Add a failing
    regression before changing behavior; preserve cancellation, routing, TLS and
    resource ownership. New product scope needs explicit requirements.
-4. Run `pnpm build`, `pnpm typecheck`, `pnpm test` and `pnpm dev:check`. For packaging
+4. Run `pnpm build:shared`, `pnpm typecheck`, `pnpm test`, `pnpm test:rust` and `pnpm dev:check`. For packaging
    changes also run `pnpm dev:doctor --packaging` and the affected release build.
    For Windows artifact changes, run `pnpm test:product` after building the EXE;
    release CI requires all five cases with no skipped product tests and a free service slot.

@@ -12,16 +12,17 @@ import { readProductBuild } from './product-build.ts'
 import { assertProductServiceIdle, withProductRunLock } from './product-service.ts'
 import { prepareMcpBuildRuntime, mcpBuildEnvironment } from './mcp-build-runtime.ts'
 import { runMcpBuildCommand } from './run-mcp-build-command.ts'
+import { verifyDesktopRuntime } from './runtime-inventory.ts'
 
 const root = resolve(import.meta.dirname, '..')
-const { values, positionals } = parseArgs({ options: { preflight: { type: 'boolean' }, 'startup-only': { type: 'boolean' } } })
+const { values, positionals } = parseArgs({ options: { preflight: { type: 'boolean' }, 'startup-only': { type: 'boolean' }, target: { type: 'string' } } })
 if (positionals.length) throw new Error('Unexpected browser test arguments')
 if (values.preflight && values['startup-only']) throw new Error('Choose preflight or startup-only')
 async function installed(candidates: string[]): Promise<string | undefined> {
   for (const file of candidates) try { await access(file); return file } catch { /* Try only known public browser installation locations. */ }
 }
 async function main(): Promise<void> {
-  if (process.platform !== 'win32' || process.arch !== 'x64') throw new Error('Browser E2E requires Windows x64')
+  if (process.platform !== 'win32' || !['x64','ia32'].includes(process.arch)) throw new Error('Browser E2E requires Windows x86 or x64')
   const node = await prepareMcpBuildRuntime(root)
   if (node) { await runMcpBuildCommand(node, ['--import', 'tsx/esm', ...process.argv.slice(1)], root, mcpBuildEnvironment(node, process.env)); return }
   for (const path of ['.artifacts', '.artifacts/ci', '.artifacts/browser-e2e']) {
@@ -35,6 +36,7 @@ async function main(): Promise<void> {
     await mkdir(join(root, '.artifacts/browser-e2e'), { recursive: true })
     if ((await lstat(join(root, '.artifacts/browser-e2e'))).isSymbolicLink()) throw new Error('Browser test state must not be linked')
     const state = await mkdtemp(join(root, '.artifacts/browser-e2e/run-'))
+    let reportTarget = values['startup-only'] ? 'startup-only' : 'unresolved'
     try {
       const helper = await compileDesktopProbe(state)
       await nativeProbe(helper, 'protect-state', state)
@@ -56,10 +58,10 @@ async function main(): Promise<void> {
         }
         requireColdStartupMatrix(cold)
         if (!values['startup-only']) {
-          const build = await readProductBuild(root)
+          const build = await readProductBuild(root,values.target)
+          reportTarget = build.target
           evidence.build = build
-          const qualification = await import(pathToFileURL(join(root, 'packages/mcp-proxy/src/runtime-cache.ts')).href) as { verifyElectronRuntime(root: string): Promise<void> }
-          await qualification.verifyElectronRuntime(build.runtime)
+          await verifyDesktopRuntime(build.runtime)
           const browsers = []
           for (const [browser, executable] of [['chrome', chrome!], ['edge', edge!]] as const) {
             evidence.stage = browser
@@ -82,6 +84,7 @@ async function main(): Promise<void> {
       throw error
     } finally {
       await writeFile(join(root, '.artifacts/ci/browser-verification.json'), JSON.stringify(evidence, null, 2) + '\n')
+      await writeFile(join(root, `.artifacts/ci/browser-${reportTarget}-verification.json`), JSON.stringify(evidence, null, 2) + '\n')
     }
   })
 }

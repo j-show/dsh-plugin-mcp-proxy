@@ -1,0 +1,83 @@
+{
+  "sourceKind": "working tree before first Tauri commit; not evidence for the previous Electron commit",
+  "scope": "Windows x64 host, x86 and x64 Tauri clients",
+  "node": "22.23.5",
+  "pnpm": {
+    "range": ">=10",
+    "frozenLockMetadataVerified": [
+      "10.0.0",
+      "11.3.0"
+    ]
+  },
+  "tests": {
+    "default": {
+      "passed": 573,
+      "skipped": 8
+    },
+    "rust": {
+      "passed": 5
+    },
+    "development": {
+      "passed": 59
+    }
+  },
+  "products": [
+    {
+      "target": "win-32",
+      "status": "passed",
+      "tests": {
+        "passed": 5,
+        "skipped": 0
+      },
+      "serviceBefore": "idle",
+      "serviceAfter": "idle",
+      "cleanup": "test-owned data removed",
+      "build": {
+        "id": "build-win-32-OWJqIj",
+        "executableSha256": "53fa5a3ee591af283097fd90594e2c2c3e68d898cd82f1eb9a5debab6b0f1609",
+        "installerSha256": "ecbce111a22c6adbb2dd45c16b9bb7a87b8ee47ed4e989e11d5baee4e7de6c17",
+        "manifestSha256": "6facc9ad0d4e6a29495dcc3bddf75d213d52d8d83cc9890c6f57c4b12e116698"
+      }
+    },
+    {
+      "target": "win-64",
+      "status": "passed",
+      "tests": {
+        "passed": 5,
+        "skipped": 0
+      },
+      "serviceBefore": "idle",
+      "serviceAfter": "idle",
+      "cleanup": "test-owned data removed",
+      "build": {
+        "id": "build-win-64-jZcfeM",
+        "executableSha256": "3e7711bed856902f3aec5a4cd98e071fc1d70d0eb48b923a00740ea9c52460ea",
+        "installerSha256": "ac9cf9957e3263f8274cffdd9e0e245aa760827d4dc8240a959deb1ca15b616b",
+        "manifestSha256": "ed34815b25d0bb34cd0291a62c2299c491e15e521eed539d2d0a7449e387015a"
+      }
+    }
+  ],
+  "installers": [
+    {
+      "target": "win-32",
+      "status": "passed",
+      "cleanup": true,
+      "payload": "installed executable and runtime matched the recorded build; CLI passed",
+      "scope": "real current-user NSIS install, installed CLI and owned uninstall; existing URI unchanged"
+    },
+    {
+      "target": "win-64",
+      "status": "passed",
+      "cleanup": true,
+      "payload": "installed executable and runtime matched the recorded build; CLI passed",
+      "scope": "real current-user NSIS install, installed CLI and owned uninstall; existing URI unchanged"
+    }
+  ],
+  "browser": {
+    "status": "blocked by existing URI owner; preserved",
+    "ciRequired": true
+  },
+  "macAndLinux": {
+    "status": "pending native CI; scripts are not acceptance"
+  }
+}

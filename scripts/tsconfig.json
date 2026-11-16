@@ -11,5 +11,8 @@
   ],
   "exclude": [
     "*.spec.ts"
+  ],
+  "references": [
+    { "path": "../packages/mcp-proxy/tsconfig.json" }
   ]
 }

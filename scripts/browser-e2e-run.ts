@@ -32,7 +32,7 @@ export async function runBrowserMatrix(repository: string, state: string, helper
   let web: WebFixture | undefined, certificate: { thumbprint: string; added: boolean } | undefined
   let gui: NativeWindow | undefined, browserProcess: ChildProcess | undefined, browserIdentity: Identity | undefined, cdp: BrowserCdp | undefined
   let service: { pid: number; ready: boolean } | undefined
-  let launcher: ChildProcess | undefined
+  let launcher: ChildProcess | undefined, launcherIdentity: Identity | undefined
   let browserOutput = ''
   let failure: unknown
   let stage = 'web-install'
@@ -47,7 +47,8 @@ export async function runBrowserMatrix(repository: string, state: string, helper
     return reply.snapshot!
   }
   const guiState = async () => {
-    const rows = await nativeProbe<NativeWindow[]>(helper, 'gui', data)
+    if (!launcherIdentity) return undefined
+    const rows = await nativeProbe<NativeWindow[]>(helper, 'gui-owned', String(launcherIdentity.pid), launcherIdentity.started)
     return rows.length ? uniqueTarget(rows) : undefined
   }
   const mcpPids = async () => (await readFile(marker, 'utf8')).trim().split('\n').filter(Boolean).map(line => (JSON.parse(line) as { pid: number }).pid)
@@ -74,6 +75,8 @@ export async function runBrowserMatrix(repository: string, state: string, helper
     stage = 'GUI startup'
     launcher = spawn(executable, ['--config', settings], { cwd: workspace, env, stdio: 'ignore', windowsHide: true })
     await once(launcher, 'spawn')
+    launcherIdentity = await remember(launcher.pid!)
+    for (const id of await nativeProbe<Identity[]>(helper,'children',String(launcherIdentity.pid),launcherIdentity.started)) observed.set(id.pid,id)
     gui = await eventually(guiState, 'product GUI', 180000)
     observed.set(gui.pid, gui)
     service = await eventually(async () => {
@@ -265,6 +268,11 @@ export async function runBrowserMatrix(repository: string, state: string, helper
         }
         for (const id of await nativeProbe<Identity[]>(helper, 'scope-processes', scope)) {
           if (await nativeProbe<boolean>(helper, 'alive', String(id.pid), id.started)) { await action('kill-owned', id); await stopped(id) }
+        }
+        // Tauri and bundled Node run from the qualified distribution, outside app-data.
+        // These identities were captured from this run's launcher/service child trees.
+        for (const id of [...observed.values()].reverse()) {
+          if (await nativeProbe<boolean>(helper,'alive',String(id.pid),id.started)) { await action('kill-owned',id); await stopped(id) }
         }
         if (launcher && launcher.exitCode === null && launcher.signalCode === null) launcher.kill()
         if (browserProcess && !browserIdentity && browserProcess.exitCode === null) browserProcess.kill()

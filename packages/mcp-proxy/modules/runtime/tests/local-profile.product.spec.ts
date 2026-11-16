@@ -16,16 +16,16 @@ import { acquireServiceSlot } from './product-service-slot.ts'
 
 const repository = resolve(import.meta.dirname, '../../../../..')
 const packaged = process.env.MCP_PROXY_RUNTIME_DIR
-const electronRuntime = process.env.MCP_PROXY_ELECTRON_RUNTIME
-const electronExecutable = process.env.MCP_PROXY_ELECTRON_EXE
-const electronData = process.env.MCP_PROXY_ELECTRON_DATA
-const electronInputs = [electronRuntime, electronExecutable, electronData]
-if (electronInputs.some(value => value !== undefined) && electronInputs.some(value => value === undefined)) {
-  throw new Error('Single-EXE acceptance requires its executable, qualified cache runtime and test-owned local application data')
+const desktopRuntime = process.env.MCP_PROXY_DESKTOP_RUNTIME
+const desktopExecutable = process.env.MCP_PROXY_DESKTOP_EXE
+const desktopData = process.env.MCP_PROXY_DESKTOP_DATA
+const desktopInputs = [desktopRuntime, desktopExecutable, desktopData]
+if (desktopInputs.some(value => value !== undefined) && desktopInputs.some(value => value === undefined)) {
+  throw new Error('Tauri acceptance requires its executable, qualified runtime and test-owned application data')
 }
-const node = electronRuntime !== undefined ? join(resolve(electronRuntime), 'mcp-proxy.exe')
+const node = desktopRuntime !== undefined ? join(resolve(desktopRuntime), 'resources/dsh/runtime', process.platform === 'win32' ? 'node.exe' : 'node')
   : packaged === undefined ? process.execPath : join(resolve(packaged), 'runtime', process.platform === 'win32' ? 'node.exe' : 'node')
-const cli = electronRuntime !== undefined ? join(resolve(electronRuntime), 'resources/dsh/lib/bin.js')
+const cli = desktopRuntime !== undefined ? join(resolve(desktopRuntime), 'resources/dsh/lib/bin.js')
   : packaged === undefined ? join(resolve(createRequire(join(repository,'packages/mcp-proxy/package.json')).resolve('@deepseek-ai/dsh/package.json'),'..'), 'lib/bin.js') : join(resolve(packaged), 'lib/bin.js')
 
 async function fixture(acknowledge: boolean, projectEnvironment = false) {
@@ -102,19 +102,17 @@ async function fixture(acknowledge: boolean, projectEnvironment = false) {
   const settings = join(root, 'settings.json')
   await writeFile(settings, JSON.stringify({ server: { origin, credentialRef: credential, caFile: cert },
     identityFile: identity, directory: workspace, services: [{ service: 'files', transport: 'stdio',
-      command: electronRuntime === undefined ? node : process.execPath,
+      command: node,
       args: [join(repository, 'packages/mcp-proxy/modules/local/tests/fixtures/files.mjs')], env: { MCP_FIXTURE_START_MARKER: marker },
     }],
   }))
   async function command(...args: string[]) {
-    const command = electronExecutable === undefined ? node : resolve(electronExecutable)
-    const argv = electronExecutable === undefined ? [cli, '--profile', 'mcp-proxy', '--config', settings, ...args]
+    const command = desktopExecutable === undefined ? node : resolve(desktopExecutable)
+    const argv = desktopExecutable === undefined ? [cli, '--profile', 'mcp-proxy', '--config', settings, ...args]
       : ['--config', settings, ...args]
     const child = spawn(command, argv, {
       cwd: root, env: { ...process.env, NODE_PATH: undefined, NODE_OPTIONS: undefined, DSH_HOME: home,
-        ELECTRON_LOG_FILE: undefined, ELECTRON_ENABLE_LOGGING: undefined,
-        ...(electronRuntime === undefined ? {} : { ELECTRON_RUN_AS_NODE: electronExecutable === undefined ? '1' : undefined }),
-        ...(electronData === undefined ? {} : { LOCALAPPDATA: electronData }),
+        ...(desktopData === undefined ? {} : { LOCALAPPDATA: desktopData }),
       },
       stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true,
     })
@@ -139,7 +137,7 @@ async function fixture(acknowledge: boolean, projectEnvironment = false) {
   return { root, home, profile, workspace, settings, catalog: catalog.promise, state, command, pids }
 }
 
-it.skipIf(process.platform !== 'win32' || process.env.MCP_PROXY_PRODUCT_TESTS !== '1')('runs the mcp-proxy profile in the background, delivers a local file and joins stopped MCP processes', async () => {
+it.skipIf(process.env.MCP_PROXY_PRODUCT_TESTS !== '1')('runs the mcp-proxy profile in the background, delivers a local file and joins stopped MCP processes', async () => {
   const test = await fixture(true)
   await test.command('--start')
   const status = await requestLocalStatus(await machineControlAddress(), 5000)
@@ -161,11 +159,7 @@ it.skipIf(process.platform !== 'win32' || process.env.MCP_PROXY_PRODUCT_TESTS !=
   for (const pid of children) await expect.poll(() => running(pid), { timeout: 10000 }).toBe(false)
 }, 300000)
 
-it.skipIf(process.platform !== 'win32' || process.env.MCP_PROXY_PRODUCT_TESTS !== '1')('cancels a real profile after MCP startup but before catalog acknowledgement without orphaning either process', async () => {
-  if (electronRuntime !== undefined) {
-    vi.stubEnv('ELECTRON_RUN_AS_NODE', '1')
-    onTestFinished(() => { vi.unstubAllEnvs() })
-  }
+it.skipIf(process.env.MCP_PROXY_PRODUCT_TESTS !== '1')('cancels a real profile after MCP startup but before catalog acknowledgement without orphaning either process', async () => {
   const test = await fixture(false)
   const stop = new AbortController()
   const outcome = startBackgroundService({ node, cli, cwd: test.root, home: test.home, profile: 'mcp-proxy', profileDir: test.profile,
@@ -185,7 +179,7 @@ it.skipIf(process.platform !== 'win32' || process.env.MCP_PROXY_PRODUCT_TESTS !=
   for (const pid of children) await expect.poll(() => running(pid), { timeout: 10000 }).toBe(false)
 }, 300000)
 
-it.skipIf(process.platform !== 'win32' || process.env.MCP_PROXY_PRODUCT_TESTS !== '1')('retains invoking-directory environment precedence when starting the background profile', async () => {
+it.skipIf(process.env.MCP_PROXY_PRODUCT_TESTS !== '1')('retains invoking-directory environment precedence when starting the background profile', async () => {
   const test = await fixture(true, true)
   await test.command('--start')
   const status = await requestLocalStatus(await machineControlAddress(), 5000)

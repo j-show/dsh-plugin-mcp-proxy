@@ -73,7 +73,8 @@ function render(): void {
     target.row.append(badge(t(available ? stateKeys[server.state] : 'unavailable'), available ? server.state : 'error'))
     const key = `disconnect:${server.id}`
     const action = button('disconnect', () => {
-      if (window.confirm(`${t('disconnectConfirm')}\n\n${server.origin}`)) void run(key, { kind: 'disconnect', id: server.id })
+      void window.mcpProxy.confirm(`${t('disconnectConfirm')}\n\n${server.origin}`)
+        .then(confirmed => { if (confirmed) return run(key, { kind: 'disconnect', id: server.id }) }).catch(() => { toast('operationFailed') })
     })
     action.disabled = !available || busy.has(key) || server.state === 'disconnected'
     target.row.append(action); connections.append(target.row)
@@ -86,7 +87,8 @@ function render(): void {
     target.row.append(badge(t(service.ready ? 'ready' : 'unavailable'), service.ready ? 'ready' : 'error'))
     const key = `remove:${service.service}`
     const action = button('remove', () => {
-      if (window.confirm(`${t('removeConfirm')}\n\n${service.service}`)) void run(key, { kind: 'remove-mcp', service: service.service })
+      void window.mcpProxy.confirm(`${t('removeConfirm')}\n\n${service.service}`)
+        .then(confirmed => { if (confirmed) return run(key, { kind: 'remove-mcp', service: service.service }) }).catch(() => { toast('operationFailed') })
     }, 'quiet danger')
     action.disabled = !available || busy.has(key); target.row.append(action); mcps.append(target.row)
   }

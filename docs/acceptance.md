@@ -1,5 +1,12 @@
 # 验收记录与待完成事项
 
+## 当前迁移边界
+
+2026-11-16 起按 [Tauri 迁移确认](migrations/tauri-2026-11-16.md) 验证新桌面实现。
+下方 Electron 的历史 CI、缓存、断点与浏览器证据保留为历史事实，不能替代 Tauri 的原生/GUI 验收。
+新入口为 `build:shared`、各平台 `build:*`、`verify`、`test:product --target`、`test:installer --target`。
+本轮已在本机生成 Windows x86/x64 安装包并通过两种架构各五项产物用例；macOS/Linux 与 Tauri 浏览器/托盘结果按本轮 CI 单独记录。
+
 迁移基线日期：2026-11-07；最新浏览器自动化证据：2026-11-14（Asia/Shanghai）。适用独立项目 `0.1.0`、公共 DSH `0.1.6-alpha.2` 及所附兼容补丁。需求编号见[requirements](requirements.md)，设计见[design](design.md)，启动和配置见[configuration](configuration.md)。本文是证据清单，不把已实现或单元测试通过等同于完整产品验收。
 
 ## 已有证据
@@ -83,8 +90,8 @@ Chrome/Edge 与原生 GUI/托盘矩阵按[已批准设计](superpowers/specs/202
 | B19 elicitation | [elicitation.spec.ts](../packages/dsh-plugin/modules/host/tests/elicitation.spec.ts)、[elicitation.client.spec.ts](../packages/dsh-plugin/modules/ui/tests/elicitation.client.spec.ts) | live 表单/URL 与单次回答有覆盖，历史归约及重启终态待补 A4 |
 | B20 roots | [local.spec.ts](../packages/mcp-proxy/modules/local/tests/local.spec.ts) | 配置/初始化自动覆盖；不承诺动态 roots 通知 |
 | B21 完整插件启用/释放 | [server.spec.ts](../packages/dsh-plugin/tests/server.spec.ts) | Loader 挂载/卸载及激活失败回滚覆盖；真实安装后禁用/卸载待补 A5 |
-| B22 单文件 Electron | [runtime-cache.spec.ts](../packages/mcp-proxy/tests/runtime-cache.spec.ts)、[portable-cwd.spec.ts](../packages/mcp-proxy/tests/portable-cwd.spec.ts)、product 测试 | EXE、缓存和普通桌面运行已有证据；新用户/含空格等完整矩阵待补 A7 |
-| B23 GUI/托盘/直接退出 | [test-browser.ts](../scripts/test-browser.ts)、[desktop-lifetime.spec.ts](../packages/mcp-proxy/tests/desktop-lifetime.spec.ts)、[desktop-exit.spec.ts](../packages/mcp-proxy/tests/desktop-exit.spec.ts) | 当前产物的关闭隐藏、真实托盘恢复、二次启动、原生菜单退出及回收已验证；其余用户/故障环境见 A7 |
+| B22 / M4 桌面分发 | [runtime-inventory.spec.ts](../scripts/runtime-inventory.spec.ts)、[product-build.spec.ts](../scripts/product-build.spec.ts)、[test-installer.ts](../scripts/test-installer.ts) | 原单文件技术限定已由 M4 改为安装包；新程序/运行时/安装包绑定分别验证，旧缓存测试不再适用 |
+| B23 GUI/托盘/直接退出 | [test-browser.ts](../scripts/test-browser.ts)、[Rust 桌面测试](../packages/mcp-proxy/src-tauri/src/main.rs)、[service-shutdown.spec.ts](../packages/mcp-proxy/tests/service-shutdown.spec.ts) | 业务要求保留；Tauri 实测结果单独记录，不套用 Electron 历史绿灯 |
 | B24 多 DSH 独立连接 | [managed-runtime.spec.ts](../packages/mcp-proxy/modules/runtime/tests/managed-runtime.spec.ts) | 自动覆盖，两真实独立部署与 EXE 联合待补 A2 |
 | B25 共享 MCP 增删 | [management.spec.ts](../packages/mcp-proxy/modules/local/tests/management.spec.ts) | 增删、失败不提交、实例替换自动覆盖；GUI 双部署联验待补 A2 |
 | B26 取消及影响范围 | [routing.spec.ts](../packages/mcp-proxy/modules/local/tests/routing.spec.ts)、[management.spec.ts](../packages/mcp-proxy/modules/local/tests/management.spec.ts) | 路由/取消 fixture 覆盖；实际副作用和清理待补 A2 |
@@ -102,7 +109,7 @@ Chrome/Edge 与原生 GUI/托盘矩阵按[已批准设计](superpowers/specs/202
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm build
+pnpm build:shared
 pnpm typecheck
 pnpm test
 pnpm build:mcp-proxy
@@ -111,14 +118,20 @@ pnpm build:mcp-plugin
 
 记录 Node/pnpm/Windows 版本、代码提交（有提交后）、产物 SHA256、实际命令、退出状态和跳过项。不要把声明的命令或先前通过日志当成这次执行。默认 `pnpm test` 不运行需要独占机器服务位的 product 用例。
 
-product 测试只在 Windows 空闲服务位运行；它们使用固定机器控制入口，不能与用户正在运行的连通服务并行。先由所有者正常退出其应用，不自动杀死未知进程。统一入口自动读取成功构建生成的 `release/mcp-proxy/product-build.json`，校验该 EXE、同次 `win-unpacked` 清单哈希和完整目录内容，然后创建自己的空测试数据目录：
+product 测试要求空闲服务位，不能与用户运行的连通服务并行，不停止未知进程。
+入口按 `--target` 读取 `release/mcp-proxy/<目标>/product-build.json`，校验同次安装包、应用程序和完整运行时。
+Windows 要求五项、Mac/Linux 要求三项实际用例零跳过；安装器验证另用 `test:installer`。
 
-```powershell
-pnpm build:mcp-proxy
-pnpm test:product
+```sh
+pnpm build:win
+pnpm test:product --target win-32
+pnpm test:product --target win-64
+pnpm test:installer --target win-64
 ```
 
-入口不按目录时间或“最新名字”猜测。构建记录是当前 checkout 的验收索引，需保留该次 `.artifacts/build-proxy-*/electron/distribution/`，不是 Windows 用户安装所需文件。记录缺失或产物被替换、损坏时必须重新构建。入口仅对子测试进程设置产品开关及路径，要求 5 项实际通过、零跳过；前后检查服务位，测试中的服务/MCP PID 退出断言保留。成功后删除自有测试数据，失败时保留私有现场并非零退出，绝不上传该目录或结束未知服务。验证证据写入 `.artifacts/ci/product-verification.json` 和 `product-results.json`。
+入口不按目录时间或“最新名字”猜测。需保留该次 `.artifacts/build-<目标>-*/distribution/` 及安装包原件。
+记录缺失、目标不符或产物被替换时重建；验收不修复运行时。验证前后检查服务位与创建身份，成功才删除自有测试数据。
+失败现场不上传。每目标结果保存到 `.artifacts/ci/product-<目标>.json`、`installer-<目标>.json`，浏览器另有按目标汇总。
 
 release CI 在两端打包后自动调用该入口，并保留 `.artifacts/ci` 的报告；默认 `pnpm test` 的 5 项产品跳过由此单独执行，3 项 POSIX 跳过仍按 Windows 平台规则保留。native product 用例只证明原生 helper 的转发，不证明 Chrome/Edge 实际触发了 URI，也不替代真实模型、多设备或跨用户验收。
 

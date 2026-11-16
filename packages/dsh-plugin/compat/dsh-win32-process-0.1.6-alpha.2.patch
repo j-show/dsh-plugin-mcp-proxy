@@ -1,0 +1,123 @@
+diff --git a/lib/index.js b/lib/index.js
+index 40dc44b..6f258a9 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -1,6 +1,9 @@
+ import { createLazyRequire } from "@deepseek-ai/dsh-lazy-require";
+ /** Win32 code reporting a caller-provided buffer is too small. */
+ const ERROR_INSUFFICIENT_BUFFER = 122;
++const STARTUPINFOW_BYTES = process.arch === "ia32" ? 68 : 104;
++const PROCESS_INFORMATION_BYTES = process.arch === "ia32" ? 16 : 24;
++const JOB_LIMIT_BYTES = process.arch === "ia32" ? 112 : 144;
+ /** Job limit that terminates every member when the final Job handle closes. */
+ const JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 8192;
+ //#endregion
+@@ -32,7 +35,7 @@ const requireKoffi = createLazyRequire("koffi", import.meta.url);
+ * @returns true for null, undefined, or address zero.
+ */
+ function isNullPtr(value) {
+-	return value === null || value === void 0 || value === 0n;
++	return value === null || value === void 0 || value === 0 || value === 0n;
+ }
+ let cachedTypes;
+ /** Resolve Koffi pointer and process layouts on the first native operation. */
+@@ -68,8 +71,8 @@ function win32Types() {
+ 		dwThreadId: "uint32"
+ 	});
+ 	/* v8 ignore start -- ABI guards are pinned by native header probes. */
+-	if (STARTUPINFOW.size !== 104) throw new Error(`STARTUPINFOW layout mismatch: koffi computed ${STARTUPINFOW.size}, expected 104`);
+-	if (PROCESS_INFORMATION.size !== 24) throw new Error(`PROCESS_INFORMATION layout mismatch: koffi computed ${PROCESS_INFORMATION.size}, expected 24`);
++	if (STARTUPINFOW.size !== STARTUPINFOW_BYTES) throw new Error(`STARTUPINFOW layout mismatch: koffi computed ${STARTUPINFOW.size}, expected ${STARTUPINFOW_BYTES}`);
++	if (PROCESS_INFORMATION.size !== PROCESS_INFORMATION_BYTES) throw new Error(`PROCESS_INFORMATION layout mismatch: koffi computed ${PROCESS_INFORMATION.size}, expected ${PROCESS_INFORMATION_BYTES}`);
+ 	/* v8 ignore stop */
+ 	return cachedTypes = {
+ 		PVOID,
+@@ -306,8 +309,8 @@ function throwWin32(api, name, win32Code, detail) {
+ //#endregion
+ //#region lib/types/control-stdio.js
+ /** Windows CRT startup descriptors for a Node payload with one inherited control pipe. */
+-const HANDLE_BYTES = 8;
+-const INVALID_HANDLE = 18446744073709551615n;
++const HANDLE_BYTES = process.arch === "ia32" ? 4 : 8;
++const INVALID_HANDLE = process.arch === "ia32" ? 4294967295n : 18446744073709551615n;
+ const FOPEN = 1;
+ const FPIPE = 8;
+ const FDEV = 64;
+@@ -315,7 +318,7 @@ const FILE_TYPE_CHAR = 2;
+ const FILE_TYPE_PIPE = 3;
+ /**
+ * Encode the CRT's descriptor table before the child runtime allocates descriptors.
+-* Supported Windows targets use 64-bit handles. Empty slots remain closed, and the
++* Handle width follows the executing Node architecture. Empty slots remain closed, and the
+ * backing Buffer must remain alive until CreateProcess returns.
+ * @param api - native file-type inspection for inherited handles.
+ * @param stdio - standard handles and the provider-owned fd-7 control pipe.
+@@ -325,8 +328,11 @@ function inheritedControlStdio(api, stdio) {
+ 	const count = stdio.control.fileDescriptor + 1;
+ 	const handleOffset = 4 + count;
+ 	const bytes = Buffer.alloc(handleOffset + count * HANDLE_BYTES);
++	const writeHandle = (handle, offset) => HANDLE_BYTES === 4
++		? bytes.writeUInt32LE(Number(BigInt.asUintN(32, BigInt(handle))), offset)
++		: bytes.writeBigUInt64LE(BigInt(handle), offset);
+ 	bytes.writeUInt32LE(count, 0);
+-	for (let index = 0; index < count; index++) bytes.writeBigUInt64LE(INVALID_HANDLE, handleOffset + index * HANDLE_BYTES);
++	for (let index = 0; index < count; index++) writeHandle(INVALID_HANDLE, handleOffset + index * HANDLE_BYTES);
+ 	const entries = [
+ 		[0, stdio.stdin],
+ 		[1, stdio.stdout],
+@@ -337,7 +343,7 @@ function inheritedControlStdio(api, stdio) {
+ 		const kind = api.getFileType(handle);
+ 		if (fd === stdio.control.fileDescriptor && kind !== FILE_TYPE_PIPE) throw new Error("subprocess control descriptor is not a Windows pipe");
+ 		bytes[4 + fd] = FOPEN | (kind === FILE_TYPE_PIPE ? FPIPE : kind === FILE_TYPE_CHAR ? FDEV : 0);
+-		bytes.writeBigUInt64LE(handle, handleOffset + fd * HANDLE_BYTES);
++		writeHandle(handle, handleOffset + fd * HANDLE_BYTES);
+ 	}
+ 	return bytes;
+ }
+@@ -447,7 +453,7 @@ function spawnPipedProcess(api, options) {
+ 		]) if (api.setHandleInformation(handle, 1, 1) === 0) throwLastError(api, "SetHandleInformation", label);
+ 		startupInfo = allocStartupInfo();
+ 		encodeStartupInfo(startupInfo, {
+-			cb: 104,
++			cb: STARTUPINFOW_BYTES,
+ 			dwFlags: 257,
+ 			wShowWindow: 0,
+ 			hStdInput: stdIn.read,
+@@ -537,7 +543,7 @@ function waitForProcessExit(api, process) {
+ function createKillOnCloseJob(api) {
+ 	const job = api.createJobObjectW(null, null);
+ 	if (isNullPtr(job)) throwLastError(api, "CreateJobObjectW");
+-	const information = Buffer.alloc(144);
++	const information = Buffer.alloc(JOB_LIMIT_BYTES);
+ 	information.writeUInt32LE(JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE, 16);
+ 	if (api.setInformationJobObject(job, 9, information, information.length) === 0) {
+ 		const win32Code = api.getLastError();
+@@ -546,8 +552,8 @@ function createKillOnCloseJob(api) {
+ 	}
+ 	return job;
+ }
+-const UV_INVALID_OS_FILE_HANDLE = 18446744073709551615n;
+-const UV_INVALID_FILE_DESCRIPTOR = 18446744073709551614n;
++const UV_INVALID_OS_FILE_HANDLE = process.arch === "ia32" ? 4294967295n : 18446744073709551615n;
++const UV_INVALID_FILE_DESCRIPTOR = process.arch === "ia32" ? 4294967294n : 18446744073709551614n;
+ function inheritedStandardHandles(api, controlFileDescriptor) {
+ 	const get = (selector, label) => {
+ 		const handle = api.getStdHandle(selector);
+@@ -566,7 +572,7 @@ function inheritedStandardHandles(api, controlFileDescriptor) {
+ }
+ function descriptorHandle(api, fileDescriptor, label) {
+ 	const handle = api.uvGetOsfhandle(fileDescriptor);
+-	if (isNullPtr(handle) || handle === UV_INVALID_OS_FILE_HANDLE || handle === UV_INVALID_FILE_DESCRIPTOR) throw new Error(`uv_get_osfhandle returned an invalid handle for target ${label} fd ${String(fileDescriptor)}`);
++	if (isNullPtr(handle) || BigInt(handle) === UV_INVALID_OS_FILE_HANDLE || BigInt(handle) === UV_INVALID_FILE_DESCRIPTOR) throw new Error(`uv_get_osfhandle returned an invalid handle for target ${label} fd ${String(fileDescriptor)}`);
+ 	return handle;
+ }
+ function targetCarrierHandles(api, descriptors) {
+@@ -615,7 +621,7 @@ function spawnJobProcess(api, options, resolveStdio, createName, create) {
+ 		}
+ 		startupInfo = allocStartupInfo();
+ 		encodeStartupInfo(startupInfo, {
+-			cb: 104,
++			cb: STARTUPINFOW_BYTES,
+ 			dwFlags: 257,
+ 			wShowWindow: 0,
+ 			hStdInput: stdio.stdin,

@@ -9,7 +9,7 @@ import { X509Certificate } from 'node:crypto'
 import { generateDevelopmentTls } from './development.ts'
 import { createDevelopmentProxy } from './development-proxy.ts'
 
-it.skipIf(process.platform !== 'win32')('creates unique trusted localhost TLS and preserves authenticated route headers', async () => {
+it('creates unique trusted localhost TLS and preserves authenticated route headers', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'mcp-development-tls-'))
   onTestFinished(() => rm(directory, { recursive: true, force: true }))
   await generateDevelopmentTls(directory)

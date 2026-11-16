@@ -2,3 +2,6 @@
 *.png binary
 *.exe binary
 *.pfx binary
+*.ico binary
+*.icns binary
+*.patch whitespace=-space-before-tab

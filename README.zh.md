@@ -2,81 +2,89 @@
 
 [English](README.md) | 中文
 
-本项目提供 Windows 本地 MCP 连通应用及可单独安装的 DSH 服务端插件。本地应用可连接多个 DSH，共用一份本地 MCP 列表，并将每次调用与回调严格绑定到来源 DSH。应用不提供文件工具，本地操作由配置的下游 MCP 完成。
+本项目提供 Tauri 本地 MCP 连通应用与独立的 DSH 服务端插件。Rust 负责窗口、托盘和系统集成，
+随包 Node 22 继续运行既有 DSH/MCP 核心，保留多 DSH 连接、调用归属、取消、配对及文件所有权检查。
+应用不提供文件工具，文件操作由配置的下游 MCP 完成。
 
-## 需求与后续开发
+```mermaid
+flowchart LR
+    Web[已认证 DSH Web] -->|URI| UI[Tauri 窗口与托盘]
+    UI --> Host[随包 Node 22 监督进程]
+    Host --> Runtime[自有 DSH profile]
+    Runtime <-->|HTTPS/WSS| Plugin[服务端插件]
+    Runtime --> MCP[用户配置的 MCP]
+```
 
-| 文档 | 内容 |
-| --- | --- |
-| [已确认需求](docs/requirements.md) | B1—B28、独立化要求、MCP 能力范围与非目标 |
-| [现行技术方案](docs/design.md) | 两端职责、配对、轮次/来源绑定、取消、回调与恢复 |
-| [配置与运行](docs/configuration.md) | 两端安装、完整示例、配置预算、禁用/卸载及诊断 |
-| [验收与待完成](docs/acceptance.md) | 逐项需求覆盖、已执行证据、复现步骤及剩余开发/验收 |
-| [完整历史基线](docs/history/README.md) | 已确认需求和方案 A 的中英文全文、后续变更与导入哈希 |
+后续开发从[需求](docs/requirements.md)、[设计](docs/design.md)、[配置](docs/configuration.md)与
+[验收](docs/acceptance.md)开始。[迁移记录](docs/migrations/tauri-2026-11-16.md)区分已实现与实际验证；
+历史 Electron 证据不能替代 Tauri 验收。
 
-后续开发从需求编号和验收待办开始，不依赖原仓库或聊天记录。已实现、自动测试覆盖和最终产品验收分别记录；当前尚未完成全部联合验收。所谓接入任意 MCP 限于文档列明的传输及能力，resources/prompts 不在本期范围。
+## 准备与开发
 
-## 开发
-
-新机器准备、独立 DSH profile、本地 TLS 和源码断点见[开发调试指南](docs/development.md)。
-贡献流程见 [CONTRIBUTING](CONTRIBUTING.md)，敏感问题见 [SECURITY](SECURITY.md)。
-安装依赖后执行 `pnpm dev:doctor`、`pnpm dev:init`；分别使用 `pnpm dev:server`、
-`pnpm dev:desktop` 启动原生开发环境。Windows CI 在无生产密钥的环境验证安装、测试及两端打包。
-
-`pnpm build:mcp-proxy` 后可运行 `pnpm test:product`：自动绑定构建记录中的 EXE/runtime，
-要求 5 项原生产物测试全部通过，并检查服务位及测试数据清理。运行前需正常退出占用本机服务位的应用。
-release CI 在两端打包后自动执行，详见[验收指南](docs/acceptance.md)。
-
-`pnpm test:browser` 验证真实 Chrome/Edge 协议确认、自动配对及 GUI/托盘生命周期。
-需要活动 Windows 会话、交互桌面、Explorer 托盘及空闲服务位/用户与系统 URI 注册；`--preflight` 安全检查，绝不覆盖现有安装。
-release CI 要求两种浏览器各七场景及网页伪确认/托盘遮挡拒绝检查全部执行，不以跳过算成功；[已验证范围](docs/evidence/browser-desktop-e2e-2026-11-13.md)与未覆盖矩阵分别记录。
-
-使用 Node.js 22.19+ 或 24+，以及 pnpm 11.7.0。依赖均来自公共 npm 仓库，不需要 Harness 源码目录。
+使用 Node **22.19+**（推荐 **22.23.5**）、pnpm **>=10**、Rust 与对应宿主的
+[Tauri 原生工具链](https://v2.tauri.app/start/prerequisites/)。不依赖消费项目源码或生产凭据，
+操作及断点见[开发指南](docs/development.md)。
 
 ```sh
-pnpm install
-pnpm build
-pnpm test
+pnpm install --frozen-lockfile
+pnpm build:shared
 pnpm typecheck
+pnpm test
+pnpm test:rust
 ```
 
-在受影响的 Windows Node 24 版本上，发布构建和测试会自动在 `.artifacts/` 准备固定版本并经过校验的独立 Node，不修改全局安装。首次使用需要联网。
+所有包脚本统一从 `scripts/tasks.ts` 分派，不需要 PowerShell。根 `package.json` 管理公开脚本、
+应用版本和 npm 依赖；Rust 依赖由 Cargo.toml/Cargo.lock 管理。
+为兼容早期 pnpm 10，必要设置同时保存在 package.json#pnpm 与 pnpm-workspace.yaml；
+postinstall 只规范化补丁元数据，保留相同依赖版本和完整性。
 
-## 构建交付物
+## 构建
 
-```sh
-pnpm build:mcp-proxy
-pnpm build:mcp-plugin
-```
+已删除顶层 `build`。不能在一个宿主上声称完成所有操作系统的原生打包。
 
-第一条命令需要 Windows x64，生成包含 Electron 和全部运行依赖的 `release/mcp-proxy/mcp-proxy.exe`。第二条生成 `release/mcp-plugin/`，包含单个插件 tarball、`install.mjs`、发布元数据和兼容补丁。中间文件保存在 `.artifacts/`。`--skip-build` 复用已编译的库；EXE 构建还支持 `--electron-dist`、`--node-license` 和 `--connection-presets`，用于显式指定构建输入。
+| 命令 | 宿主 | `release/mcp-proxy/` 下的产物 |
+| --- | --- | --- |
+| `pnpm build:win:32` | Windows | `win-32/`，x86 安装包与 x86 Node |
+| `pnpm build:win:64` | Windows | `win-64/`，x64 安装包与 x64 Node |
+| `pnpm build:win` | Windows | 两个 Windows 架构 |
+| `pnpm build:mac:intel` | macOS | `mac-intel/`，Intel DMG |
+| `pnpm build:mac:arm` | macOS | `mac-arm/`，Apple Silicon DMG |
+| `pnpm build:mac` | macOS | 两个 Mac 架构 |
+| `pnpm build:linux` | Ubuntu x64 | `linux/`，以 Ubuntu 22.04 为基线的 deb |
 
-构建还在 `release/mcp-proxy/` 生成一个较小的 Node profile 运行归档，供消费侧仅使用产物进行集成测试，不是 Windows 用户的额外安装步骤。产物测试通过 `MCP_PROXY_PRODUCT_TESTS=1` 显式启用，需要空闲的本机服务位，测试源码列出了经过校验的 Electron 产物输入。
+平台聚合命令只编译一次共享内容，并复用同一宿主的依赖部署；各目标分别绑定官方 Node **22.23.5**、
+对应原生依赖、运行时文件清单和许可证。验收按成功构建记录取安装包/程序/运行时，拒绝损坏或混用产物。
+`build:mcp-proxy` 保留为当前宿主入口，`--connection-presets <file>` 可提供公开连接/CA 预设。
+`build:mcp-plugin` 独立生成 `release/mcp-plugin/` 下的服务端归档、安装器、元数据、兼容补丁和许可证。
 
-## 安装与使用
+## 安装与运行
 
-在运行下游 MCP 的电脑打开 `mcp-proxy.exe`，应用自动启动服务并注册 `mcp-proxy://`。通过 GUI 添加 MCP 命令或 HTTP/SSE 地址，再从各 DSH 网页点击“连接这台电脑”。有效激活会自动连接，GUI 支持逐个 DSH 手动断开。关闭窗口后缩小到托盘，托盘“退出”直接停止所属服务，不再二次确认。
+安装对应架构的包，再启动应用。Windows 安装器可自动补装缺失的 WebView2，首次可能联网；
+所有目标内置 Node，不要求用户另装。通过 GUI 添加 MCP，然后在 DSH Web 点击“连接这台电脑”。
+关闭窗口仅隐藏；托盘“退出”等待自有服务/MCP 清理，不再二次确认。URI 安装不会覆盖未知所有者。
+配置、身份和工作文件独立保存，不随程序版本覆盖。
 
-插件面向 DSH `0.1.6-alpha.2`。先停止服务，再对 **DSH 的包管理安装根目录** 运行发布安装器，不能填写 profile 目录：
+服务端固定为 DSH `0.1.6-alpha.2`。先停止服务，再对其包管理安装根目录执行：
 
 ```sh
 node release/mcp-plugin/install.mjs --dsh-root <dsh-installation-root>
 ```
 
-使用自定义 profile home 时设置 `DSH_HOME`。`--profile` 默认为 `web`；DSH 源码安装可通过 `--dsh-cli` 指定相对 CLI 入口。安装器验证受支持的 DSH 版本，仅在需要时应用最小会话事件兼容补丁，然后通过 `dsh plugin --profile web add` 安装归档。已有冲突的 session 补丁需要显式合并，不会被覆盖。启动 DSH 前，将 `MCP_PROXY_ORIGIN` 设置为部署的公开 HTTPS 地址，继续使用既有鉴权系统和 TLS 终止设施。
+自定义 profile home 使用 `DSH_HOME`，公开 HTTPS 部署地址使用 `MCP_PROXY_ORIGIN`。
+保留 DSH 既有鉴权和四项必须读取的 Session 事件。客户端为固定版本原生 SDK 附带 x86 ABI 补丁，
+不改 x64 的结构尺寸、协议及业务语义。
 
-补丁只向固定 DSH 版本的已知事件集合增加四个 MCP 事件名，保留对未知必需事件的拒绝，不将绑定事件标记为可忽略。本项目的开发依赖补丁只作用于本仓库；发布安装器会单独检测并在需要时修补 `--dsh-root` 指定的目标 DSH 安装。
+## 验证
 
-## 目录
+`pnpm verify` 执行共享/核心检查，`pnpm verify --release` 加入当前宿主打包及产物验收。
+`pnpm test:product --target win-32`／`win-64` 要求五项 Windows 原生产物测试零跳过，Mac/Linux 执行三项 profile 用例。
+`pnpm test:installer --target <目标>` 单独检查安装包中的实际程序、运行时和清理。
 
-```text
-packages/mcp-proxy/       Electron GUI、本地运行时、本地 MCP 客户端及协议
-packages/dsh-plugin/      统一服务端入口、适配器、Web UI 及兼容补丁
-scripts/                 独立构建、测试及发布安装工具
-```
+Windows 的真实浏览器验收先运行 `pnpm test:browser --preflight`，再运行
+`pnpm test:browser --target win-64`／`win-32`。要求活动桌面、普通 Chrome/Edge、Explorer、
+空闲服务位和无已有 URI 注册；已有安装安全拒绝，不自动卸载。
+保留冷启动、配对、GUI 两页、隐藏/托盘恢复、二次启动、重连、退出和清理，预检或跳过不算通过。
+报告在 `.artifacts/ci`，不上传 profile、身份、私钥或原始服务日志。
 
-内部模块是私有 workspace 包，会打入两个交付物，无需分别安装。[架构概览](docs/architecture.md)提供模块导航，详细事实分别由上方文档维护。
-
-## 许可证
-
-原创增补采用 [Apache-2.0](LICENSE)，改编的 DeepSeek Harness 代码保留 [MIT 声明](LICENSE-MIT-UPSTREAM)，详见[第三方声明](THIRD_PARTY_NOTICES.md)。当前不交付 macOS/Linux 桌面版本，不包含代码签名和发布操作。
+原创增补使用 [Apache-2.0](LICENSE)，改编部分保留[上游 MIT 声明](LICENSE-MIT-UPSTREAM)。
+见[第三方声明](THIRD_PARTY_NOTICES.md)。签名、公证、正式发布及剩余产品矩阵分别验收。
