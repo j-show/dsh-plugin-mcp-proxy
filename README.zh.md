@@ -21,9 +21,10 @@ flowchart LR
 
 ## 准备与开发
 
-使用 Node **22.19+**（推荐 **22.23.5**）、pnpm **>=10**、Rust 与对应宿主的
+使用 Node **22.x 且 >=22.19**（推荐 **22.23.5**）、pnpm **>=10**、Rust 与对应宿主的
 [Tauri 原生工具链](https://v2.tauri.app/start/prerequisites/)。不依赖消费项目源码或生产凭据，
 操作及断点见[开发指南](docs/development.md)。
+换机从[交接清单](docs/handoff.md)开始，按宿主准备工具并保留未验证项。
 
 ```sh
 pnpm install --frozen-lockfile
@@ -80,7 +81,10 @@ node release/mcp-plugin/install.mjs --dsh-root <dsh-installation-root>
 
 ## 验证
 
-`pnpm verify` 执行共享/核心检查，`pnpm verify --release` 加入当前宿主打包及产物验收。
+`pnpm verify` 执行 Node/核心检查，不要求原生工具；`dev:doctor --packaging` 另行发现原生工具和库，不能代替构建/GUI 验收。
+`pnpm verify --release --plan` 预览本地与 CI 共用计划；`--release` 执行 Windows 两架构、Mac ARM 或 Ubuntu 宿主打包及验收。
+Intel DMG 仅在 Mac 显式 `--target mac-intel` 时重试；Linux 无显示会话时自动用 Xvfb 执行产物检查。
+原生 CI 同时运行各宿主的默认 TS 测试集合。逐步结果见 `.artifacts/ci/verification.json`。
 `pnpm test:product --target win-32`／`win-64` 要求五项 Windows 原生产物测试零跳过，Mac/Linux 执行三项 profile 用例。
 `pnpm test:installer --target <目标>` 单独检查安装包中的实际程序、运行时和清理。
 

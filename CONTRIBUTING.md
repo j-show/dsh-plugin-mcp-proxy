@@ -4,7 +4,7 @@ Start with [requirements](docs/requirements.md), [design](docs/design.md) and th
 [cross-platform development guide](docs/development.md). Use the fixed public DSH version;
 do not reference another checkout or copy personal profiles, credentials or caches.
 
-1. Prepare the documented Node, pnpm and Windows tools, then install with
+1. Follow [handoff](docs/handoff.md) to prepare Node/pnpm and the chosen host's tools, then install with
    `pnpm install --frozen-lockfile`.
 2. Use `pnpm dev:doctor`, `pnpm dev:init` and the development guide to reproduce the
    issue in a project-owned environment. A real model key is optional for unit and
@@ -12,10 +12,10 @@ do not reference another checkout or copy personal profiles, credentials or cach
 3. Identify the affected B/M requirement and acceptance scenario. Add a failing
    regression before changing behavior; preserve cancellation, routing, TLS and
    resource ownership. New product scope needs explicit requirements.
-4. Run `pnpm build:shared`, `pnpm typecheck`, `pnpm test`, `pnpm test:rust` and `pnpm dev:check`. For packaging
-   changes also run `pnpm dev:doctor --packaging` and the affected release build.
-   For Windows artifact changes, run `pnpm test:product` after building the EXE;
-   release CI requires all five cases with no skipped product tests and a free service slot.
+4. Run `pnpm verify` for core checks. Native changes also require `pnpm dev:doctor --packaging`
+   and `pnpm verify --release` (preview with `--plan`, choose an affected `--target` as needed).
+   Local and CI use the same plan, including Rust, exact-build product/installer checks and Windows browser E2E.
+   Native cases require zero skips and a free service slot; Intel DMG remains explicitly deferred.
 5. Update affected README/AGENTS and current design/configuration/acceptance docs.
    Keep docs/history unchanged. Describe behavior, verification and remaining
    product acceptance in the PR. Do not mark skipped tests as passing.

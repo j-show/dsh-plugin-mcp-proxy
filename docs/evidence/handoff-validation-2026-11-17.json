@@ -1,0 +1,33 @@
+{
+  "sourceKind": "working tree based on 039dd66; corresponding new commit CI must be checked separately",
+  "date": "2026-11-17 Asia/Shanghai",
+  "host": "Windows x64",
+  "node": "22.23.5 (private task runtime; global Node left unchanged)",
+  "pnpm": "11.3.0",
+  "checks": {
+    "pnpm verify": {"exitCode": 0, "defaultPassed": 604, "defaultSkipped": 8, "developmentPassed": 59, "typecheck": "passed"},
+    "pnpm dev:doctor --packaging": {"exitCode": 0, "scope": "tool discovery only; not native acceptance"},
+    "pnpm test:rust": {"exitCode": 0, "passed": 15, "skipped": 0},
+    "independentReview": "Ubuntu libxdo.pc false-negative corrected; process launch-failure reporting corrected; focused regressions passed"
+  },
+  "regressions": [
+    "core verification has no native tool requirement",
+    "native plan includes the default TS suite and per-target acceptance",
+    "Intel DMG requires explicit selection; foreign OS targets are refused",
+    "Linux artifact commands use Xvfb only without an existing display",
+    "occupied native control address is refused without commands or owner termination",
+    "missing native tools produce per-host remediation",
+    "xdo header/library detection does not require libxdo.pc",
+    "first failing command stops the plan; nonzero exits and launch failures are recorded"
+  ],
+  "unchangedDeferrals": ["Intel macOS DMG; preserve DMG and explicit retry entry"],
+  "unverified": [
+    "This change's macOS/Linux native execution requires its GitHub Actions runs, not local cross-builds",
+    "Local complete browser/installer run requires an unused URI/integration owner; existing personal integration is preserved",
+    "Completely cold-cache new-machine installation and Tauri three-layer debugger acceptance",
+    "True x86 Windows rather than WoW64",
+    "macOS/Linux browser, GUI, tray, URI and complete system installation lifecycle",
+    "Real model, multi-device/multi-DSH, cross-user, history, plugin upgrade/disable and release acceptance A1-A7",
+    "Historical Chrome/Edge startup anomaly root causes"
+  ]
+}

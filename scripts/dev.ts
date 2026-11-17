@@ -7,11 +7,11 @@ import { spawn, execFile } from 'node:child_process'
 import { once } from 'node:events'
 import { parseArgs, promisify } from 'node:util'
 import { pathToFileURL } from 'node:url'
-import { createConnection } from 'node:net'
+import {assertDevelopmentServiceIdle} from './development-service.ts'
+import {nativePrerequisites} from './native-preflight.ts'
 import { buildLibraries } from './build-libraries.ts'
 import { prepareMcpBuildRuntime, mcpBuildEnvironment, mcpBuildRuntimeDownload } from './mcp-build-runtime.ts'
 import { runMcpBuildCommand } from './run-mcp-build-command.ts'
-import { packageMcpProxy } from './package-mcp-proxy.ts'
 import { buildApplications } from './build-app.ts'
 import { buildShared } from './build-shared.ts'
 import { developmentPaths, initializeDevelopment, initializeDevelopmentProfiles, developmentIssues, developmentDshCli, DEVELOPMENT_ORIGIN } from './development.ts'
@@ -38,14 +38,22 @@ async function doctor(): Promise<void> {
       || await fileExists(join(process.env.WINDIR ?? '', 'Microsoft.NET/Framework/v4.0.30319/csc.exe')),
     license: mcpBuildRuntimeDownload(process.platform, process.version) !== undefined || await fileExists(values['node-license'] ?? join(dirname(process.execPath), 'LICENSE')) }, values.packaging ?? false)
   if (!['win32','darwin','linux'].includes(process.platform)) issues.push('Native development requires Windows, macOS or Linux.')
-  if (values.packaging && !await available('cargo',['--version'])) issues.push('Install Rust/Cargo and the platform Tauri prerequisites.')
+  const native=values.packaging?await nativePrerequisites(process.platform):[]
+  issues.push(...native.filter(check=>!check.ready).map(check=>`${check.name}: ${check.hint}`))
   for (const name of ['tsx', 'typescript', 'vitest', '@deepseek-ai/dsh', '@deepseek-ai/dsh-app-boot']) {
     try { require.resolve(name + '/package.json') } catch { issues.push(`Run pnpm install --frozen-lockfile (missing ${name}).`) }
   }
-  const session = await import('@deepseek-ai/dsh-session')
-  if (!['input', 'turn', 'sampling', 'elicitation'].every(name => session.KNOWN_SESSION_EVENT_TYPES.has(`mcp-proxy/${name}`))) issues.push('Session patch missing; reinstall with the repository lockfile.')
+  try {
+    const session = await import('@deepseek-ai/dsh-session')
+    if (!['input', 'turn', 'sampling', 'elicitation'].every(name => session.KNOWN_SESSION_EVENT_TYPES.has(`mcp-proxy/${name}`))) issues.push('Session patch missing; reinstall with the repository lockfile.')
+  } catch { issues.push('Cannot inspect Session patch; run pnpm install --frozen-lockfile.') }
+  await mkdir(join(root,'.artifacts/ci'),{recursive:true})
+  await writeFile(join(root,'.artifacts/ci',values.packaging?'doctor-native.json':'doctor-core.json'),JSON.stringify({
+    scope:values.packaging?'native prerequisites':'Node/core prerequisites',platform:process.platform,node:process.version,pnpm:version,
+    checks:native,issues,status:issues.length?'failed':'passed',boundary:'Discovery only; not a build, GUI, debugger or product acceptance result.',
+  },null,2)+'\n')
   if (issues.length) throw new Error(issues.join('\n'))
-  process.stdout.write('Development prerequisites ready. Network access is also needed for first-time release binary downloads.\n')
+  process.stdout.write(`${values.packaging?'Native tool discovery':'Node/core prerequisites'} passed; build/GUI/debugger acceptance is separate. First-time downloads require network access.\n`)
 }
 
 function environment(home: string): NodeJS.ProcessEnv {
@@ -72,17 +80,6 @@ async function foreground(executable: string, args: string[], home: string, log:
     const [code, signal] = await once(child, 'exit') as [number | null, string | null]
     if (code !== 0 && code !== 130 && signal !== 'SIGTERM' && signal !== 'SIGINT') throw new Error(`Development child failed (${signal ?? code}); see .artifacts/dev/logs/${log}`)
   } finally { process.off('SIGINT', stop); process.off('SIGTERM', stop); output.end() }
-}
-
-async function assertNoLocalOwner(): Promise<void> {
-  const socket = createConnection('\\\\.\\pipe\\dsh-mcp-proxy')
-  try {
-    await new Promise<void>((resolve, reject) => {
-      socket.once('connect', () => { reject(new Error('A local MCP service already owns this machine. Exit it normally before development.')) })
-      socket.once('error', error => { if ('code' in error && ['ENOENT', 'ECONNREFUSED'].includes(String(error.code))) resolve(); else reject(error) })
-      socket.setTimeout(2000, () => { reject(new Error('Local MCP service probe timed out')) })
-    })
-  } finally { socket.destroy() }
 }
 
 async function run(): Promise<void> {
@@ -119,7 +116,7 @@ async function run(): Promise<void> {
     await foreground(process.execPath, ['--import', signalPreload, developmentDshCli(root),
       '--profile', 'mcp-proxy', '--config', p.settings, '--associate', values.uri], p.localHome, 'association.log'); return
   }
-  await assertNoLocalOwner()
+  await assertDevelopmentServiceIdle()
   if (command === 'runtime') {
     await foreground(process.execPath, [...(values.inspect ? ['--inspect=127.0.0.1:9232'] : []), '--import', signalPreload, '--enable-source-maps', developmentDshCli(root),
       '--profile', 'mcp-proxy', '--config', p.settings], p.localHome, 'runtime.log'); return

@@ -2,18 +2,20 @@
 
 ## 当前迁移边界
 
+换机操作及测试边界以[交接清单](handoff.md)为入口。已核实基线为 `039dd66` 的
+[CI 43855401293](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43855401293)：六项启用任务均通过，Intel DMG 仍暂缓。
+2026-11-17 的预检/编排变更统一本地与 CI 计划，并增加原生宿主默认 TS 集合；本次结果须读取对应提交的
+`verification.json` 和 Actions，不从下面的历史次数继承。尚无完全冷缓存/全新普通用户电脑的完整初始化与断点验收证据。
+本地命令与边界见[换机验证记录](evidence/handoff-validation-2026-11-17.json)。
+
 2026-11-16 起按 [Tauri 迁移确认](migrations/tauri-2026-11-16.md) 验证新桌面实现。
 下方 Electron 的历史 CI、缓存、断点与浏览器证据保留为历史事实，不能替代 Tauri 的原生/GUI 验收。
 新入口为 `build:shared`、各平台 `build:*`、`verify`、`test:product --target`、`test:installer --target`。
-本轮已在本机生成 Windows x86/x64 安装包并通过两种架构各五项产物用例；macOS/Linux 与 Tauri 浏览器/托盘结果按本轮 CI 单独记录。
-CI 修复后的本机工作区验证见[后续证据](evidence/tauri-followup-2026-11-16.json)：581 项默认测试、7 项 Rust 测试及两架构原生产物通过；保留既有 URI 的真实安装/卸载通过。新增“注册后普通卸载”、直接 DMG 及 Unix 进程清理按新 CI 验证，不能沿用旧安装测试结果。
-后续 `7bd8040` CI 已通过 Ubuntu、macOS ARM、两种 Windows 安装/卸载和原生产物，以及每浏览器三环境九次冷启动；Intel 镜像与 Chrome GUI 展示失败。GUI 盘符配置根因、本地自然启动修复与下一轮待验范围见[启动后续证据](evidence/tauri-startup-followup-2026-11-16.json)。
-`72d79bc` 的 Windows x86/x64 完整 Chrome/Edge GUI/托盘与原生产物已通过，Ubuntu/macOS ARM 原生任务通过。Intel DMG 按用户决定[保留格式并暂缓该宿主](evidence/mac-intel-dmg-deferred-2026-11-16.md)；默认 CI 省略此 lane、明示未验证，后续换 Mac 再复测。
-同次 Windows 产物哈希、两架构各五项用例、四组浏览器七场景及独立 guards/cold-start 清理见[固定证据](evidence/tauri-windows-acceptance-2026-11-16.json)；x86 在 x64 Windows 的 WoW64 环境验证。
-`e1f8b35` 的[完整启用流水线](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43842454583)六项任务全部通过，源码 `dirty:false`；共享检查 582 项通过、13 项按平台/入口跳过，开发检查 59 项通过。任务及产物摘要见[本轮 CI 快照](evidence/tauri-active-ci-2026-11-16.json)。Intel DMG 的暂缓不计为通过。
-记录提交 `88f49a0` 的重跑另暴露 Windows 夹具删除 `EBUSY` 和 Mac ARM 取消启动的 `kill EPERM`。业务与清理结果按提交区分；修复采用有界状态核对和目录删除重试，不把权限未知解释为退出，不移除原进程/MCP 退出断言。新原生结果继续单列，不能用上一提交绿灯替代。
+迁移中的本机/CI 时间线见[迁移记录](migrations/tauri-2026-11-16.md)，Windows 同构建七场景、guards/cold-start 见[固定证据](evidence/tauri-windows-acceptance-2026-11-16.json)。
+临时目录与进程回收竞态见[修复记录](evidence/cleanup-races-2026-11-16.json)。各证据只对应其中注明的提交。
+Intel DMG 按用户决定[保留格式并暂缓](evidence/mac-intel-dmg-deferred-2026-11-16.md)，默认 CI 明示未验证。
 
-迁移基线日期：2026-11-07；最新浏览器自动化证据：2026-11-14（Asia/Shanghai）。适用独立项目 `0.1.0`、公共 DSH `0.1.6-alpha.2` 及所附兼容补丁。需求编号见[requirements](requirements.md)，设计见[design](design.md)，启动和配置见[configuration](configuration.md)。本文是证据清单，不把已实现或单元测试通过等同于完整产品验收。
+迁移基线日期：2026-11-07；当前已核实 Tauri 浏览器 CI 基线日期：2026-11-16（Asia/Shanghai）。适用独立项目 `0.1.0`、公共 DSH `0.1.6-alpha.2` 及所附兼容补丁。本文不把已实现或单元测试通过等同于完整产品验收。
 
 ## 已有证据
 
@@ -168,6 +170,8 @@ release CI 在两端打包后自动调用该入口，并保留 `.artifacts/ci` �
 | A6 | 发行交付剩余项 | 干净 checkout 公共安装、Windows 构建、原生产物及浏览器 CI 和固定证据已有验证；仍未执行正式签名/发布流程及发布后安装验收。当前未发布 npm 包或 GitHub release，须按用户授权另行处理 |
 | A7 | 桌面/部署矩阵剩余项 | 当前同构建 Chrome/Edge 七场景及回收已有固定 CI 证据；仍需新 Windows 用户/权限、目录/磁盘/缓存异常、URI 冲突、浏览器 × 传输 × 故障、真实远端 TLS 反代及模型流程演示。不得用本轮子矩阵关闭整项 |
 
-设备撤销 GUI、CA 导入向导、MCP 编辑、自动更新、macOS/Linux、resources/prompts 或通用通知代理属于可另行决定的扩展，不混入 B1—B28 的完成条件。已有架构代码不等于这些扩展已经交付。
+设备撤销 GUI、CA 导入向导、MCP 编辑、自动更新、resources/prompts 或通用通知代理属于可另行决定的扩展，不混入 B1—B28 的完成条件。
+macOS/Linux 已由 M4 纳入原生构建目标，但完整浏览器/GUI/托盘及系统安装生命周期仍未验证；Intel DMG 按用户决定暂缓。
+Windows x86 当前为 WoW64 证据，真实 32 位 Windows 尚未验收。Tauri 三层调试及全新机器验收、历史 Chrome/Edge 启动异常根因仍待留证。
 
 继续开发时先选择 A 项并引用对应 B/M 编号，运行相关测试，更新此记录的产物哈希、结果和剩余项。没有产品证据的场景始终保留待验收，不以增加通过测试数量关闭它。

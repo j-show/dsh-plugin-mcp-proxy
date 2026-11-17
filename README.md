@@ -23,9 +23,10 @@ Historical Electron evidence does not establish Tauri acceptance.
 
 ## Develop
 
-Use Node **22.19+** (recommended **22.23.5**), pnpm **>=10**, Rust and the native
+Use Node **22.x >=22.19** (recommended **22.23.5**), pnpm **>=10**, Rust and the native
 [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for the build host.
 No consumer checkout or production credentials are required. See [development](docs/development.md) and [CONTRIBUTING](CONTRIBUTING.md).
+For a new computer start with the [handoff checklist](docs/handoff.md), including native setup, commands and unverified cases.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -92,8 +93,12 @@ patch for the fixed SDK; x64 widths and protocol semantics remain unchanged.
 
 ## Verify
 
-`pnpm verify` runs shared/core checks; `pnpm verify --release` additionally packages
-the host platforms and runs native acceptance. `pnpm test:product --target win-32`
+`pnpm verify` runs Node/core checks without requiring native tools. `pnpm dev:doctor --packaging`
+discovers native tools/libraries; discovery is separate from successful builds and GUI tests.
+`pnpm verify --release --plan` previews the shared local/CI command plan; `--release` builds and verifies
+Windows x86/x64, Mac ARM or Ubuntu on their host OS. Intel DMG requires explicit `--target mac-intel` on a Mac.
+Headless Linux artifact execution uses Xvfb. Native CI also runs each host's default TS suite.
+`pnpm test:product --target win-32`
 or `win-64` binds an explicit build and requires all five Windows native cases; Mac/Linux run three profile cases.
 `pnpm test:installer --target <target>` checks actual installed/extracted package payloads and cleanup.
 

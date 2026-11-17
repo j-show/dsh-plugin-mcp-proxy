@@ -37,10 +37,7 @@ jobs:
         env:
           MCP_PROXY_MAC_INTEL_RUNNER: ${{ inputs.mac_intel_runner }}
         run: node --import tsx/esm scripts/ci-matrix.ts
-      - run: pnpm build:shared
-      - run: pnpm typecheck
-      - run: pnpm test
-      - run: pnpm dev:check
+      - run: pnpm verify
       - uses: actions/upload-artifact@v4
         with:
           name: shared-${{ github.sha }}
@@ -50,6 +47,8 @@ jobs:
             packages/*/modules/*/lib/
             packages/dsh-plugin/lib/
             .artifacts/ci/native-matrix.json
+            .artifacts/ci/verification.json
+            .artifacts/ci/doctor-core.json
           if-no-files-found: error
           retention-days: 7
   package-manager:
@@ -98,36 +97,10 @@ jobs:
         with:
           name: shared-${{ github.sha }}
           path: .
-      - run: pnpm ${{ matrix.build }}
-      - run: pnpm test:rust
-      - run: pnpm build:mcp-plugin
-      - name: Verify installed package payload
-        if: runner.os != 'Linux'
-        run: pnpm test:installer --target ${{ matrix.target }}
-      - name: Verify extracted Debian payload
-        if: runner.os == 'Linux'
-        run: xvfb-run -a pnpm test:installer --target linux
-      - name: Verify Win32 installer independently
-        if: runner.os == 'Windows'
-        run: pnpm test:installer --target win-32
-      - name: Test native product
-        if: runner.os != 'Linux'
-        run: pnpm test:product --target ${{ matrix.target }}
-      - name: Test Linux native product on a real X server
-        if: runner.os == 'Linux'
-        run: xvfb-run -a pnpm test:product --target linux
-      - name: Test the Win32 product independently
-        if: runner.os == 'Windows'
-        run: pnpm test:product --target win-32
-      - name: Require the interactive Windows desktop
-        if: runner.os == 'Windows'
-        run: pnpm test:browser --preflight
-      - name: Test both browsers and the Tauri lifecycle
-        if: runner.os == 'Windows'
-        run: pnpm test:browser --target win-64
-      - name: Test the Win32 GUI with both browsers
-        if: runner.os == 'Windows'
-        run: pnpm test:browser --target win-32
+      - name: Run the shared native verification plan
+        env:
+          VERIFY_TARGET: ${{ runner.os == 'Windows' && 'win' || matrix.target }}
+        run: pnpm verify --native-only --target "$VERIFY_TARGET"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

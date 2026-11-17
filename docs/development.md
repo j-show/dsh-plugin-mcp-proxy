@@ -1,6 +1,7 @@
 # 跨平台开发与调试
 
-从完整源码 checkout 开始，使用 Node 22.19+（推荐 `.node-version` 中的 22.23.5）、pnpm >=10、
+换机先读[交接清单](handoff.md)，包含系统依赖安装、测试计划、当前基线及未验证项。
+从完整源码 checkout 开始，使用 Node 22.x 且 >=22.19（推荐 `.node-version` 中的 22.23.5）、pnpm >=10、
 Rust/rustup 及对应宿主的 [Tauri 原生前置依赖](https://v2.tauri.app/start/prerequisites/)。
 不需要其他源码仓库、生产 DSH 或模型账户。Windows 打包需要 MSVC、Windows SDK、系统 tar
 和 .NET Framework 4.x 编译器（仅用于既有 URI 桥接与 UIA 测试）；不需要 PowerShell。
@@ -11,15 +12,14 @@ macOS 镜像创建不提权。Intel CI 宿主的镜像收尾问题按用户决�
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm dev:doctor
-pnpm build:shared
-pnpm typecheck
-pnpm test
-pnpm test:rust
+pnpm verify
+pnpm dev:doctor --packaging
 ```
 
 依赖和初次构建运行时需要联网。脚本以 Node.js 分派，不改全局 Node，必要时在 `.artifacts/`
 准备已校验的 Node 22。实际打包按目标使用同一版本官方 Node，保留 LICENSE。
+`verify` 的核心预检不要求 Rust；原生预检检查 Cargo/rustc/rustup、系统 tar，以及各宿主的编译器、SDK、库或 WebView2。
+它记录发现结果和修复建议，不证明真实链接、GUI、浏览器或调试可用；这些须执行相应构建和验收。
 根 package.json 管理 npm 版本、应用版本与公开命令；Cargo.toml/Cargo.lock 管理 Rust。
 pnpm 10.0 所需设置在 package.json#pnpm 保留兼容镜像；修改后须与 pnpm-workspace.yaml 一致。
 postinstall 仅把补丁锁定元数据规范为兼容格式，不升级依赖或改变完整性。
@@ -106,7 +106,11 @@ Web ready 要求正常登录引导后的 HTTPS 首页 200，且日志没有必�
 
 ## 自动化与产物验证
 
-`pnpm verify` 运行核心检查，`pnpm verify --release` 增加当前宿主打包及原生产物/安装包验证。
+`pnpm verify` 运行核心预检、初始化、共享构建、类型检查、默认 TS 集合和开发检查。
+`pnpm verify --release --plan` 预览，`--release` 增加原生预检、Rust、宿主目标构建、插件包和各目标验收。
+Windows 默认两个架构；Mac ARM 默认只运行 ARM，Intel 仅显式 `--target mac-intel` 重试。
+`--native-only` 是共享构建之后的 CI 阶段，各原生宿主也执行默认 TS 集合。计划统一维护于 `verification-plan.ts`。
+Ubuntu 无 DISPLAY/WAYLAND_DISPLAY 时用 Xvfb 执行产物，不推导为真实桌面通过。失败即停止，报告保留实际失败步骤及退出码。
 `test:product --target <目标>` 从构建记录校验程序、安装包和完整运行时，不找“最新目录”，不修复损坏产物。
 Windows 五项用例、Mac/Linux 三项 profile 用例分别要求零跳过；服务位占用时安全拒绝。
 `test:installer` 检查真实安装/卸载或挂载/解包后的程序；Windows 要求没有已有安装记录、自启或 AppID 集成，拒绝未知所有者。
