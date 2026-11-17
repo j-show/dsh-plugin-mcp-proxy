@@ -29,3 +29,9 @@ it('checks Ubuntu xdo with the compiler rather than requiring a nonexistent libx
   expect(checks.find(check=>check.name==='X11 xdo')?.ready).toBe(true)
   expect(calls.some(call=>call.command==='cc'&&call.args.includes('-lxdo'))).toBe(true)
 })
+it('accepts a successful hdiutil help command without stdout but preserves execution failures',async()=>{
+  const success=async(command:string)=>command==='hdiutil'?'':'available'
+  expect((await nativePrerequisites('darwin',{},success)).find(check=>check.name==='DMG tools')?.ready).toBe(true)
+  const failure=async(command:string)=>{if(command==='hdiutil')throw new Error('failed');return 'available'}
+  expect((await nativePrerequisites('darwin',{},failure)).find(check=>check.name==='DMG tools')?.ready).toBe(false)
+})

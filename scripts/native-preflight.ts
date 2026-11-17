@@ -6,7 +6,7 @@ import {tmpdir} from 'node:os'
 import {promisify} from 'node:util'
 import {nativeTar} from './native-tools.ts'
 
-export interface Prerequisite {name:string;ready:boolean;hint:string}
+export interface Prerequisite {name:string;ready:boolean;hint:string;observation?:string;errorCode?:string|number}
 type Run=(file:string,args:readonly string[])=>Promise<string>
 const execute=promisify(execFile)
 async function run(file:string,args:readonly string[]):Promise<string>{
@@ -39,10 +39,19 @@ async function windowsSdk(env:NodeJS.ProcessEnv):Promise<boolean>{
 }
 export async function nativePrerequisites(platform:NodeJS.Platform,env:NodeJS.ProcessEnv=process.env,invoke:Run=run):Promise<Prerequisite[]>{
   const checks:Prerequisite[]=[]
-  const command=async(name:string,file:string,args:readonly string[],hint:string):Promise<void>=>{
-    let ready=false
-    try{ready=(await invoke(file,args)).trim().length>0}catch{/* Report the fixed remediation, not process output. */}
-    checks.push({name,ready,hint})
+  const command=async(name:string,file:string,args:readonly string[],hint:string,requireOutput=true):Promise<void>=>{
+    let ready=false,observation='execution-failed',errorCode:string|number|undefined
+    try{
+      const output=await invoke(file,args)
+      observation=output.trim()?'stdout-present':'empty-stdout'
+      ready=!requireOutput||observation==='stdout-present'
+    }catch(error:unknown){
+      if(error&&typeof error==='object'&&'code' in error){
+        const code=error.code
+        if(typeof code==='number'||typeof code==='string'&&/^[A-Z0-9_]{1,40}$/.test(code))errorCode=code
+      }
+    }
+    checks.push({name,ready,hint,observation,...(errorCode===undefined?{}:{errorCode})})
   }
   await command('Cargo','cargo',['--version'],'Install rustup and the repository rust-toolchain.toml toolchain.')
   await command('Rust compiler','rustc',['--version'],'Install the pinned Rust toolchain with rustup.')
@@ -70,7 +79,7 @@ export async function nativePrerequisites(platform:NodeJS.Platform,env:NodeJS.Pr
   }else if(platform==='darwin'){
     await command('Xcode tools','xcrun',['--find','clang'],'Run xcode-select --install; complete Xcode licensing/setup if required.')
     await command('macOS SDK','xcrun',['--show-sdk-path'],'Select an installed Xcode/Command Line Tools SDK.')
-    await command('DMG tools','hdiutil',['help'],'Use macOS system hdiutil; Intel DMG remains deferred unless explicitly selected.')
+    await command('DMG tools','hdiutil',['help'],'Use macOS system hdiutil; Intel DMG remains deferred unless explicitly selected.',false)
   }else if(platform==='linux'){
     await command('C compiler','cc',['--version'],'Install build-essential and pkg-config.')
     for(const [name,pkg] of [['WebKitGTK','webkit2gtk-4.1'],['GTK','gtk+-3.0'],['AppIndicator','ayatana-appindicator3-0.1'],['OpenSSL','openssl'],['librsvg','librsvg-2.0']]){

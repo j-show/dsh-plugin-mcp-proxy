@@ -95,6 +95,7 @@ patch for the fixed SDK; x64 widths and protocol semantics remain unchanged.
 
 `pnpm verify` runs Node/core checks without requiring native tools. `pnpm dev:doctor --packaging`
 discovers native tools/libraries; discovery is separate from successful builds and GUI tests.
+Tool reports distinguish command failure from empty standard output; macOS help output need not use stdout.
 `pnpm verify --release --plan` previews the shared local/CI command plan; `--release` builds and verifies
 Windows x86/x64, Mac ARM or Ubuntu on their host OS. Intel DMG requires explicit `--target mac-intel` on a Mac.
 Headless Linux artifact execution uses Xvfb. Native CI also runs each host's default TS suite.

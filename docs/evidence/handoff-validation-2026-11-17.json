@@ -5,7 +5,7 @@
   "node": "22.23.5 (private task runtime; global Node left unchanged)",
   "pnpm": "11.3.0",
   "checks": {
-    "pnpm verify": {"exitCode": 0, "defaultPassed": 604, "defaultSkipped": 8, "developmentPassed": 59, "typecheck": "passed"},
+    "pnpm verify": {"exitCode": 0, "defaultPassed": 605, "defaultSkipped": 8, "developmentPassed": 59, "typecheck": "passed"},
     "pnpm dev:doctor --packaging": {"exitCode": 0, "scope": "tool discovery only; not native acceptance"},
     "pnpm test:rust": {"exitCode": 0, "passed": 15, "skipped": 0},
     "independentReview": "Ubuntu libxdo.pc false-negative corrected; process launch-failure reporting corrected; focused regressions passed"
@@ -21,6 +21,13 @@
     "first failing command stops the plan; nonzero exits and launch failures are recorded"
   ],
   "unchangedDeferrals": ["Intel macOS DMG; preserve DMG and explicit retry entry"],
+  "ciFollowup": {
+    "commit": "55fd813577ea5c9936b4a5e2fedd1db951159d54",
+    "run": "https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/44034510380",
+    "failure": "Mac ARM DMG tools discovery rejected hdiutil help before any build",
+    "regression": "successful help with empty stdout must pass; execution failures remain failures",
+    "boundary": "follow-up native CI must establish the actual macOS result; default Intel deferral unchanged"
+  },
   "unverified": [
     "This change's macOS/Linux native execution requires its GitHub Actions runs, not local cross-builds",
     "Local complete browser/installer run requires an unused URI/integration owner; existing personal integration is preserved",
