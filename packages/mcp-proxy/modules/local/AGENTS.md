@@ -1,4 +1,4 @@
-# @j-show/mcp-proxy-local
+# @jshow/app-mcp-proxy/local
 
 - Keep this package independent of consumer checkouts; use declared public DSH dependencies.
 - Preserve cancellation, per-DSH routing, TLS validation and file ownership checks.

@@ -1,9 +1,11 @@
 # Build scripts
 
-- Build only this repository and declared public npm dependencies. Internal modules stay bundled in the two deliverables.
-- Keep intermediates under .artifacts and deliveries under release. Validate dependency closure before producing an EXE or plugin archive.
+- Build only the two parent workspaces and public npm dependencies. modules.json is a source/subpath registry, not a package list; internal directories have no package manifests, versions or packing step.
+- Package the combined LICENSE at desktop resources and plugin output. Never substitute it for dependency licenses. Plugin archives require all component/client entries and must not contain internal workspace packages.
+- Keep intermediates/reports under .artifacts, command logs under logs/verify and deliveries under release. Report log paths relative to the checkout root; never generate root-level *.log. Validate dependency closure before packaging.
 - Development initialization preserves existing settings/identities and refuses unowned or linked paths. Unit trust/proxy checks leave certificate stores unchanged; browser acceptance uses the temporary CA ownership contract below.
 - Package scripts dispatch through tasks.ts under Node 22. Platform aggregates build shared sources once and bind target-specific Node/native dependencies to Tauri installers; reject a different build host OS rather than skipping targets.
+- Keep Vitest dispatch in tasks.ts, runtime relaunch in mcp-build-runtime.ts and process/pnpm/system-tar helpers in run-mcp-build-command.ts. Preserve direct CLI guards for remaining entries; plugin --skip-build and doctor --node-license are retired no-op options, while dev --skip-build remains functional.
 - Keep local/CI command ordering in verification-plan.ts. Core has no native prerequisites; native CI runs the host default TS suite as well as Rust/product/browser checks. Intel DMG requires explicit target selection. Use Xvfb only for headless Linux artifact execution; never substitute it for browser acceptance.
 - Native discovery never changes host integration; Linux xdo uses a private temporary compile/link probe without executing it, since Ubuntu provides no libxdo.pc. Record failed checks with remediation. Development preflight resolves the runtime's actual native control address and never sends stop/activation commands to an existing owner.
 - Help-only probes such as hdiutil use successful process exit, not nonempty stdout, as availability evidence. Keep command failure distinct from empty output in sanitized discovery reports.

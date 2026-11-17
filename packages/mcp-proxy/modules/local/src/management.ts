@@ -1,6 +1,6 @@
 /** Narrow JSON commands and redacted snapshots across the desktop/process IPC. */
 import { z } from 'zod'
-import type { DshConnectionId } from '@j-show/mcp-proxy-protocol'
+import type { DshConnectionId } from '@jshow/app-mcp-proxy/protocol'
 
 const id = z.string().regex(/^[A-Za-z0-9_-]{1,128}$/)
 const dsh = id.transform(value => value as DshConnectionId)

@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import type { GenerationId, DshConnectionId, InvocationId, ProxyFrame } from '@j-show/mcp-proxy-protocol'
+import type { GenerationId, DshConnectionId, InvocationId, ProxyFrame } from '@jshow/app-mcp-proxy/protocol'
 import { LocalInvocationRoutes, type LocalDshOwner } from '../src/routing.ts'
 
 const generation = 'same-generation' as GenerationId

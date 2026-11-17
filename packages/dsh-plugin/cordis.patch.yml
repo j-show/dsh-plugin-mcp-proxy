@@ -1,6 +1,6 @@
 - insert:
     - id: mcp-proxy-server
-      name: '@j-show/dsh-plugin-mcp-proxy'
+      name: '@jshow/dsh-plugin-mcp-proxy'
       config:
         host:
           publicOrigin: !!js process.env.MCP_PROXY_ORIGIN

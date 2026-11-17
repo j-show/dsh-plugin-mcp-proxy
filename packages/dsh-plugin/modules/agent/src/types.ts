@@ -1,7 +1,7 @@
 /** Durable input and Turn device associations owned by the MCP proxy agent consumer. */
 import type { MessageId, ToolCallId } from '@deepseek-ai/dsh-llm/brand'
-import type { EndpointId, CallbackId, InvocationId, GenerationId } from '@j-show/mcp-proxy-protocol'
-import type { PromptAdmissionId, ProxySelection } from '@j-show/dsh-mcp-proxy-host'
+import type { EndpointId, CallbackId, InvocationId, GenerationId } from '@jshow/app-mcp-proxy/protocol'
+import type { PromptAdmissionId, ProxySelection } from '@jshow/dsh-plugin-mcp-proxy/host'
 
 /** Durable link between a nested request, local connection and recorded Agent tool call. */
 export interface CallbackCorrelation {

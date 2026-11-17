@@ -11,7 +11,7 @@ it.each(['exit','spawn'] as const)('stops verification on %s failure and records
   const root=await mkdtemp(join(tmpdir(),'verification-cli-'))
   onTestFinished(()=>rm(root,{recursive:true,force:true}))
   await mkdir(join(root,'scripts'))
-  for(const file of ['verify.ts','verification-plan.ts','app-targets.ts','pnpm-invocation.ts']){
+  for(const file of ['verify.ts','verification-plan.ts','app-targets.ts','run-mcp-build-command.ts']){
     await copyFile(new URL(file,import.meta.url),join(root,'scripts',file))
   }
   await writeFile(join(root,'package.json'),'{"type":"module"}')
@@ -22,9 +22,10 @@ it.each(['exit','spawn'] as const)('stops verification on %s failure and records
   const entry=failure==='exit'?fake:join(root,'missing-pnpm')
   const result=await promisify(execFile)(process.execPath,['--import',pathToFileURL(require.resolve('tsx/esm')).href,join(root,'scripts/verify.ts')],
     {cwd:root,env:{...environment,npm_execpath:entry,CALLS:calls},timeout:30000}).catch((error:unknown)=>error)
-  expect(result,await readFile(join(root,'.artifacts/ci/doctor.log'),'utf8')).toBeInstanceOf(Error)
+  expect(result,await readFile(join(root,'logs/verify/doctor.log'),'utf8')).toBeInstanceOf(Error)
   const report=JSON.parse(await readFile(join(root,'.artifacts/ci/verification.json'),'utf8'))
   expect(report.status).toBe('failed')
+  expect(report.executions[0].log).toBe('logs/verify/doctor.log')
   if(failure==='exit'){
     expect((result as Error).message).toContain('Verification failed: typecheck')
     expect((await readFile(calls,'utf8')).trim().split('\n').map(line=>JSON.parse(line))).toEqual([

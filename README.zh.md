@@ -5,6 +5,7 @@
 本项目提供 Tauri 本地 MCP 连通应用与独立的 DSH 服务端插件。Rust 负责窗口、托盘和系统集成，
 随包 Node 22 继续运行既有 DSH/MCP 核心，保留多 DSH 连接、调用归属、取消、配对及文件所有权检查。
 应用不提供文件工具，文件操作由配置的下游 MCP 完成。
+仅保留 `@jshow/app-mcp-proxy`、`@jshow/dsh-plugin-mcp-proxy` 两个交付工作区。runtime/local/protocol 与 host/agent/browser/ui 都是普通源码模块，分别编入对应产物；共享协议不再作为独立包安装。
 
 ```mermaid
 flowchart LR
@@ -34,8 +35,8 @@ pnpm test
 pnpm test:rust
 ```
 
-所有包脚本统一从 `scripts/tasks.ts` 分派，不需要 PowerShell。根 `package.json` 管理公开脚本、
-应用版本和 npm 依赖；Rust 依赖由 Cargo.toml/Cargo.lock 管理。
+所有包脚本统一从 `scripts/tasks.ts` 分派，不需要 PowerShell。根 `package.json` 管理公开脚本、应用版本和 npm 依赖；Rust 依赖由 Cargo.toml/Cargo.lock 管理。
+测试由此入口直接执行，原 `scripts/test.ts` 直调路径已移除；运行时重启复用 `mcp-build-runtime.ts`，进程/pnpm/系统 tar 工具集中于 `run-mcp-build-command.ts`。
 为兼容早期 pnpm 10，必要设置同时保存在 package.json#pnpm 与 pnpm-workspace.yaml；
 postinstall 只规范化补丁元数据，保留相同依赖版本和完整性。
 
@@ -93,6 +94,8 @@ Windows 的真实浏览器验收先运行 `pnpm test:browser --preflight`，再�
 空闲服务位和无已有 URI 注册；已有安装安全拒绝，不自动卸载。
 保留冷启动、配对、GUI 两页、隐藏/托盘恢复、二次启动、重连、退出和清理，预检或跳过不算通过。
 报告在 `.artifacts/ci`，不上传 profile、身份、私钥或原始服务日志。
+验证命令日志写入忽略提交的 `logs/verify/`；手工重定向也写入 `logs/`，不在项目根目录生成日志。
+重复初始化只迁移归属于本 checkout 的旧插件引用，保留配置和身份。
 
-原创增补使用 [Apache-2.0](LICENSE)，改编部分保留[上游 MIT 声明](LICENSE-MIT-UPSTREAM)。
+合并后的 [LICENSE](LICENSE) 包含原创增补的 Apache-2.0 条款及上游改编部分的完整 MIT 条款/版权声明，分别适用于对应部分。
 见[第三方声明](THIRD_PARTY_NOTICES.md)。签名、公证、正式发布及剩余产品矩阵分别验收。

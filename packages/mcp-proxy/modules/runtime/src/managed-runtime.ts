@@ -1,7 +1,7 @@
 /** Shared local MCP ownership and independently reconnecting DSH channels. */
 import { LocalInvocationRoutes, LocalMcpPool, resolveLocalServices, type LocalOptions, type LocalDshSettings,
-  type LocalDesktopSnapshot } from '@j-show/mcp-proxy-local'
-import type { AssociationRequestId, DshConnectionId, ProxyFrame } from '@j-show/mcp-proxy-protocol'
+  type LocalDesktopSnapshot } from '@jshow/app-mcp-proxy/local'
+import type { AssociationRequestId, DshConnectionId, ProxyFrame } from '@jshow/app-mcp-proxy/protocol'
 import type { ManagedSettingsStore } from './settings-store.ts'
 import { setTimeout as delay } from 'node:timers/promises'
 import { isDeepStrictEqual } from 'node:util'

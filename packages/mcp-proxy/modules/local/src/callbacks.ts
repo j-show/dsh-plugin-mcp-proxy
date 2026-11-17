@@ -1,6 +1,6 @@
 /** Invocation ownership for downstream client callbacks and local roots. */
 import { pathToFileURL } from 'node:url'
-import type { InvocationId } from '@j-show/mcp-proxy-protocol'
+import type { InvocationId } from '@jshow/app-mcp-proxy/protocol'
 import type { LocalServiceConfig } from './config.ts'
 
 /** Tool-initiated request forwarded to the Harness model or human interaction owner. */

@@ -1,7 +1,7 @@
 /** Versioned shared local services and independent DSH deployment configuration. */
 import { resolve } from 'node:path'
 import { z } from 'zod'
-import type { DshConnectionId } from '@j-show/mcp-proxy-protocol'
+import type { DshConnectionId } from '@jshow/app-mcp-proxy/protocol'
 import { resolveLocalServices, type LocalServiceConfig } from './config.ts'
 
 const ref = z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/)

@@ -102,7 +102,7 @@ mod tests {
             assert!(!valid_path(path));
         }
         assert!(valid_path(
-            "dsh/node_modules/@j-show/mcp-proxy-runtime/lib/index.js"
+            "dsh/node_modules/@jshow/app-mcp-proxy/lib/index.js"
         ));
     }
 }

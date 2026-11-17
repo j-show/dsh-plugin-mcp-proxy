@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { request } from 'node:http'
 import WebSocket from 'ws'
 import { expect, it, onTestFinished } from 'vitest'
-import { pairingChallenge, ProxyIdentity, proveProxyIdentity, ProxyChannel, type BrowserBindingId } from '@j-show/mcp-proxy-protocol'
+import { pairingChallenge, ProxyIdentity, proveProxyIdentity, ProxyChannel, type BrowserBindingId } from '@jshow/app-mcp-proxy/protocol'
 import Host from '../src/index.ts'
 import { openHost } from './helpers/composition.ts'
 

@@ -9,7 +9,7 @@ import { join, resolve } from 'node:path'
 import { createRequire } from 'node:module'
 import { randomUUID } from 'node:crypto'
 import { WebSocketServer } from 'ws'
-import { acceptProxyIdentity, decodeFrame, ProxyChannel, type ProxyFrame } from '@j-show/mcp-proxy-protocol'
+import { acceptProxyIdentity, decodeFrame, ProxyChannel, type ProxyFrame } from '@jshow/app-mcp-proxy/protocol'
 import { startBackgroundService } from '../src/background.ts'
 import { machineControlAddress, requestLocalStatus, requestLocalStop } from '../src/control.ts'
 import { acquireServiceSlot } from './product-service-slot.ts'
@@ -33,7 +33,7 @@ async function fixture(acknowledge: boolean, projectEnvironment = false) {
   const home = join(root, 'home')
   const profile = join(home, 'profiles/mcp-proxy')
   await mkdir(profile, { recursive: true })
-  await writeFile(join(profile,'package.json'), JSON.stringify({private:true,type:'module',dependencies:{},dsh:{profile:{bundles:['@j-show/mcp-proxy-runtime']}}}))
+  await writeFile(join(profile,'package.json'), JSON.stringify({private:true,type:'module',dependencies:{},dsh:{profile:{bundles:['@jshow/app-mcp-proxy']}}}))
   await writeFile(join(profile,'cordis.patch.yml'),'[]\n')
   const workspace = join(root, 'workspace')
   await mkdir(workspace)

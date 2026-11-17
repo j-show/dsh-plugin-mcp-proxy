@@ -7,11 +7,11 @@ import { transform } from 'lightningcss'
 /** @param root - Repository root. @returns After the plugin's self-contained browser artifact is emitted. */
 export async function buildBrowserClient(root: string, development = false): Promise<void> {
   const directory = join(root, 'packages/dsh-plugin/modules/ui')
-  const id = '@j-show/dsh-mcp-proxy-ui'
+  const id = '@jshow/dsh-plugin-mcp-proxy'
   const externals = new Set(['react', 'react/jsx-runtime', 'react-dom', 'react-dom/client', '@deepseek-ai/cordis',
     '@deepseek-ai/dsh-client-store', '@deepseek-ai/dsh-client-ui-slots', '@deepseek-ai/dsh-client-ui-primitives',
     '@deepseek-ai/dsh-client-ui-dockkit'])
-  await build({ config: false, cwd: directory, entry: ['src/client/index.ts'], outDir: 'lib', format: ['cjs'],
+  await build({ config: false, cwd: directory, entry: ['src/client/index.ts'], outDir: '../../lib', format: ['cjs'],
     platform: 'browser', target: 'es2024', dts: false, sourcemap: development, clean: false,
     define: { 'process.env.NODE_ENV': '"production"' },
     deps: { neverBundle: source => externals.has(source), alwaysBundle: source => !externals.has(source) },

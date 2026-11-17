@@ -1,7 +1,7 @@
 /** Durable human request projection with invocation-owned waiting on the host. */
 import type { Agent } from '@deepseek-ai/dsh-agent'
-import type { ProxyCallbackRequest } from '@j-show/mcp-proxy-protocol'
-import type { default as McpProxyHost, PendingElicitation, ProxySelection } from '@j-show/dsh-mcp-proxy-host'
+import type { ProxyCallbackRequest } from '@jshow/app-mcp-proxy/protocol'
+import type { default as McpProxyHost, PendingElicitation, ProxySelection } from '@jshow/dsh-plugin-mcp-proxy/host'
 import type { CallbackCorrelation } from './types.ts'
 
 /** Request, answer or explicit failure of one tool-initiated human continuation. */

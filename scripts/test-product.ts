@@ -6,18 +6,14 @@ import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { readProductBuild } from './product-build.ts'
 import { assertProductServiceIdle, verifyProductResults, withProductServiceCheck, withProductRunLock } from './product-service.ts'
-import { prepareMcpBuildRuntime, mcpBuildEnvironment } from './mcp-build-runtime.ts'
-import { runMcpBuildCommand } from './run-mcp-build-command.ts'
+import { relaunchBuildRuntime } from './mcp-build-runtime.ts'
 import { parseArgs } from 'node:util'
 import { verifyDesktopRuntime } from './runtime-inventory.ts'
 
 const root = resolve(import.meta.dirname, '..')
 async function main(): Promise<void> {
   const {values} = parseArgs({options:{target:{type:'string'}}})
-  const executable = await prepareMcpBuildRuntime(root)
-  if (executable) {
-    await runMcpBuildCommand(executable, ['--import', 'tsx/esm', ...process.argv.slice(1)], root, mcpBuildEnvironment(executable, process.env)); return
-  }
+  if (await relaunchBuildRuntime(root)) return
   await mkdir(join(root, '.artifacts/ci'), { recursive: true })
   await withProductRunLock(async () => {
     const output = join(root, '.artifacts/ci/product-results.json')

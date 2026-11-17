@@ -7,8 +7,8 @@ import Sessions, { SessionId } from '@deepseek-ai/dsh-session'
 import Projections from '@deepseek-ai/dsh-session-projection'
 import Prompt from '@deepseek-ai/dsh-system-prompt'
 import Tools from '@deepseek-ai/dsh-tools'
-import { promptAdmissionId } from '@j-show/dsh-mcp-proxy-host'
-import type { ChannelOptions } from '@j-show/mcp-proxy-protocol'
+import { promptAdmissionId } from '@jshow/dsh-plugin-mcp-proxy/host'
+import type { ChannelOptions } from '@jshow/app-mcp-proxy/protocol'
 import { expect, it, onTestFinished } from 'vitest'
 import { openHost } from '../../host/tests/helpers/composition.ts'
 import * as ProxyAgent from '../src/index.ts'
@@ -95,7 +95,7 @@ it('cancels and records an in-flight sampling request when its calling plugin un
   })
   const running = fixture.submit(peer.identity.endpointId)
   await entered.promise
-  const fiber = [...fixture.ctx.loader.entries()].find(entry => entry.options.name === '@j-show/dsh-mcp-proxy-agent')?.fiber
+  const fiber = [...fixture.ctx.loader.entries()].find(entry => entry.options.name === '@jshow/dsh-plugin-mcp-proxy/agent')?.fiber
   if (fiber === undefined) throw new Error('Expected proxy agent fiber')
   await fiber.dispose()
   await cancelled.promise
@@ -178,7 +178,7 @@ async function boot() {
     { name: '@deepseek-ai/dsh-tools', module: Tools, config: () => ({}) },
     { name: '@deepseek-ai/dsh-agent', module: Agents, config: () => ({}) },
     { name: '@deepseek-ai/dsh-agent-loop', module: AgentLoop, config: () => ({ agents: [] }) },
-    { name: '@j-show/dsh-mcp-proxy-agent', module: ProxyAgent, config: () => ({}) },
+    { name: '@jshow/dsh-plugin-mcp-proxy/agent', module: ProxyAgent, config: () => ({}) },
   ], undefined, 10000)
   const model = new Model()
   fixture.ctx.llm.registerAdapter(['fixture'], model)
@@ -265,7 +265,7 @@ it('removes its listeners and leaves an unbound subsequent Turn without local to
   const peer = await fixture.local()
   await fixture.submit(peer.identity.endpointId)
   const count = fixture.agent.session.snapshotEvents().filter(event => event.type.startsWith('mcp-proxy/')).length
-  const fiber = [...fixture.ctx.loader.entries()].find(entry => entry.options.name === '@j-show/dsh-mcp-proxy-agent')?.fiber
+  const fiber = [...fixture.ctx.loader.entries()].find(entry => entry.options.name === '@jshow/dsh-plugin-mcp-proxy/agent')?.fiber
   if (fiber === undefined) throw new Error('Expected proxy agent fiber')
   await fiber.dispose()
   await fixture.submit(peer.identity.endpointId)
@@ -286,7 +286,7 @@ it('cancels an in-flight invocation when the agent plugin unloads', async () => 
   })
   const running = fixture.submit(peer.identity.endpointId)
   await entered.promise
-  const fiber = [...fixture.ctx.loader.entries()].find(entry => entry.options.name === '@j-show/dsh-mcp-proxy-agent')?.fiber
+  const fiber = [...fixture.ctx.loader.entries()].find(entry => entry.options.name === '@jshow/dsh-plugin-mcp-proxy/agent')?.fiber
   if (fiber === undefined) throw new Error('Expected proxy agent fiber')
   await fiber.dispose()
   await stopped.promise

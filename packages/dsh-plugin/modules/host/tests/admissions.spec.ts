@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import type { EndpointId } from '@j-show/mcp-proxy-protocol'
+import type { EndpointId } from '@jshow/app-mcp-proxy/protocol'
 import { promptAdmissionId, ProxyAdmissions } from '../src/admissions.ts'
 
 const endpoint = 'endpoint' as EndpointId

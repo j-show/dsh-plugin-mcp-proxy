@@ -1,7 +1,7 @@
 /** Observe the existing HTTP carrier's reads without consuming or replacing its prompt envelope. */
 import type { IncomingMessage } from 'node:http'
 import { clientRequestSchema } from '@deepseek-ai/dsh-client-connection'
-import { promptAdmissionId, type PromptAdmissionId } from '@j-show/dsh-mcp-proxy-host'
+import { promptAdmissionId, type PromptAdmissionId } from '@jshow/dsh-plugin-mcp-proxy/host'
 
 function object(value: unknown): Record<string, unknown> | undefined {
   return value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : undefined

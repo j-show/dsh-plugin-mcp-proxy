@@ -2,8 +2,8 @@
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import { BlockAssembler, createAssistantMessage, createUserMessage, type ContentBlock, type GenerateOptions,
   type Message, type StreamChunk, type ToolCallId } from '@deepseek-ai/dsh-llm'
-import type { ProxyCallbackRequest } from '@j-show/mcp-proxy-protocol'
-import type { ProxySelection } from '@j-show/dsh-mcp-proxy-host'
+import type { ProxyCallbackRequest } from '@jshow/app-mcp-proxy/protocol'
+import type { ProxySelection } from '@jshow/dsh-plugin-mcp-proxy/host'
 import type AttachmentStore from '@deepseek-ai/dsh-attachment'
 import { specTypeSchemas } from '@modelcontextprotocol/client'
 import type { CallbackCorrelation } from './types.ts'

@@ -10,7 +10,7 @@ import Loader from '@deepseek-ai/cordis-plugin-loader'
 import Include from '@deepseek-ai/cordis-plugin-include'
 import { composeEntries, loadOverlayPatches } from '@deepseek-ai/dsh-app-boot'
 import Credentials from '@deepseek-ai/dsh-credentials-local'
-import { acceptProxyIdentity, decodeFrame, ProxyChannel, type ProxyFrame } from '@j-show/mcp-proxy-protocol'
+import { acceptProxyIdentity, decodeFrame, ProxyChannel, type ProxyFrame } from '@jshow/app-mcp-proxy/protocol'
 import { WebSocketServer } from 'ws'
 import { expect, it, onTestFinished, vi, beforeAll, afterAll } from 'vitest'
 import Runtime from '../src/index.ts'
@@ -43,7 +43,7 @@ async function bootApplication(context: Context, argv: string[], exit: (code: nu
   await context.plugin(Loader)
   context.loader.builtins.include = Include
   const modules = new Map<string, unknown>([['@deepseek-ai/dsh-credentials-local', Credentials],
-    ['@j-show/mcp-proxy-runtime', Runtime], ['@j-show/mcp-proxy-runtime/startup', Startup],
+    ['@jshow/app-mcp-proxy/runtime', Runtime], ['@jshow/app-mcp-proxy/runtime/startup', Startup],
   ])
   context.loader.internal = { version: 'v2', async import(name: string) {
     if (!modules.has(name)) throw new Error('Unexpected runtime composition module')
@@ -53,12 +53,12 @@ async function bootApplication(context: Context, argv: string[], exit: (code: nu
   const pending: Promise<unknown>[] = []
   for (const entry of entries) {
     if (options.omitCredentials && entry.name === '@deepseek-ai/dsh-credentials-local') continue
-    const selected = entry.name === '@j-show/mcp-proxy-runtime'
+    const selected = entry.name === '@jshow/app-mcp-proxy/runtime'
       ? { ...entry, config: { ...entry.config, heartbeatIntervalMs: 100, heartbeatTimeoutMs: 1000 } }
-      : entry.name === '@j-show/mcp-proxy-runtime/startup' && options.startupTimeoutMs !== undefined
+      : entry.name === '@jshow/app-mcp-proxy/runtime/startup' && options.startupTimeoutMs !== undefined
         ? { ...entry, config: { serviceStartTimeoutMs: options.startupTimeoutMs } } : entry
     const work = context.loader.create(selected)
-    if (options.omitCredentials && entry.name === '@j-show/mcp-proxy-runtime') {
+    if (options.omitCredentials && entry.name === '@jshow/app-mcp-proxy/runtime') {
       pending.push(work)
       void work.catch((_disposedPendingEntry) => { /* The owning test joins this outcome after scope disposal. */ })
     } else await work
@@ -82,7 +82,7 @@ it('fails startup when a required profile provider remains pending', async () =>
   const failed = Promise.withResolvers<number>()
   pending = await bootApplication(context, ['--config', filename], code => failed.resolve(code),
     { omitCredentials: true, startupTimeoutMs: 50 })
-  const entry = [...context.loader.entries()].find(entry => entry.options.name === '@j-show/mcp-proxy-runtime')
+  const entry = [...context.loader.entries()].find(entry => entry.options.name === '@jshow/app-mcp-proxy/runtime')
   expect(entry).toBeDefined()
   expect(entry?.fiber?.state).not.toBe(2)
   expect(entry?.fiber?.state).not.toBe(3)
@@ -191,7 +191,7 @@ it('retains the installation identity when the local runtime restarts', async ()
   const { context, endpoints, identityFile } = await mountRuntime()
   expect(context.get('mcpProxyLocal')?.connected).toBe(true)
   expect(await readFile(identityFile, 'utf8')).toContain('MCP_PROXY_INSTALLATION_KEY')
-  const entry = [...context.loader.entries()].find(entry => entry.options.name === '@j-show/mcp-proxy-runtime')
+  const entry = [...context.loader.entries()].find(entry => entry.options.name === '@jshow/app-mcp-proxy/runtime')
   if (entry === undefined) throw new Error('Expected local runtime entry')
   await context.loader.update(entry.id, { disabled: true })
   await context.loader.await()
@@ -266,7 +266,7 @@ it('replaces a retired MCP after parent cancellation without waiting for a netwo
 
 it('detects an idle local MCP process exit through connection health supervision and restores it', { timeout: 35000 }, async () => {
   const { context, host, endpoints, catalog, settingsFile } = await mountRuntime()
-  const entry = [...context.loader.entries()].find(entry => entry.options.name === '@j-show/mcp-proxy-runtime')
+  const entry = [...context.loader.entries()].find(entry => entry.options.name === '@jshow/app-mcp-proxy/runtime')
   expect(entry?.options.config).toMatchObject({ heartbeatIntervalMs: 100, heartbeatTimeoutMs: 1000 })
   const spec = Runtime.Config({ settingsFile, heartbeatIntervalMs: 100, heartbeatTimeoutMs: 1000 })
   // Recovery owns a complete discovery budget and a fresh TLS proof budget.

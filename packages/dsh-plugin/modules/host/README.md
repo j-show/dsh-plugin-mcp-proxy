@@ -1,4 +1,4 @@
-# @j-show/dsh-mcp-proxy-host
+# @jshow/dsh-plugin-mcp-proxy/host
 
 Device admission, pairing, immutable catalogs and live elicitation ownership.
 

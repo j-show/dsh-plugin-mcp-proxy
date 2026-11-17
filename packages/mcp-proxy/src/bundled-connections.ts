@@ -1,6 +1,6 @@
 /** Application-owned deployment connection initialization. */
-import type { ManagedSettingsStore } from '@j-show/mcp-proxy-runtime/desktop'
-import type { LocalDshSettings } from '@j-show/mcp-proxy-local'
+import type { ManagedSettingsStore } from '@jshow/app-mcp-proxy/runtime/desktop'
+import type { LocalDshSettings } from '@jshow/app-mcp-proxy/local'
 import { createHash, X509Certificate } from 'node:crypto'
 import { lstat, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'

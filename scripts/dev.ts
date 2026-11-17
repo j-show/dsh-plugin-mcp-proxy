@@ -1,7 +1,7 @@
 /** CLI for isolated native development; all processes use this checkout's public dependencies. */
 import { access, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { createWriteStream } from 'node:fs'
-import { dirname, join, resolve } from 'node:path'
+import { join, resolve } from 'node:path'
 import { createRequire } from 'node:module'
 import { spawn, execFile } from 'node:child_process'
 import { once } from 'node:events'
@@ -10,7 +10,7 @@ import { pathToFileURL } from 'node:url'
 import {assertDevelopmentServiceIdle} from './development-service.ts'
 import {nativePrerequisites} from './native-preflight.ts'
 import { buildLibraries } from './build-libraries.ts'
-import { prepareMcpBuildRuntime, mcpBuildEnvironment, mcpBuildRuntimeDownload } from './mcp-build-runtime.ts'
+import { relaunchBuildRuntime } from './mcp-build-runtime.ts'
 import { runMcpBuildCommand } from './run-mcp-build-command.ts'
 import { buildApplications } from './build-app.ts'
 import { buildShared } from './build-shared.ts'
@@ -18,7 +18,7 @@ import { developmentPaths, initializeDevelopment, initializeDevelopmentProfiles,
 import { createDevelopmentProxy } from './development-proxy.ts'
 
 const root = resolve(import.meta.dirname, '..')
-const { values, positionals } = parseArgs({ allowPositionals: true, options: { packaging: { type: 'boolean' }, inspect: { type: 'boolean' }, 'skip-build': { type: 'boolean' }, 'node-license': { type: 'string' }, uri: { type: 'string' } } })
+const { values, positionals } = parseArgs({ allowPositionals: true, options: { packaging: { type: 'boolean' }, inspect: { type: 'boolean' }, 'skip-build': { type: 'boolean' }, uri: { type: 'string' } } })
 const command = positionals[0]
 if (positionals.length !== 1 || !['doctor', 'init', 'build', 'server', 'runtime', 'desktop', 'associate', 'check'].includes(command ?? '')) throw new Error('Use a documented dev:* command')
 const p = developmentPaths(root)
@@ -35,8 +35,7 @@ async function doctor(): Promise<void> {
   const version = pnpm ? (await execute(process.execPath, [pnpm, '--version'], { timeout: 15000, windowsHide: true })).stdout.trim() : ''
   const issues = developmentIssues({ node: process.version, pnpm: version,
     tar: await available('tar', ['--version']), compiler: await fileExists(join(process.env.WINDIR ?? '', 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'))
-      || await fileExists(join(process.env.WINDIR ?? '', 'Microsoft.NET/Framework/v4.0.30319/csc.exe')),
-    license: mcpBuildRuntimeDownload(process.platform, process.version) !== undefined || await fileExists(values['node-license'] ?? join(dirname(process.execPath), 'LICENSE')) }, values.packaging ?? false)
+      || await fileExists(join(process.env.WINDIR ?? '', 'Microsoft.NET/Framework/v4.0.30319/csc.exe')) }, values.packaging ?? false)
   if (!['win32','darwin','linux'].includes(process.platform)) issues.push('Native development requires Windows, macOS or Linux.')
   const native=values.packaging?await nativePrerequisites(process.platform):[]
   issues.push(...native.filter(check=>!check.ready).map(check=>`${check.name}: ${check.hint}`))
@@ -85,10 +84,7 @@ async function foreground(executable: string, args: string[], home: string, log:
 async function run(): Promise<void> {
   if (command === 'doctor') { await doctor(); return }
   // Use the same pinned, verified runtime as release/test on affected Windows Node versions.
-  const executable = await prepareMcpBuildRuntime(root)
-  if (executable) {
-    await runMcpBuildCommand(executable, ['--import', 'tsx/esm', ...process.argv.slice(1)], root, mcpBuildEnvironment(executable, process.env)); return
-  }
+  if (await relaunchBuildRuntime(root)) return
   if (!['win32','darwin','linux'].includes(process.platform)) throw new Error('Native development requires Windows, macOS or Linux')
   await initializeDevelopment(root)
   await initializeDevelopmentProfiles(root, p)

@@ -6,7 +6,7 @@ import type { AddressInfo } from 'node:net'
 import { fileURLToPath } from 'node:url'
 import WebSocket, { WebSocketServer } from 'ws'
 import { expect, it, onTestFinished } from 'vitest'
-import { acceptProxyIdentity, proveProxyIdentity, ProxyChannel, ProxyIdentity } from '@j-show/mcp-proxy-protocol'
+import { acceptProxyIdentity, proveProxyIdentity, ProxyChannel, ProxyIdentity } from '@jshow/app-mcp-proxy/protocol'
 import { attachLocalProxy, LocalMcpPool, resolveLocalServices } from '../src/index.ts'
 
 it('routes a signed remote connection to an actual local MCP file operation', async () => {

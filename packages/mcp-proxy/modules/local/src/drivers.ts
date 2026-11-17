@@ -9,7 +9,7 @@ import { StreamableHTTPClientTransport as LegacyHttpTransport } from '@modelcont
 import type { Transport as LegacyTransport } from '@modelcontextprotocol/sdk/shared/transport.js'
 import { CreateMessageRequestSchema, CreateMessageResultSchema, ElicitRequestSchema, ElicitResultSchema, ListRootsRequestSchema,
   ListToolsResultSchema, type Tool as LegacyTool } from '@modelcontextprotocol/sdk/types.js'
-import type { InvocationId } from '@j-show/mcp-proxy-protocol'
+import type { InvocationId } from '@jshow/app-mcp-proxy/protocol'
 import type { LocalServiceConfig } from './config.ts'
 import { CallbackOwner, checkedResponse, type LocalClientRequestHandler } from './callbacks.ts'
 import { DriverLifetime } from './lifetime.ts'
@@ -17,7 +17,7 @@ import { LegacyCancellation } from './legacy-cancellation.ts'
 import { callLegacyTool } from './legacy-tasks.ts'
 import { LegacyTaskScope } from './legacy-task-scope.ts'
 
-const { version } = createRequire(import.meta.url)('../package.json') as { version: string }
+const { version } = createRequire(import.meta.url)('@jshow/app-mcp-proxy/package.json') as { version: string }
 
 /** Explicit runtime limits shared by service adapters. */
 export interface LocalOptions {

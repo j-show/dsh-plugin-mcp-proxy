@@ -9,7 +9,7 @@ import { homedir } from 'node:os'
 import { DesktopHost, desktopDataDirectory, type DesktopHostOptions } from './desktop-host.ts'
 import { ensureLocalProfile } from './ensure-profile.ts'
 import {recoverService,assertRecoverySocketAbsent} from './recover-service.ts'
-import type * as DesktopApi from '@j-show/mcp-proxy-runtime/desktop'
+import type * as DesktopApi from '@jshow/app-mcp-proxy/runtime/desktop'
 
 const send = (value: unknown) => { process.stdout.write(JSON.stringify(value) + '\n') }
 async function administrative(options: DesktopHostOptions): Promise<void> {
@@ -31,7 +31,7 @@ if(process.argv[2]==='--recover-shutdown'){
     const owner=JSON.parse(process.argv[3]!) as {resources:string;pid:number;settingsFile:string}
     if(typeof owner.resources!=='string'||!isAbsolute(owner.resources)||typeof owner.settingsFile!=='string'||!isAbsolute(owner.settingsFile))throw new Error('Invalid recovery locations')
     const require=createRequire(join(owner.resources,'dsh/package.json'))
-    const api=await import(pathToFileURL(require.resolve('@j-show/mcp-proxy-runtime/desktop')).href) as typeof DesktopApi
+    const api=await import(pathToFileURL(require.resolve('@jshow/app-mcp-proxy/runtime/desktop')).href) as typeof DesktopApi
     const address=await api.machineControlAddress()
     await recoverService(owner,{
       exited:()=>{try{process.kill(owner.pid,0);return false}catch(error){if((error as NodeJS.ErrnoException).code==='ESRCH')return true;throw error}},

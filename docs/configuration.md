@@ -1,5 +1,7 @@
 # 配置、安装与运行
 
+内部组件不是独立 npm 包：服务端组件通过 `@jshow/dsh-plugin-mcp-proxy/*` 加载，本地 runtime 通过 `@jshow/app-mcp-proxy/runtime` 加载；安装只面向两个父产物。
+
 本文从本仓库的两个发布产物出发，不要求消费项目源码。配置字段对应当前 `0.1.0` 实现；支持的 DSH 固定为 `0.1.6-alpha.2`、Cordis 为 `4.0.2`。升级这些依赖前须完成兼容与会话恢复验证。
 
 ## 开发与打包
@@ -23,7 +25,7 @@ pnpm build:mcp-plugin
 | `release/mcp-proxy/win-32/`、`win-64/` | 对应架构 NSIS 安装包；安装后运行 mcp-proxy.exe |
 | `release/mcp-proxy/mac-intel/`、`mac-arm/` | 对应架构 DMG |
 | `release/mcp-proxy/linux/` | Ubuntu x64 deb |
-| `release/mcp-plugin/j-show-dsh-plugin-mcp-proxy-0.1.0.tgz` | 含内部模块和浏览器产物的服务端插件 |
+| `release/mcp-plugin/jshow-dsh-plugin-mcp-proxy-0.1.0.tgz` | 含内部模块和浏览器产物的服务端插件 |
 | `release/mcp-plugin/install.mjs`、`release.json`、补丁、许可证 | 服务端发布安装工具及配套文件，需保留整个目录 |
 
 在对应宿主调用 `build:win:32`／`build:win:64`／`build:win`、`build:mac:intel`／`build:mac:arm`／`build:mac`、`build:linux`。
@@ -207,7 +209,7 @@ dsh --profile web
 
 停止 DSH 后，在目标 profile 的 `cordis.patch.yml` 添加 `- id: mcp-proxy-server`、`disabled: true` 的同一条覆盖（YAML 两字段同级），重启验证本地连接入口、路由及工具消失。重新启用时移除此禁用覆盖。不要单独卸载某个内部模块。
 
-彻底移除时先备份并清理自己添加的该条配置，再运行 `dsh plugin --profile web remove @j-show/dsh-plugin-mcp-proxy`。保留原 Session 和设备历史，不自动回退四事件补丁：含插件必需事件的旧会话仍需要兼容读者。需要回退目标安装的包管理补丁时，先确认不会读取这些会话并人工合并其他配置，不可自动恢复整份旧工作区备份。禁用/卸载后的真实产品回归见[待验收事项](acceptance.md#待完成事项)。
+彻底移除时先备份并清理自己添加的该条配置，再运行 `dsh plugin --profile web remove @jshow/dsh-plugin-mcp-proxy`。保留原 Session 和设备历史，不自动回退四事件补丁：含插件必需事件的旧会话仍需要兼容读者。需要回退目标安装的包管理补丁时，先确认不会读取这些会话并人工合并其他配置，不可自动恢复整份旧工作区备份。禁用/卸载后的真实产品回归见[待验收事项](acceptance.md#待完成事项)。
 
 ## TLS 与故障定位
 

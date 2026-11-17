@@ -60,3 +60,11 @@ export async function prepareMcpBuildRuntime(repository: string): Promise<string
   await runMcpBuildCommand(executable, ['-e', `if(process.versions.node !== ${JSON.stringify(download.version)}) process.exit(1)`], repository)
   return executable
 }
+
+/** Relaunch a CLI under the supported private runtime, preserving argv and scoped environment. */
+export async function relaunchBuildRuntime(repository:string):Promise<boolean>{
+  const executable=await prepareMcpBuildRuntime(repository)
+  if(!executable)return false
+  await runMcpBuildCommand(executable,['--import','tsx/esm',...process.argv.slice(1)],repository,mcpBuildEnvironment(executable,process.env))
+  return true
+}

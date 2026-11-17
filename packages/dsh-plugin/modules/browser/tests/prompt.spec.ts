@@ -4,7 +4,7 @@ import type { Socket } from 'node:net'
 import { once } from 'node:events'
 import { expect, it, onTestFinished } from 'vitest'
 import { observePrompt } from '../src/prompt.ts'
-import { promptAdmissionId } from '@j-show/dsh-mcp-proxy-host'
+import { promptAdmissionId } from '@jshow/dsh-plugin-mcp-proxy/host'
 
 const envelope = (payload: unknown, method = 'session/prompt') => ({ type: 'client-request', rpcId: 'wire', method, payload })
 

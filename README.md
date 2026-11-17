@@ -3,6 +3,7 @@
 English | [中文](README.zh.md)
 
 A Tauri desktop connector for local MCP servers and a separately installable DSH plugin.
+The only delivery workspaces are `@jshow/app-mcp-proxy` and `@jshow/dsh-plugin-mcp-proxy`. Runtime/local/protocol and host/agent/browser/ui are ordinary source modules, bundled into these two packages. Shared protocol code is compiled into each consumer; it is not a separately installed package.
 The application shares one MCP list across multiple DSH connections while retaining call,
 callback, cancellation and device ownership. Downstream MCPs perform file operations.
 The Rust desktop shell supervises the existing Node/DSH core; the renderer receives only a narrow management bridge.
@@ -38,6 +39,8 @@ pnpm test:rust
 
 There is no top-level `build`: native installers are built on their corresponding OS.
 Scripts dispatch through `scripts/tasks.ts`; PowerShell is not a project prerequisite.
+Tests dispatch directly from this entry (the former `scripts/test.ts` path is retired).
+Runtime relaunch is shared in `mcp-build-runtime.ts`; process/pnpm/system-tar helpers live in `run-mcp-build-command.ts`.
 Windows archive operations select system tar explicitly, including when invoked from Git Bash.
 Older pnpm 10 settings are mirrored in `package.json#pnpm`; later managers read
 `pnpm-workspace.yaml`. The postinstall hook preserves a lock format readable by pnpm 10.0 and later, without changing dependency resolutions.
@@ -109,6 +112,8 @@ Chrome and Edge, Explorer, a free service slot and no existing URI registration.
 Cold startup, pairing, both GUI pages, hide/restore, second launch, reconnect,
 tray exit and owned cleanup remain mandatory. Preflight refusal and skipped cases are not passes.
 Reports are in `.artifacts/ci`; profiles, credentials, private TLS keys and raw server logs are never uploaded.
+Verification command logs are in ignored `logs/verify/`; keep ad-hoc redirected logs under `logs/`, not the repository root.
+Development profile initialization migrates the old plugin reference only when its link belongs to this checkout, preserving configuration and identity.
 
-Original additions use [Apache-2.0](LICENSE); adapted upstream code retains its [MIT notice](LICENSE-MIT-UPSTREAM).
+The combined [LICENSE](LICENSE) contains Apache-2.0 for original additions and the complete MIT terms/copyright for adapted upstream code; each applies to its respective portions.
 See [third-party notices](THIRD_PARTY_NOTICES.md). Signing, notarization, release publication and the remaining product matrix require their own verification.

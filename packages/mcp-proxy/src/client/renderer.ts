@@ -1,5 +1,5 @@
 /** Local management presentation; all executable operations cross the narrow preload bridge. */
-import type { LocalDesktopSnapshot, LocalManagementReply } from '@j-show/mcp-proxy-local/management'
+import type { LocalDesktopSnapshot, LocalManagementReply } from '@jshow/app-mcp-proxy/local/management'
 import type { GuiCommand, BootstrapState } from './api.ts'
 import { desktopMessages, type DesktopMessageKey } from './messages.ts'
 

@@ -1,5 +1,5 @@
 /** Local invocation ownership shared by independent authenticated DSH channels. */
-import type { GenerationId, DshConnectionId, InvocationId, ProxyFrame } from '@j-show/mcp-proxy-protocol'
+import type { GenerationId, DshConnectionId, InvocationId, ProxyFrame } from '@jshow/app-mcp-proxy/protocol'
 import type { LocalClientRequest } from './callbacks.ts'
 import { randomUUID } from 'node:crypto'
 

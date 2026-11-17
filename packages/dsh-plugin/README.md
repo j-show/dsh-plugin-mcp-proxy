@@ -1,5 +1,7 @@
 # DSH server plugin
 
+Workspace/package identity: `@jshow/dsh-plugin-mcp-proxy`. Host/agent/browser/ui are ordinary source modules, loaded via this package's subpath exports; browser discovery is registered once on the parent package. No internal npm packages are bundled or separately installed.
+
 This is the single public server entry. Its private modules provide authenticated endpoint admission, per-Turn tool binding, browser association and the Web connection UI. The archive bundles them with the shared protocol, so they require no separate publication.
 
 Build with `pnpm build:mcp-plugin` at the repository root. Use the emitted installation helper for DSH `0.1.6-alpha.2`; it verifies compatibility at the actual DSH installation, preserves existing configuration and installs through DSH's public plugin command. Stop DSH before changing dependencies. The four-event patch under `compat/` is required on an unmodified upstream installation and is skipped when already supported.

@@ -1,8 +1,8 @@
 import { once } from 'node:events'
 import { request as httpRequest } from 'node:http'
 import * as Connection from '@deepseek-ai/dsh-client-connection'
-import { decodeFrame, type ProxyFrame } from '@j-show/mcp-proxy-protocol'
-import { promptAdmissionId } from '@j-show/dsh-mcp-proxy-host'
+import { decodeFrame, type ProxyFrame } from '@jshow/app-mcp-proxy/protocol'
+import { promptAdmissionId } from '@jshow/dsh-plugin-mcp-proxy/host'
 import { expect, it, onTestFinished, vi } from 'vitest'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import { openHost } from '../../host/tests/helpers/composition.ts'
@@ -11,7 +11,7 @@ import * as Controller from '../src/index.ts'
 async function boot(config: Partial<Controller.Config> = {}) {
   const fixture = await openHost(4, [
     { name: '@deepseek-ai/dsh-client-connection', module: Connection, config: origin => ({ trustedHosts: [new URL(origin).host] }) },
-    { name: '@j-show/dsh-mcp-proxy-browser', module: Controller, config: () => ({ maxRequestBytes: 256, ...config }) },
+    { name: '@jshow/dsh-plugin-mcp-proxy/browser', module: Controller, config: () => ({ maxRequestBytes: 256, ...config }) },
   ])
   function browser() {
     const jar = new Map<string, string>()
@@ -147,7 +147,7 @@ it('refuses a Fetch callback retained by its carrier after the controller owner 
   const unauthenticated = await callback(new Request(fixture.origin + '/api/mcp-proxy/begin', { method: 'POST', body: '{}' }))
   expect(unauthenticated.status).toBe(401)
   expect(unauthenticated.headers.get('set-cookie')).toBeNull()
-  const fiber = [...fixture.ctx.loader.entries()].find(entry => entry.options.name === '@j-show/dsh-mcp-proxy-browser')?.fiber
+  const fiber = [...fixture.ctx.loader.entries()].find(entry => entry.options.name === '@jshow/dsh-plugin-mcp-proxy/browser')?.fiber
   if (fiber === undefined) throw new Error('Expected controller owner')
   await fiber.dispose()
   expect((await fixture.ctx.connection.createSharedFetchHandler('/api').fetch(new Request(
@@ -220,7 +220,7 @@ it('refuses a prompt whose captured middleware resumes after the owning plugin u
     payload: { args: { request: { sessionId: 'session', requestId: 'request', content: [] } } },
   })
   await entered.promise
-  const fiber = [...fixture.ctx.loader.entries()].find(entry => entry.options.name === '@j-show/dsh-mcp-proxy-browser')?.fiber
+  const fiber = [...fixture.ctx.loader.entries()].find(entry => entry.options.name === '@jshow/dsh-plugin-mcp-proxy/browser')?.fiber
   if (fiber === undefined) throw new Error('Expected controller owner')
   await fiber.dispose()
   release.resolve(undefined)
@@ -458,7 +458,7 @@ it('removes its HTTP routes on plugin unload while leaving the base authenticati
   const fixture = await boot()
   const browser = fixture.browser()
   await begin(browser)
-  const fiber = [...fixture.ctx.loader.entries()].find(entry => entry.options.name === '@j-show/dsh-mcp-proxy-browser')?.fiber
+  const fiber = [...fixture.ctx.loader.entries()].find(entry => entry.options.name === '@jshow/dsh-plugin-mcp-proxy/browser')?.fiber
   if (fiber === undefined) throw new Error('Expected controller fiber')
   await fiber.dispose()
   expect((await browser.request('begin')).status).toBe(404)
@@ -484,7 +484,7 @@ it('cancels an admitted body reader and cannot mutate associations after plugin 
     } as RequestInit & { duplex: 'half' },
   ))
   await admitted.promise
-  const fiber = [...fixture.ctx.loader.entries()].find(entry => entry.options.name === '@j-show/dsh-mcp-proxy-browser')?.fiber
+  const fiber = [...fixture.ctx.loader.entries()].find(entry => entry.options.name === '@jshow/dsh-plugin-mcp-proxy/browser')?.fiber
   if (fiber === undefined) throw new Error('Expected controller fiber')
   await fiber.dispose()
   if (!cancelled) {
@@ -562,7 +562,7 @@ it('aborts delegated prompt admission on unload after its HTTP body has already 
     payload: { args: { request: { sessionId: 'session', requestId: 'request', content: [] } } },
   }).then(value => ({ value }), (error: unknown) => ({ error }))
   await entered.promise
-  const fiber = [...fixture.ctx.loader.entries()].find(entry => entry.options.name === '@j-show/dsh-mcp-proxy-browser')?.fiber
+  const fiber = [...fixture.ctx.loader.entries()].find(entry => entry.options.name === '@jshow/dsh-plugin-mcp-proxy/browser')?.fiber
   if (fiber === undefined) throw new Error('Expected controller owner')
   const closing = fiber.dispose()
   await expect.poll(() => aborted, { timeout: 1000 }).toBe(true)

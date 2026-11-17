@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest'
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
-import type { InvocationId } from '@j-show/mcp-proxy-protocol'
+import type { InvocationId } from '@jshow/app-mcp-proxy/protocol'
 import { LegacyCancellation } from '../src/legacy-cancellation.ts'
 
 const parentId = 'parent-call' as InvocationId

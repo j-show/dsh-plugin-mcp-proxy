@@ -1,5 +1,5 @@
 /** Attach a ready local MCP pool to its authenticated proxy connection. */
-import { ProxyChannel, type AuthenticatedProxy, type ChannelOptions, type ProxyFrame, type proveProxyIdentity } from '@j-show/mcp-proxy-protocol'
+import { ProxyChannel, type AuthenticatedProxy, type ChannelOptions, type ProxyFrame, type proveProxyIdentity } from '@jshow/app-mcp-proxy/protocol'
 import type { LocalMcpPool } from './pool.ts'
 import type { LocalInvocationRoutes, LocalDshOwner } from './routing.ts'
 type Catalog = Extract<ProxyFrame, { kind: 'catalog' }>

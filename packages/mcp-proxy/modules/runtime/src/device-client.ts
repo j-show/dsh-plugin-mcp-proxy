@@ -1,7 +1,7 @@
 /** Activation-origin HTTPS ticket redemption; no account or deployment credential is sent. */
 import { credentialRef, type CredentialProvider } from '@deepseek-ai/dsh-credentials'
-import type { LocalDshSettings } from '@j-show/mcp-proxy-local'
-import { pairingChallenge, ProxyIdentity, type ProxyActivation, type DshConnectionId } from '@j-show/mcp-proxy-protocol'
+import type { LocalDshSettings } from '@jshow/app-mcp-proxy/local'
+import { pairingChallenge, ProxyIdentity, type ProxyActivation, type DshConnectionId } from '@jshow/app-mcp-proxy/protocol'
 import { createHash, randomUUID } from 'node:crypto'
 import { request as requestHttps } from 'node:https'
 import type { ClientRequest } from 'node:http'

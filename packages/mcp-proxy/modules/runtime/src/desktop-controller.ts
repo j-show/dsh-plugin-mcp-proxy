@@ -1,7 +1,7 @@
 /** Allowlisted desktop management and automatic Web activation owned by the dsh profile. */
 import { parseLocalManagementCommand, parseLocalManagementReply, type LocalManagementCommand,
-  type LocalManagementReply, type LocalDshSettings } from '@j-show/mcp-proxy-local'
-import { parseProxyActivation, type ProxyActivation, type DshConnectionId } from '@j-show/mcp-proxy-protocol'
+  type LocalManagementReply, type LocalDshSettings } from '@jshow/app-mcp-proxy/local'
+import { parseProxyActivation, type ProxyActivation, type DshConnectionId } from '@jshow/app-mcp-proxy/protocol'
 import type { ManagedSettingsStore } from './settings-store.ts'
 import type { ManagedLocalRuntime } from './managed-runtime.ts'
 import { setTimeout as delay } from 'node:timers/promises'

@@ -1,38 +1,38 @@
 [
   {
     "directory": "packages/mcp-proxy",
-    "name": "@j-show/mcp-proxy"
+    "name": "@jshow/app-mcp-proxy"
   },
   {
     "directory": "packages/mcp-proxy/modules/protocol",
-    "name": "@j-show/mcp-proxy-protocol"
+    "name": "@jshow/app-mcp-proxy/protocol"
   },
   {
     "directory": "packages/mcp-proxy/modules/local",
-    "name": "@j-show/mcp-proxy-local"
+    "name": "@jshow/app-mcp-proxy/local"
   },
   {
     "directory": "packages/mcp-proxy/modules/runtime",
-    "name": "@j-show/mcp-proxy-runtime"
+    "name": "@jshow/app-mcp-proxy/runtime"
   },
   {
     "directory": "packages/dsh-plugin",
-    "name": "@j-show/dsh-plugin-mcp-proxy"
+    "name": "@jshow/dsh-plugin-mcp-proxy"
   },
   {
     "directory": "packages/dsh-plugin/modules/host",
-    "name": "@j-show/dsh-mcp-proxy-host"
+    "name": "@jshow/dsh-plugin-mcp-proxy/host"
   },
   {
     "directory": "packages/dsh-plugin/modules/agent",
-    "name": "@j-show/dsh-mcp-proxy-agent"
+    "name": "@jshow/dsh-plugin-mcp-proxy/agent"
   },
   {
     "directory": "packages/dsh-plugin/modules/browser",
-    "name": "@j-show/dsh-mcp-proxy-browser"
+    "name": "@jshow/dsh-plugin-mcp-proxy/browser"
   },
   {
     "directory": "packages/dsh-plugin/modules/ui",
-    "name": "@j-show/dsh-mcp-proxy-ui"
+    "name": "@jshow/dsh-plugin-mcp-proxy/ui"
   }
 ]

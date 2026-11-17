@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { expect, it, onTestFinished } from 'vitest'
-import { ManagedSettingsStore } from '@j-show/mcp-proxy-runtime/desktop'
+import { ManagedSettingsStore } from '@jshow/app-mcp-proxy/runtime/desktop'
 import { applyBundledConnections } from '../src/bundled-connections.ts'
 
 async function fixture() {

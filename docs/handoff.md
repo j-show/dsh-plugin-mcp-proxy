@@ -5,6 +5,8 @@
 
 ## 目标与入口
 
+仓库只有 packages/dsh-plugin、packages/mcp-proxy 两个交付包。modules/ 下无独立 package.json 或版本，组件通过父包子路径加载，共享协议源码分别编入两个产物。构建只打包父包，浏览器模块元数据在服务端父包登记一次。已有本地 runtime profile 的旧 bundle 引用在初始化时迁移，身份和用户配置保留；这些变更不关闭后文暂缓/待验事项。
+
 按 [requirements](requirements.md) 的 B/M 编号确定行为，[design](design.md) 和
 [configuration](configuration.md) 说明实现；[acceptance](acceptance.md) 列出未完成产品验收。
 M4 已取代旧 Electron、单 EXE 和平台暂缓技术限定。历史测试只能证明其对应提交。
@@ -72,6 +74,7 @@ pnpm verify --release
 检查 `.artifacts/ci/verification.json` 的提交、dirty、计划和每步退出码。`status:passed` 只覆盖记录的计划。
 `doctor-core.json`/`doctor-native.json` 记录预检范围。安装包报告明确区分 Windows 真实安装卸载、Mac 只读挂载和 Linux deb 提取。
 报告引用的构建目录与产物绑定本机路径和哈希；换机重新构建，不迁移旧 receipt 冒充本机构建。
+验证日志在 `logs/verify/`，报告中的 log 路径相对于 checkout 根目录；`logs/` 不提交。私密开发/运行时日志保留原隔离路径。
 
 ## 已验证基线与剩余边界
 

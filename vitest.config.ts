@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 const modules = JSON.parse(readFileSync(new URL('./scripts/modules.json', import.meta.url), 'utf8')) as Array<{name:string;directory:string}>
-const aliases = modules.flatMap(m => [
+const aliases = [...modules].sort((a,b)=>b.name.length-a.name.length).flatMap(m => [
  { find: new RegExp('^' + m.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '/src/(.+)$'), replacement: resolve(m.directory, 'src/$1') },
  { find: m.name + '/desktop', replacement: resolve(m.directory, 'src/desktop.ts') },
  { find: m.name + '/startup', replacement: resolve(m.directory, 'src/startup.ts') },

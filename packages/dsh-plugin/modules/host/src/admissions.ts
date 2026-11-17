@@ -1,6 +1,6 @@
 /** Request-local association authority; inherited asynchronous work cannot reuse a closed request. */
 import type { Branded } from '@deepseek-ai/dsh-brand'
-import type { EndpointId } from '@j-show/mcp-proxy-protocol'
+import type { EndpointId } from '@jshow/app-mcp-proxy/protocol'
 import { AsyncLocalStorage } from 'node:async_hooks'
 
 /** Exact Session/request pair admitted from one Web prompt envelope. */

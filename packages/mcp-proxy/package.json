@@ -1,34 +1,65 @@
 {
-  "name": "@j-show/mcp-proxy",
+  "name": "@jshow/app-mcp-proxy",
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "license": "Apache-2.0 AND MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/j-show/dsh-plugin-mcp-proxy.git",
+    "directory": "packages/mcp-proxy"
+  },
   "description": "Deployment dependency closure for the local mcp-proxy dsh profile",
   "files": [
+    "lib/*.js",
+    "lib/*.js.map",
+    "lib/*.d.ts",
+    "cordis.patch.yml",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
     "README.md",
-    "settings.example.json",
-    "LICENSE-MIT-UPSTREAM",
-    "THIRD_PARTY_NOTICES.md"
+    "lib/mcp-proxy.exe",
+    "README.zh.md",
+    "settings.example.json"
   ],
   "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.2",
+    "@types/ws": "^8.18.1",
+    "@modelcontextprotocol/server": "2.0.0",
+    "@modelcontextprotocol/node": "2.0.0",
+    "ws": "^8.21.0",
+    "@deepseek-ai/cordis-plugin-loader": "1.0.3",
+    "@deepseek-ai/cordis-plugin-include": "1.0.7",
+    "@deepseek-ai/dsh-app-boot": "0.1.6-alpha.2",
+    "koffi": "^3.1.0",
     "tsdown": "^0.22.2",
     "zod": "^4.4.3",
-    "@deepseek-ai/dsh": "0.1.6-alpha.2",
-    "@j-show/mcp-proxy-local": "workspace:*"
+    "@deepseek-ai/dsh": "0.1.6-alpha.2"
   },
   "dependencies": {
+    "@deepseek-ai/dsh-brand": "0.1.6-alpha.2",
+    "zod": "^4.4.3",
+    "ws": "^8.21.0",
     "@deepseek-ai/cordis": "4.0.2",
+    "@deepseek-ai/dsh-subprocess": "0.1.6-alpha.2",
+    "@modelcontextprotocol/client": "2.0.0",
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "@deepseek-ai/dsh-util-values": "0.1.6-alpha.2",
+    "@deepseek-ai/node-addon-system": "0.1.2",
+    "@deepseek-ai/dsh-atomic-write": "0.1.6-alpha.2",
+    "@deepseek-ai/dsh-win32-process": "0.1.6-alpha.2",
+    "@deepseek-ai/dsh-cmdline": "0.1.6-alpha.2",
+    "@deepseek-ai/dsh-credentials-local": "0.1.6-alpha.2",
+    "commander": "^15.0.0",
+    "@deepseek-ai/dsh-credentials": "0.1.6-alpha.2",
+    "@deepseek-ai/schemastery": "3.18.2",
     "@deepseek-ai/cordis-plugin-group": "1.0.2",
     "@deepseek-ai/cordis-plugin-include": "1.0.7",
     "@deepseek-ai/cordis-plugin-loader": "1.0.3",
     "@deepseek-ai/cosmokit": "1.8.3",
     "@deepseek-ai/dsh-agent": "0.1.6-alpha.2",
     "@deepseek-ai/dsh-app-boot": "0.1.6-alpha.2",
-    "@deepseek-ai/dsh-atomic-write": "0.1.6-alpha.2",
     "@deepseek-ai/dsh-attachment": "0.1.6-alpha.2",
-    "@deepseek-ai/dsh-brand": "0.1.6-alpha.2",
-    "@deepseek-ai/dsh-cmdline": "0.1.6-alpha.2",
-    "@deepseek-ai/dsh-credentials": "0.1.6-alpha.2",
     "@deepseek-ai/dsh-home-paths": "0.1.6-alpha.2",
     "@deepseek-ai/dsh-host-plugin-inventory": "0.1.6-alpha.2",
     "@deepseek-ai/dsh-http-proxy": "0.1.6-alpha.2",
@@ -42,21 +73,53 @@
     "@deepseek-ai/dsh-scope": "0.1.6-alpha.2",
     "@deepseek-ai/dsh-session": "0.1.6-alpha.2",
     "@deepseek-ai/dsh-session-projection": "0.1.6-alpha.2",
-    "@deepseek-ai/dsh-subprocess": "0.1.6-alpha.2",
     "@deepseek-ai/dsh-system-prompt": "0.1.6-alpha.2",
     "@deepseek-ai/dsh-timeout": "0.1.6-alpha.2",
     "@deepseek-ai/dsh-tools": "0.1.6-alpha.2",
     "@deepseek-ai/dsh-typert-protocol": "0.1.6-alpha.2",
-    "@deepseek-ai/dsh-user-approval": "0.1.6-alpha.2",
-    "@deepseek-ai/dsh-util-values": "0.1.6-alpha.2",
-    "@deepseek-ai/schemastery": "3.18.2",
-    "commander": "^15.0.0",
-    "@j-show/mcp-proxy-runtime": "workspace:*"
+    "@deepseek-ai/dsh-user-approval": "0.1.6-alpha.2"
   },
-  "license": "Apache-2.0 AND MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/j-show/dsh-plugin-mcp-proxy.git",
-    "directory": "packages/mcp-proxy"
+  "main": "lib/runtime.js",
+  "types": "lib/runtime.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/runtime.d.ts",
+      "default": "./lib/runtime.js"
+    },
+    "./package.json": "./package.json",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./runtime": {
+      "types": "./lib/runtime.d.ts",
+      "default": "./lib/runtime.js"
+    },
+    "./runtime/startup": {
+      "types": "./lib/runtime-startup.d.ts",
+      "default": "./lib/runtime-startup.js"
+    },
+    "./runtime/desktop": {
+      "types": "./lib/runtime-desktop.d.ts",
+      "default": "./lib/runtime-desktop.js"
+    },
+    "./protocol": {
+      "types": "./lib/protocol.d.ts",
+      "default": "./lib/protocol.js"
+    },
+    "./protocol/activation": {
+      "types": "./lib/protocol-activation.d.ts",
+      "default": "./lib/protocol-activation.js"
+    },
+    "./local": {
+      "types": "./lib/local.d.ts",
+      "default": "./lib/local.js"
+    },
+    "./local/management": {
+      "types": "./lib/local-management.d.ts",
+      "default": "./lib/local-management.js"
+    }
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
   }
 }

@@ -11,8 +11,8 @@ import { promisify } from 'node:util'
  */
 export async function verifyMcpRuntimeImports(directory: string, executable: string,
   environment: NodeJS.ProcessEnv = process.env): Promise<void> {
-  const source = "for (const name of ['@j-show/mcp-proxy-runtime', '@j-show/mcp-proxy-runtime/startup',"
-    + " '@j-show/mcp-proxy-runtime/desktop']) await import(name)"
+  const source = "for (const name of ['@jshow/app-mcp-proxy/runtime', '@jshow/app-mcp-proxy/runtime/startup',"
+    + " '@jshow/app-mcp-proxy/runtime/desktop']) await import(name)"
   await promisify(execFile)(executable, ['--input-type=module', '--eval', source],
     { cwd: directory, env: environment, windowsHide: true, timeout: 30000, maxBuffer: 1048576 })
 }

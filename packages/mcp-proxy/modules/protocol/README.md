@@ -1,4 +1,4 @@
-# @j-show/mcp-proxy-protocol
+# @jshow/app-mcp-proxy/protocol
 
 Wire schemas, identity proofs and invocation/callback settlement.
 

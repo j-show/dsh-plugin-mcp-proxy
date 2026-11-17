@@ -10,7 +10,7 @@ import type {} from '@deepseek-ai/dsh-host-webserver'
 import { acceptProxyIdentity, AssociationStore, decodeFrame, ProxyCallError, ProxyChannel, catalogFingerprint,
   type AuthenticatedProxy, type EndpointId, type GenerationId, type ProxyFrame, type ProxyInvocationRequest, type ProxyCallbackHandler,
   type AssociationRequest, type AssociationRequestId, type BrowserBindingId,
-} from '@j-show/mcp-proxy-protocol'
+} from '@jshow/app-mcp-proxy/protocol'
 import WebSocket, { WebSocketServer, type RawData } from 'ws'
 import { ProxyAdmissions } from './admissions.ts'
 import { ElicitationStore } from './elicitation.ts'

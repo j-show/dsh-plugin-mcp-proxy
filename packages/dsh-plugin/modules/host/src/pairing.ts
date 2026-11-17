@@ -1,7 +1,7 @@
 /** Browser-ticket redemption grants device admission without granting a browser association. */
-import type { AssociationRequest, AssociationRequestId, EndpointId } from '@j-show/mcp-proxy-protocol'
+import type { AssociationRequest, AssociationRequestId, EndpointId } from '@jshow/app-mcp-proxy/protocol'
 import type { DeviceRegistry } from './devices.ts'
-import { decodeFrame, pairingChallenge, verifyRegistration } from '@j-show/mcp-proxy-protocol'
+import { decodeFrame, pairingChallenge, verifyRegistration } from '@jshow/app-mcp-proxy/protocol'
 
 /** Explicit ticket and wire admission budgets. */
 export interface DevicePairingOptions { readonly origin: string; readonly capacity: number; readonly maxFrameBytes: number }

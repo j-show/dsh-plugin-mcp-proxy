@@ -1,5 +1,5 @@
 /** Atomic local GUI configuration and explicit legacy migration. */
-import { parseManagedMcpSettings, readMcpProxySettings, type ManagedMcpSettings } from '@j-show/mcp-proxy-local'
+import { parseManagedMcpSettings, readMcpProxySettings, type ManagedMcpSettings } from '@jshow/app-mcp-proxy/local'
 import { withFileLock, writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'

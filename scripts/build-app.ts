@@ -7,7 +7,7 @@ import { parseArgs } from 'node:util'
 import { withFileLock } from '@deepseek-ai/dsh-atomic-write'
 import { appBuildPlan, bundleKinds, frontendDirectory, type AppTarget } from './app-targets.ts'
 import { buildShared } from './build-shared.ts'
-import { prepareMcpBuildRuntime, mcpBuildEnvironment, targetRuntimeDownload } from './mcp-build-runtime.ts'
+import { relaunchBuildRuntime, targetRuntimeDownload } from './mcp-build-runtime.ts'
 import { downloadPrimaryRuntimeAsset } from './download-runtime.ts'
 import { runMcpBuildCommand } from './run-mcp-build-command.ts'
 import { packageMcpProxy } from './package-mcp-proxy.ts'
@@ -39,7 +39,7 @@ async function packageTarget(root: string, target: AppTarget, shared: string, de
   await copyFile(join(nodeRoot,'LICENSE'),join(resources,'dsh/runtime/LICENSE'))
   await cp(join(shared,'resources'),resources,{recursive:true})
   await writeFile(join(resources,'connection-presets.json'),JSON.stringify(presets)+'\n')
-  for (const name of ['LICENSE-MIT-UPSTREAM','THIRD_PARTY_NOTICES.md']) await copyFile(join(root,'packages/mcp-proxy',name),join(resources,name))
+  for (const name of ['LICENSE','THIRD_PARTY_NOTICES.md']) await copyFile(join(root,'packages/mcp-proxy',name),join(resources,name))
   await writeRustLicenses(root,join(resources,'rust-licenses'),target.triple)
   await writeFile(join(resources,'dsh/mcp-proxy-build.json'),JSON.stringify({ version:'0.1.6-alpha.2',node:download.version,platform:target.platform,arch:target.arch,profile:'mcp-proxy' })+'\n')
   const runtimeDigest = await writeRuntimeInventory(resources,target.platform,target.arch,download.version)
@@ -105,7 +105,5 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   const root = resolve(import.meta.dirname,'..')
   const {positionals,values} = parseArgs({allowPositionals:true,options:{development:{type:'boolean'},'no-bundle':{type:'boolean'},'connection-presets':{type:'string'}}})
   if (positionals.length !== 1) throw new Error('Choose an explicit platform build target')
-  const node = await prepareMcpBuildRuntime(root)
-  if (node) await runMcpBuildCommand(node,['--import','tsx/esm',...process.argv.slice(1)],root,mcpBuildEnvironment(node,process.env))
-  else await buildApplications(root,positionals[0]!,!!values.development,!!values['no-bundle'],values['connection-presets'])
+  if (!await relaunchBuildRuntime(root)) await buildApplications(root,positionals[0]!,!!values.development,!!values['no-bundle'],values['connection-presets'])
 }

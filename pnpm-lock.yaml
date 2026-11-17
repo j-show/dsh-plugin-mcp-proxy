@@ -195,40 +195,33 @@ importers:
 
   packages/dsh-plugin:
     dependencies:
-      '@deepseek-ai/schemastery':
-        specifier: 3.18.2
-        version: 3.18.2
-      '@j-show/dsh-mcp-proxy-agent':
-        specifier: workspace:*
-        version: link:modules/agent
-      '@j-show/dsh-mcp-proxy-browser':
-        specifier: workspace:*
-        version: link:modules/browser
-      '@j-show/dsh-mcp-proxy-host':
-        specifier: workspace:*
-        version: link:modules/host
-      '@j-show/dsh-mcp-proxy-ui':
-        specifier: workspace:*
-        version: link:modules/ui
-      '@j-show/mcp-proxy-protocol':
-        specifier: workspace:*
-        version: link:../mcp-proxy/modules/protocol
-    devDependencies:
       '@deepseek-ai/cordis':
         specifier: 4.0.2
         version: 4.0.2(@deepseek-ai/cordis-plugin-include@1.0.7)(@deepseek-ai/cordis-plugin-loader@1.0.3)
       '@deepseek-ai/cordis-plugin-loader':
         specifier: 1.0.3
         version: 1.0.3(@deepseek-ai/cordis@4.0.2)(node-addon-require-builtin@0.1.9)
-
-  packages/dsh-plugin/modules/agent:
-    dependencies:
       '@deepseek-ai/dsh-agent':
         specifier: 0.1.6-alpha.2
         version: 0.1.6-alpha.2(4c5f62e9031cf6ba0cfc800b28a39a0a)
+      '@deepseek-ai/dsh-atomic-write':
+        specifier: 0.1.6-alpha.2
+        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)
       '@deepseek-ai/dsh-attachment':
         specifier: 0.1.6-alpha.2
         version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-brand@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))
+      '@deepseek-ai/dsh-brand':
+        specifier: 0.1.6-alpha.2
+        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)
+      '@deepseek-ai/dsh-client-connection':
+        specifier: 0.1.6-alpha.2
+        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-invariants@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))
+      '@deepseek-ai/dsh-credentials':
+        specifier: 0.1.6-alpha.2
+        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-invariants@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))
+      '@deepseek-ai/dsh-host-webserver':
+        specifier: 0.1.6-alpha.2
+        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)
       '@deepseek-ai/dsh-llm':
         specifier: 0.1.6-alpha.2
         version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)
@@ -247,83 +240,6 @@ importers:
       '@deepseek-ai/schemastery':
         specifier: 3.18.2
         version: 3.18.2
-      '@j-show/dsh-mcp-proxy-host':
-        specifier: workspace:*
-        version: link:../host
-      '@j-show/mcp-proxy-protocol':
-        specifier: workspace:*
-        version: link:../../../mcp-proxy/modules/protocol
-      '@modelcontextprotocol/client':
-        specifier: 2.0.0
-        version: 2.0.0
-    devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: 4.0.2
-        version: 4.0.2(@deepseek-ai/cordis-plugin-include@1.0.7)(@deepseek-ai/cordis-plugin-loader@1.0.3)
-      '@deepseek-ai/dsh-agent-loop':
-        specifier: 0.1.6-alpha.2
-        version: 0.1.6-alpha.2(547d7e5b058db1d025ca178e94755ed4)
-      '@deepseek-ai/dsh-session-projection':
-        specifier: 0.1.6-alpha.2
-        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-session@0.1.6-alpha.2(patch_hash=10fde8aba0f255fb3159b6a9b1eeb2264ef4cf853136175d3cff2b38c400be56)(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-scope@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-invariants@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))))
-      '@types/ws':
-        specifier: ^8.18.1
-        version: 8.18.2
-      ws:
-        specifier: ^8.21.0
-        version: 8.22.1
-
-  packages/dsh-plugin/modules/browser:
-    dependencies:
-      '@deepseek-ai/dsh-client-connection':
-        specifier: 0.1.6-alpha.2
-        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-invariants@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))
-      '@deepseek-ai/schemastery':
-        specifier: 3.18.2
-        version: 3.18.2
-      '@j-show/dsh-mcp-proxy-host':
-        specifier: workspace:*
-        version: link:../host
-      '@j-show/mcp-proxy-protocol':
-        specifier: workspace:*
-        version: link:../../../mcp-proxy/modules/protocol
-    devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: 4.0.2
-        version: 4.0.2(@deepseek-ai/cordis-plugin-include@1.0.7)(@deepseek-ai/cordis-plugin-loader@1.0.3)
-      '@deepseek-ai/dsh-session':
-        specifier: 0.1.6-alpha.2
-        version: 0.1.6-alpha.2(patch_hash=10fde8aba0f255fb3159b6a9b1eeb2264ef4cf853136175d3cff2b38c400be56)(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-scope@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-invariants@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)))
-      '@types/ws':
-        specifier: ^8.18.1
-        version: 8.18.2
-      ws:
-        specifier: ^8.21.0
-        version: 8.22.1
-
-  packages/dsh-plugin/modules/host:
-    dependencies:
-      '@deepseek-ai/dsh-atomic-write':
-        specifier: 0.1.6-alpha.2
-        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)
-      '@deepseek-ai/dsh-brand':
-        specifier: 0.1.6-alpha.2
-        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)
-      '@deepseek-ai/dsh-credentials':
-        specifier: 0.1.6-alpha.2
-        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-invariants@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))
-      '@deepseek-ai/dsh-host-webserver':
-        specifier: 0.1.6-alpha.2
-        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)
-      '@deepseek-ai/dsh-session':
-        specifier: 0.1.6-alpha.2
-        version: 0.1.6-alpha.2(patch_hash=10fde8aba0f255fb3159b6a9b1eeb2264ef4cf853136175d3cff2b38c400be56)(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-scope@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-invariants@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)))
-      '@deepseek-ai/schemastery':
-        specifier: 3.18.2
-        version: 3.18.2
-      '@j-show/mcp-proxy-protocol':
-        specifier: workspace:*
-        version: link:../../../mcp-proxy/modules/protocol
       '@modelcontextprotocol/client':
         specifier: 2.0.0
         version: 2.0.0
@@ -334,40 +250,12 @@ importers:
         specifier: ^4.4.3
         version: 4.6.7
     devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: 4.0.2
-        version: 4.0.2(@deepseek-ai/cordis-plugin-include@1.0.7)(@deepseek-ai/cordis-plugin-loader@1.0.3)
       '@deepseek-ai/cordis-plugin-include':
         specifier: 1.0.7
         version: 1.0.7(@deepseek-ai/cordis-plugin-loader@1.0.3)(@deepseek-ai/cordis@4.0.2)
-      '@deepseek-ai/cordis-plugin-loader':
-        specifier: 1.0.3
-        version: 1.0.3(@deepseek-ai/cordis@4.0.2)(node-addon-require-builtin@0.1.9)
-      '@deepseek-ai/dsh-credentials-local':
+      '@deepseek-ai/dsh-agent-loop':
         specifier: 0.1.6-alpha.2
-        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-atomic-write@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))(@deepseek-ai/dsh-credentials@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-invariants@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)))(@deepseek-ai/dsh-home-paths@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))(@deepseek-ai/dsh-launch-environment@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))
-      '@types/ws':
-        specifier: ^8.18.1
-        version: 8.18.2
-
-  packages/dsh-plugin/modules/ui:
-    dependencies:
-      '@deepseek-ai/schemastery':
-        specifier: 3.18.2
-        version: 3.18.2
-      '@j-show/mcp-proxy-protocol':
-        specifier: workspace:*
-        version: link:../../../mcp-proxy/modules/protocol
-    devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: 4.0.2
-        version: 4.0.2(@deepseek-ai/cordis-plugin-include@1.0.7)(@deepseek-ai/cordis-plugin-loader@1.0.3)
-      '@deepseek-ai/dsh-brand':
-        specifier: 0.1.6-alpha.2
-        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)
-      '@deepseek-ai/dsh-client-connection':
-        specifier: 0.1.6-alpha.2
-        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-invariants@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))
+        version: 0.1.6-alpha.2(547d7e5b058db1d025ca178e94755ed4)
       '@deepseek-ai/dsh-client-locale':
         specifier: 0.1.6-alpha.2
         version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)
@@ -389,12 +277,18 @@ importers:
       '@deepseek-ai/dsh-client-ui-slots':
         specifier: 0.1.6-alpha.2
         version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)
-      '@deepseek-ai/dsh-session':
+      '@deepseek-ai/dsh-credentials-local':
         specifier: 0.1.6-alpha.2
-        version: 0.1.6-alpha.2(patch_hash=10fde8aba0f255fb3159b6a9b1eeb2264ef4cf853136175d3cff2b38c400be56)(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-scope@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-invariants@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)))
+        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-atomic-write@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))(@deepseek-ai/dsh-credentials@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-invariants@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)))(@deepseek-ai/dsh-home-paths@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))(@deepseek-ai/dsh-launch-environment@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))
+      '@deepseek-ai/dsh-session-projection':
+        specifier: 0.1.6-alpha.2
+        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-session@0.1.6-alpha.2(patch_hash=10fde8aba0f255fb3159b6a9b1eeb2264ef4cf853136175d3cff2b38c400be56)(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-scope@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-invariants@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))))
       '@types/react':
         specifier: ~18.3.1
         version: 18.3.31
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.2
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -440,6 +334,9 @@ importers:
       '@deepseek-ai/dsh-credentials':
         specifier: 0.1.6-alpha.2
         version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-invariants@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))
+      '@deepseek-ai/dsh-credentials-local':
+        specifier: 0.1.6-alpha.2
+        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-atomic-write@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))(@deepseek-ai/dsh-credentials@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-invariants@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)))(@deepseek-ai/dsh-home-paths@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))(@deepseek-ai/dsh-launch-environment@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))
       '@deepseek-ai/dsh-home-paths':
         specifier: 0.1.6-alpha.2
         version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)
@@ -500,102 +397,6 @@ importers:
       '@deepseek-ai/dsh-util-values':
         specifier: 0.1.6-alpha.2
         version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)
-      '@deepseek-ai/schemastery':
-        specifier: 3.18.2
-        version: 3.18.2
-      '@j-show/mcp-proxy-runtime':
-        specifier: workspace:*
-        version: link:modules/runtime
-      commander:
-        specifier: ^15.0.0
-        version: 15.0.0
-    devDependencies:
-      '@deepseek-ai/dsh':
-        specifier: 0.1.6-alpha.2
-        version: 0.1.6-alpha.2(b3a2d40797c4cc85143691c8c311e859)
-      '@j-show/mcp-proxy-local':
-        specifier: workspace:*
-        version: link:modules/local
-      tsdown:
-        specifier: ^0.22.2
-        version: 0.22.14(tsx@4.23.15)(typescript@6.0.3)
-      zod:
-        specifier: ^4.4.3
-        version: 4.6.7
-
-  packages/mcp-proxy/modules/local:
-    dependencies:
-      '@deepseek-ai/dsh-brand':
-        specifier: 0.1.6-alpha.2
-        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)
-      '@deepseek-ai/dsh-subprocess':
-        specifier: 0.1.6-alpha.2
-        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-http-proxy@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))
-      '@j-show/mcp-proxy-protocol':
-        specifier: workspace:*
-        version: link:../protocol
-      '@modelcontextprotocol/client':
-        specifier: 2.0.0
-        version: 2.0.0
-      '@modelcontextprotocol/sdk':
-        specifier: 1.29.0
-        version: 1.29.0(zod@4.6.7)
-      zod:
-        specifier: ^4.4.3
-        version: 4.6.7
-    devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: 4.0.2
-        version: 4.0.2(@deepseek-ai/cordis-plugin-include@1.0.7)(@deepseek-ai/cordis-plugin-loader@1.0.3)
-      '@modelcontextprotocol/node':
-        specifier: 2.0.0
-        version: 2.0.0(@modelcontextprotocol/server@2.0.0)(hono@4.13.16)
-      '@modelcontextprotocol/server':
-        specifier: 2.0.0
-        version: 2.0.0
-      '@types/ws':
-        specifier: ^8.18.1
-        version: 8.18.2
-      ws:
-        specifier: ^8.21.0
-        version: 8.22.1
-
-  packages/mcp-proxy/modules/protocol:
-    dependencies:
-      '@deepseek-ai/dsh-brand':
-        specifier: 0.1.6-alpha.2
-        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)
-      ws:
-        specifier: ^8.21.0
-        version: 8.22.1
-      zod:
-        specifier: ^4.4.3
-        version: 4.6.7
-    devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: 4.0.2
-        version: 4.0.2(@deepseek-ai/cordis-plugin-include@1.0.7)(@deepseek-ai/cordis-plugin-loader@1.0.3)
-      '@types/ws':
-        specifier: ^8.18.1
-        version: 8.18.2
-
-  packages/mcp-proxy/modules/runtime:
-    dependencies:
-      '@deepseek-ai/dsh-atomic-write':
-        specifier: 0.1.6-alpha.2
-        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)
-      '@deepseek-ai/dsh-cmdline':
-        specifier: 0.1.6-alpha.2
-        version: 0.1.6-alpha.2(@deepseek-ai/cordis-plugin-loader@1.0.3)(@deepseek-ai/cordis@4.0.2)
-      '@deepseek-ai/dsh-credentials':
-        specifier: 0.1.6-alpha.2
-        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-invariants@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))
-      '@deepseek-ai/dsh-credentials-local':
-        specifier: 0.1.6-alpha.2
-        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-atomic-write@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))(@deepseek-ai/dsh-credentials@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-invariants@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)))(@deepseek-ai/dsh-home-paths@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))(@deepseek-ai/dsh-launch-environment@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))
-      '@deepseek-ai/dsh-util-values':
-        specifier: 0.1.6-alpha.2
-        version: 0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)
       '@deepseek-ai/dsh-win32-process':
         specifier: 0.1.6-alpha.2
         version: 0.1.6-alpha.2(patch_hash=0c5ec3777ad0f7dc053ebb388f317221fcfc04f630310580387499ac2aabfa0f)(@deepseek-ai/cordis@4.0.2)
@@ -605,37 +406,40 @@ importers:
       '@deepseek-ai/schemastery':
         specifier: 3.18.2
         version: 3.18.2
-      '@j-show/mcp-proxy-local':
-        specifier: workspace:*
-        version: link:../local
-      '@j-show/mcp-proxy-protocol':
-        specifier: workspace:*
-        version: link:../protocol
+      '@modelcontextprotocol/client':
+        specifier: 2.0.0
+        version: 2.0.0
+      '@modelcontextprotocol/sdk':
+        specifier: 1.29.0
+        version: 1.29.0(zod@4.6.7)
       commander:
         specifier: ^15.0.0
         version: 15.0.0
       ws:
         specifier: ^8.21.0
         version: 8.22.1
+      zod:
+        specifier: ^4.4.3
+        version: 4.6.7
     devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: 4.0.2
-        version: 4.0.2(@deepseek-ai/cordis-plugin-include@1.0.7)(@deepseek-ai/cordis-plugin-loader@1.0.3)
-      '@deepseek-ai/cordis-plugin-include':
-        specifier: 1.0.7
-        version: 1.0.7(@deepseek-ai/cordis-plugin-loader@1.0.3)(@deepseek-ai/cordis@4.0.2)
-      '@deepseek-ai/cordis-plugin-loader':
-        specifier: 1.0.3
-        version: 1.0.3(@deepseek-ai/cordis@4.0.2)(node-addon-require-builtin@0.1.9)
-      '@deepseek-ai/dsh-app-boot':
+      '@deepseek-ai/dsh':
         specifier: 0.1.6-alpha.2
-        version: 0.1.6-alpha.2(@deepseek-ai/cordis-plugin-group@1.0.2(@deepseek-ai/cordis-plugin-loader@1.0.3)(@deepseek-ai/cordis@4.0.2))(@deepseek-ai/cordis-plugin-include@1.0.7)(@deepseek-ai/cordis-plugin-loader@1.0.3)(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-home-paths@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))(@deepseek-ai/dsh-launch-environment@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))(@deepseek-ai/dsh-system-prompt@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-invariants@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))(@deepseek-ai/dsh-llm@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))(@deepseek-ai/dsh-scope@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2)(@deepseek-ai/dsh-invariants@0.1.6-alpha.2(@deepseek-ai/cordis@4.0.2))))
+        version: 0.1.6-alpha.2(b3a2d40797c4cc85143691c8c311e859)
+      '@modelcontextprotocol/node':
+        specifier: 2.0.0
+        version: 2.0.0(@modelcontextprotocol/server@2.0.0)(hono@4.13.16)
+      '@modelcontextprotocol/server':
+        specifier: 2.0.0
+        version: 2.0.0
       '@types/ws':
         specifier: ^8.18.1
         version: 8.18.2
       koffi:
         specifier: ^3.1.0
         version: 3.3.7
+      tsdown:
+        specifier: ^0.22.2
+        version: 0.22.14(tsx@4.23.15)(typescript@6.0.3)
 
 packages:
 

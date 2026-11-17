@@ -5,8 +5,7 @@ import { join, resolve, relative } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { build } from 'tsdown'
 import { buildLibraries } from './build-libraries.ts'
-import { prepareMcpBuildRuntime, mcpBuildEnvironment } from './mcp-build-runtime.ts'
-import { runMcpBuildCommand } from './run-mcp-build-command.ts'
+import { relaunchBuildRuntime } from './mcp-build-runtime.ts'
 import modules from './modules.json' with { type: 'json' }
 import {withFileLock} from '@deepseek-ai/dsh-atomic-write'
 
@@ -45,7 +44,7 @@ export async function buildShared(root: string, development = false): Promise<{ 
     format: ['esm'], platform: 'browser', target: 'es2022', sourcemap: development, dts: false, clean: true })
   await build({ config: false, cwd: root, entry: { 'desktop-host': 'packages/mcp-proxy/src/desktop-host-entry.ts' }, outDir: resources,
     format: ['esm'], platform: 'node', target: 'node22', sourcemap: development, dts: false, clean: true,
-    deps: { onlyBundle: false, neverBundle: [/^@j-show\//, /^@deepseek-ai\//] }, outputOptions: { entryFileNames: '[name].mjs' } })
+    deps: { onlyBundle: false, neverBundle: [/^@deepseek-ai\//], alwaysBundle: [/^@jshow\//] }, outputOptions: { entryFileNames: '[name].mjs' } })
   await copyFile(join(root,'packages/mcp-proxy/src/desktop-service-owner.mjs'),join(resources,'desktop-service-owner.mjs'))
   const html = (await readFile(join(root,'packages/mcp-proxy/src/client/index.html'),'utf8'))
     .replace(/\s*<meta http-equiv="Content-Security-Policy"[^>]+>/, '').replace('src="renderer.js"','src="bootstrap.js"')
@@ -61,15 +60,14 @@ export async function buildShared(root: string, development = false): Promise<{ 
       else if (entry.isFile()) outputs.push({ path: relative(root,file).replaceAll('\\','/'), sha256: createHash('sha256').update(await readFile(file)).digest('hex') })
     }
   }
-  for (const owner of modules.slice(1)) await collect(join(root,owner.directory,'lib'))
+  for (const owner of ['mcp-proxy','dsh-plugin']) await collect(join(root,'packages',owner,'lib'))
   await collect(desktop); await collect(resources)
   await writeFile(join(directory,'build.json'),JSON.stringify({ version:1, fingerprint, development, outputs })+'\n')
   return { directory, fingerprint }
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  const root = resolve(import.meta.dirname,'..'), node = await prepareMcpBuildRuntime(root)
-  if (node) await runMcpBuildCommand(node,['--import','tsx/esm',...process.argv.slice(1)],root,mcpBuildEnvironment(node,process.env))
-  else {
+  const root = resolve(import.meta.dirname,'..')
+  if (!await relaunchBuildRuntime(root)) {
     await mkdir(join(root,'.artifacts'),{recursive:true})
     await withFileLock(join(root,'.artifacts/application-build.lock'),()=>buildShared(root),{waitMs:300000})
   }

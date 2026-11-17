@@ -1,13 +1,12 @@
 /** Assemble the local MCP product from the real dsh CLI and a private deployment closure. */
 import { spawn } from 'node:child_process'
 import { createRequire } from 'node:module'
-import { access, chmod, copyFile, cp, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { access, chmod, copyFile, cp, mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
-import { pnpmInvocation } from './pnpm-invocation.ts'
+import { pnpmInvocation } from './run-mcp-build-command.ts'
 import { materializeDeploymentLinks, restoreDeploymentDependencies, pruneDeploymentWorkspaces } from './runtime-deployment.ts'
-import modules from './modules.json' with {type:'json'}
 
 /** Explicit build inputs; the official executable and license must match the requested target. */
 export interface McpProxyPackageOptions {
@@ -50,28 +49,26 @@ export async function packageMcpProxy(options: McpProxyPackageOptions, run?: Run
     if (error instanceof Error && 'code' in error && error.code === 'EEXIST') throw new Error('Portable output already exists')
     throw error
   }
-  const invocation = pnpmInvocation(['--filter', '@j-show/mcp-proxy', 'deploy', '--legacy', '--prod',
+  const invocation = pnpmInvocation(['--filter', '@jshow/app-mcp-proxy', 'deploy', '--legacy', '--prod',
     '--config.allow-unused-patches=true', '--config.node-linker=hoisted', '--config.auto-install-peers=false',
     '--config.link-workspace-packages=true', output], options.environment)
   await (run ?? execute)(invocation.command, invocation.args, repository)
-  const manifests=new Map(await Promise.all(modules.map(async module=>[module.name,
-    JSON.parse(await readFile(join(repository,module.directory,'package.json'),'utf8')) as {dependencies?:Record<string,string>;peerDependencies?:Record<string,string>} ] as const)))
-  const required=new Set<string>()
-  function visit(name:string):void{
-    if(required.has(name))return
-    required.add(name)
-    const manifest=manifests.get(name)
-    for(const dependency of Object.keys({...manifest?.dependencies,...manifest?.peerDependencies}))if(manifests.has(dependency))visit(dependency)
+  await pruneDeploymentWorkspaces(output,new Set(['@jshow/dsh-plugin-mcp-proxy','@jshow/app-mcp-proxy']))
+  const app=join(output,'node_modules/@jshow/app-mcp-proxy')
+  await mkdir(app,{recursive:true})
+  for(const file of ['package.json','cordis.patch.yml','LICENSE','THIRD_PARTY_NOTICES.md'])await copyFile(join(repository,'packages/mcp-proxy',file),join(app,file))
+  await mkdir(join(app,'lib'))
+  for(const file of await readdir(join(repository,'packages/mcp-proxy/lib'),{withFileTypes:true})){
+    if(file.isFile()&&/\.(?:js|js\.map|d\.ts|exe)$/.test(file.name))await copyFile(join(repository,'packages/mcp-proxy/lib',file.name),join(app,'lib',file.name))
   }
-  visit('@j-show/mcp-proxy')
-  await pruneDeploymentWorkspaces(output,new Set(modules.filter(module=>!required.has(module.name)||module.name==='@j-show/mcp-proxy').map(module=>module.name)))
   await restoreDeploymentDependencies(output, join(repository, 'packages/mcp-proxy/node_modules'))
   await materializeDeploymentLinks(output)
   const deployed: unknown = JSON.parse(await readFile(join(output, 'package.json'), 'utf8'))
   if (typeof deployed !== 'object' || deployed === null || !('version' in deployed) || typeof deployed.version !== 'string'
-    || !('dependencies' in deployed)) throw new Error('Invalid MCP runtime deployment manifest')
+    || !('dependencies' in deployed)||typeof deployed.dependencies!=='object'||deployed.dependencies===null||Array.isArray(deployed.dependencies)) throw new Error('Invalid MCP runtime deployment manifest')
   const { dsh: _trees, devDependencies: _dev, ...manifest } = cli as Record<string, unknown>
-  await writeFile(join(output, 'package.json'), JSON.stringify({ ...manifest, private: true, dependencies: deployed.dependencies }, null, 2) + '\n')
+  await writeFile(join(output, 'package.json'), JSON.stringify({ ...manifest, private: true,
+    dependencies: {...deployed.dependencies,'@jshow/app-mcp-proxy':deployed.version} }, null, 2) + '\n')
   await cp(join(cliRoot, 'lib'), join(output, 'lib'), { recursive: true })
   await mkdir(join(output, 'runtime'))
   const node = process.platform === 'win32' ? 'node.exe' : 'node'
@@ -81,8 +78,8 @@ export async function packageMcpProxy(options: McpProxyPackageOptions, run?: Run
   for (const file of ['README.md', 'README.zh.md', 'settings.example.json']) {
     await copyFile(join(repository, 'packages/mcp-proxy', file), join(output, file))
   }
-  const local = join(output, 'node_modules/@j-show/mcp-proxy-runtime/lib')
-  await access(join(local, 'startup.js'))
+  const local = join(output, 'node_modules/@jshow/app-mcp-proxy/lib')
+  await access(join(local, 'runtime-startup.js'))
   if (process.platform === 'win32') await access(join(local, 'mcp-proxy.exe'))
   if (process.platform === 'win32') {
     await writeFile(join(output, 'mcp-proxy.cmd'), '@echo off\r\n"%~dp0runtime\\node.exe" "%~dp0lib\\bin.js" --profile mcp-proxy %*\r\n')

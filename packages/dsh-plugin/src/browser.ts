@@ -1,2 +1,2 @@
 /** Authenticated browser association adapter API. */
-export * from '@j-show/dsh-mcp-proxy-browser'
+export * from '@jshow/dsh-plugin-mcp-proxy/browser'

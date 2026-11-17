@@ -8,7 +8,7 @@ import Loader from '@deepseek-ai/cordis-plugin-loader'
 import Include from '@deepseek-ai/cordis-plugin-include'
 import WebServer from '@deepseek-ai/dsh-host-webserver'
 import LocalCredentials from '@deepseek-ai/dsh-credentials-local'
-import { decodeFrame, proveProxyIdentity, ProxyChannel, ProxyIdentity, type ProxyFrame, type ChannelOptions } from '@j-show/mcp-proxy-protocol'
+import { decodeFrame, proveProxyIdentity, ProxyChannel, ProxyIdentity, type ProxyFrame, type ChannelOptions } from '@jshow/app-mcp-proxy/protocol'
 import WebSocket from 'ws'
 import { expect, onTestFinished } from 'vitest'
 import Host from '../../src/index.ts'
@@ -41,7 +41,7 @@ export async function openHost(maxConnections = 4, plugins: readonly TestPlugin[
     "- name: '@deepseek-ai/dsh-host-webserver'", "  config: { host: '127.0.0.1', port: 0 }",
     "- name: '@deepseek-ai/dsh-credentials-local'", `  config: { path: ${JSON.stringify(credentials)}, watch: false }`,
     ...(hostEntry === undefined ? [
-      "- name: '@j-show/dsh-mcp-proxy-host'", '  config:', `    publicOrigin: ${origin}`, `    credentialRef: ${ref}`,
+      "- name: '@jshow/dsh-plugin-mcp-proxy/host'", '  config:', `    publicOrigin: ${origin}`, `    credentialRef: ${ref}`,
       '    upgradePath: /mcp-proxy/connect', `    maxConnections: ${maxConnections}`, '    maxFrameBytes: 65536',
       '    handshakeTimeoutMs: 1000', `    callTimeoutMs: ${callTimeoutMs}`, '    maxInvocations: 64', '    maxPending: 4',
     ] : ['- ' + JSON.stringify({ name: hostEntry.name, config: hostEntry.config(origin, ref) })]),
@@ -52,7 +52,7 @@ export async function openHost(maxConnections = 4, plugins: readonly TestPlugin[
   ctx.loader.builtins.include = Include
   const modules = new Map<string, unknown>([
     ['@deepseek-ai/dsh-host-webserver', WebServer], ['@deepseek-ai/dsh-credentials-local', LocalCredentials],
-    ['@j-show/dsh-mcp-proxy-host', Host], ...plugins.map(plugin => [plugin.name, plugin.module] as const),
+    ['@jshow/dsh-plugin-mcp-proxy/host', Host], ...plugins.map(plugin => [plugin.name, plugin.module] as const),
     ...(hostEntry === undefined ? [] : [[hostEntry.name, hostEntry.module] as const]),
     ...(hostEntry?.modules ?? []),
   ])

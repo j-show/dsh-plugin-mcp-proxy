@@ -19,7 +19,7 @@ export function verificationPlan(mode:VerificationMode,platform:NodeJS.Platform,
   const native:VerificationStep[]=[{name:'doctor-native',args:['dev:doctor','--packaging']},
     ...(mode==='native'?[{name:'test-native-host',args:['test']}]:[]),
     {name:'rust',args:['test:rust']},{name:'application',args:[build]},
-    {name:'plugin',args:['build:mcp-plugin','--skip-build']},
+    {name:'plugin',args:['build:mcp-plugin']},
     ...[...targets].reverse().flatMap(t=>[
       {name:'installer-'+t.id,args:['test:installer','--target',t.id],display:true},
       {name:'product-'+t.id,args:['test:product','--target',t.id],display:true},

@@ -44,11 +44,11 @@ jobs:
           include-hidden-files: true
           path: |
             .artifacts/shared/
-            packages/*/modules/*/lib/
-            packages/dsh-plugin/lib/
+            packages/*/lib/
             .artifacts/ci/native-matrix.json
             .artifacts/ci/verification.json
             .artifacts/ci/doctor-core.json
+            logs/verify/
           if-no-files-found: error
           retention-days: 7
   package-manager:
@@ -108,6 +108,7 @@ jobs:
           include-hidden-files: true
           path: |
             .artifacts/ci/
+            logs/verify/
             release/
           if-no-files-found: warn
           retention-days: 14

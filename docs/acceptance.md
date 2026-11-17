@@ -2,6 +2,10 @@
 
 ## 当前迁移边界
 
+当前仅有 `@jshow/dsh-plugin-mcp-proxy`、`@jshow/app-mcp-proxy` 两个交付包；七个内部工作区已收敛为普通源码模块，父包子路径及独立打包回归须按当前提交验证。
+项目及工作区许可证合并为 `LICENSE`，完整保留 Apache-2.0、上游 MIT 和 DeepSeek 版权；依赖自身许可另行随包保留。
+更名前的归档/安装包哈希仅属历史证据，新包名须重新构建核验。验证日志位于 `logs/verify/`，JSON 报告仍在 `.artifacts/ci/`。
+
 换机操作及测试边界以[交接清单](handoff.md)为入口。已核实基线为 `039dd66` 的
 [CI 43855401293](https://github.com/j-show/dsh-plugin-mcp-proxy/actions/runs/43855401293)：六项启用任务均通过，Intel DMG 仍暂缓。
 2026-11-17 的预检/编排变更统一本地与 CI 计划，并增加原生宿主默认 TS 集合；本次结果须读取对应提交的

@@ -2,7 +2,7 @@ import { once } from 'node:events'
 import { randomUUID } from 'node:crypto'
 import { connect as connectTcp } from 'node:net'
 import { credentialRef } from '@deepseek-ai/dsh-credentials'
-import { decodeFrame } from '@j-show/mcp-proxy-protocol'
+import { decodeFrame } from '@jshow/app-mcp-proxy/protocol'
 import type WebSocket from 'ws'
 import { expect, it, onTestFinished } from 'vitest'
 import Host, { type ProxyCatalog } from '../src/index.ts'
@@ -113,7 +113,7 @@ it('counts connections still awaiting proof against the deployment capacity', as
 it('unmounts the upgrade route and closes existing connections on plugin disposal', async () => {
   const fixture = await boot()
   const peer = await fixture.local()
-  const fiber = [...fixture.ctx.loader.entries()].find(entry => entry.options.name === '@j-show/dsh-mcp-proxy-host')?.fiber
+  const fiber = [...fixture.ctx.loader.entries()].find(entry => entry.options.name === '@jshow/dsh-plugin-mcp-proxy/host')?.fiber
   if (fiber === undefined) throw new Error('Expected Loader-owned proxy fiber')
   const closed = once(peer.socket, 'close')
   await fiber.dispose()

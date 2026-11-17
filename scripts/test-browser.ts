@@ -10,8 +10,7 @@ import { runBrowserMatrix } from './browser-e2e-run.ts'
 import { bindServerArtifact } from './browser-e2e-environment.ts'
 import { readProductBuild } from './product-build.ts'
 import { assertProductServiceIdle, withProductRunLock } from './product-service.ts'
-import { prepareMcpBuildRuntime, mcpBuildEnvironment } from './mcp-build-runtime.ts'
-import { runMcpBuildCommand } from './run-mcp-build-command.ts'
+import { relaunchBuildRuntime } from './mcp-build-runtime.ts'
 import { verifyDesktopRuntime } from './runtime-inventory.ts'
 
 const root = resolve(import.meta.dirname, '..')
@@ -23,8 +22,7 @@ async function installed(candidates: string[]): Promise<string | undefined> {
 }
 async function main(): Promise<void> {
   if (process.platform !== 'win32' || !['x64','ia32'].includes(process.arch)) throw new Error('Browser E2E requires Windows x86 or x64')
-  const node = await prepareMcpBuildRuntime(root)
-  if (node) { await runMcpBuildCommand(node, ['--import', 'tsx/esm', ...process.argv.slice(1)], root, mcpBuildEnvironment(node, process.env)); return }
+  if (await relaunchBuildRuntime(root)) return
   for (const path of ['.artifacts', '.artifacts/ci', '.artifacts/browser-e2e']) {
     await mkdir(join(root, path), { recursive: true })
     if ((await lstat(join(root, path))).isSymbolicLink()) throw new Error('Browser test parent must not be linked')

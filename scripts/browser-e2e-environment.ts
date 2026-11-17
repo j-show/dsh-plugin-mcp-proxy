@@ -34,7 +34,7 @@ async function frameworkVersions(repository: string, home: string, cli: string):
   for (const [anchor, file] of [['profile', join(home, 'profiles/web/package.json')], ['cli', cli]] as const) {
     const require = createRequire(file)
     for (const name of ['@deepseek-ai/dsh', '@deepseek-ai/cordis', '@deepseek-ai/dsh-app-boot', '@deepseek-ai/dsh-client-modules',
-      '@deepseek-ai/dsh-client-locale', '@deepseek-ai/dsh-client-ui-slots', '@deepseek-ai/dsh-client-ui-renderer', '@j-show/dsh-plugin-mcp-proxy']) {
+      '@deepseek-ai/dsh-client-locale', '@deepseek-ai/dsh-client-ui-slots', '@deepseek-ai/dsh-client-ui-renderer', '@jshow/dsh-plugin-mcp-proxy']) {
       const before = entries.length
       try {
         let directory: string

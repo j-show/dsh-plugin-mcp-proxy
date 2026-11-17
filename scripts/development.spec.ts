@@ -2,7 +2,7 @@ import { expect, it, onTestFinished } from 'vitest'
 import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { developmentIssues, initializeDevelopment, developmentPaths } from './development.ts'
+import { developmentIssues, initializeDevelopment, initializeDevelopmentProfiles, developmentPaths } from './development.ts'
 
 async function fixture() {
   const root = await mkdtemp(join(tmpdir(), 'mcp-development-'))
@@ -11,12 +11,12 @@ async function fixture() {
 }
 
 it('reports unsupported tools and packaging prerequisites without changing the host', () => {
-  expect(developmentIssues({ node: 'v20.0.0', pnpm: '9.15.0', tar: false, compiler: false, license: false }, true, 'win32'))
+  expect(developmentIssues({ node: 'v20.0.0', pnpm: '9.15.0', tar: false, compiler: false }, true, 'win32'))
     .toEqual(expect.arrayContaining(['Use Node 22.19+.', 'Use pnpm >=10.', 'Install tar.', 'Enable the Windows .NET Framework 4.x compiler.']))
 })
 
 it('accepts pnpm 10 and later releases without requiring an exact package-manager version', () => {
-  const tools = { node: 'v22.23.5', tar: true, compiler: true, license: true }
+  const tools = { node: 'v22.23.5', tar: true, compiler: true }
   for (const pnpm of ['10.0.0', '10.26.0', '11.7.0', '12.0.0']) {
     expect(developmentIssues({ ...tools, pnpm }, false)).toEqual([])
   }
@@ -59,4 +59,22 @@ it('rejects damaged certificate pairs instead of silently replacing trust', asyn
   const p = await initializeDevelopment(root, async d => { await writeFile(join(d, 'ca.pem'), 'test'); await writeFile(join(d, 'server.pfx'), 'test') }, false)
   await rm(join(p.tls, 'server.pfx'))
   await expect(initializeDevelopment(root, async () => {}, false)).rejects.toThrow('Incomplete development TLS')
+})
+
+it('migrates an owned development plugin reference without losing custom profile state',async()=>{
+  const root=await fixture()
+  const p=await initializeDevelopment(root,async d=>{await writeFile(join(d,'ca.pem'),'test');await writeFile(join(d,'server.pfx'),'test')},false)
+  for(const directory of ['packages/dsh-plugin','packages/mcp-proxy'])await mkdir(join(root,directory),{recursive:true})
+  const profile=join(p.home,'profiles/web')
+  await mkdir(join(profile,'node_modules/@j-show'),{recursive:true})
+  await symlink(join(root,'packages/dsh-plugin'),join(profile,'node_modules/@j-show/dsh-plugin-mcp-proxy'),process.platform==='win32'?'junction':'dir')
+  await writeFile(join(profile,'package.json'),JSON.stringify({private:true,custom:'keep',dependencies:{'@j-show/dsh-plugin-mcp-proxy':'0.1.0',other:'1.2.3'},dsh:{profile:{bundles:['other','@j-show/dsh-plugin-mcp-proxy']}}}))
+  await writeFile(join(profile,'cordis.patch.yml'),'# custom configuration\n[]\n')
+  await initializeDevelopmentProfiles(root,p)
+  const manifest=JSON.parse(await readFile(join(profile,'package.json'),'utf8'))
+  expect(manifest.dsh.profile.bundles).toEqual(['other','@jshow/dsh-plugin-mcp-proxy'])
+  expect(manifest.dependencies).toEqual({other:'1.2.3','@jshow/dsh-plugin-mcp-proxy':'0.1.0'})
+  expect(manifest.custom).toBe('keep')
+  expect(await readFile(join(profile,'cordis.patch.yml'),'utf8')).toBe('# custom configuration\n[]\n')
+  await initializeDevelopmentProfiles(root,p)
 })

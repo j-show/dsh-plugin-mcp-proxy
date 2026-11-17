@@ -3,7 +3,7 @@ import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
 import type { ProxyUiConfig } from '../types.ts'
 import { objectValue } from './response.ts'
 import { proxyPost } from './post.ts'
-import { parseProxyActivation } from '@j-show/mcp-proxy-protocol/activation'
+import { parseProxyActivation } from '@jshow/app-mcp-proxy/protocol/activation'
 
 /** Presentation states independent of Session and device identifiers. */
 export type ConnectionPhase = 'loading' | 'unbound' | 'opening' | 'waiting' | 'connected' | 'disconnecting' | 'unavailable'

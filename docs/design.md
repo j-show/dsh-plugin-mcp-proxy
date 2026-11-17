@@ -4,6 +4,8 @@
 
 ## 部署与模块
 
+仓库只有应用与 DSH 插件两个 workspace。`modules/` 仅划分源码职责和类型检查边界，没有独立包清单或版本。应用导出 runtime/local/protocol 子路径，插件导出 host/agent/browser/ui 子路径；共享协议分别 bundle 到两个父包。客户端发现元数据只登记在插件父包，子组件仍保留 Loader 子作用域及原有释放/回滚顺序。
+
 ```mermaid
 flowchart TB
   subgraph Remote[每个独立 DSH 部署]

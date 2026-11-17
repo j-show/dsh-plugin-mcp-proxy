@@ -123,6 +123,8 @@ Explorer、两种浏览器、空闲服务位及无已有 URI 注册。原有安�
 `--startup-only` 仅执行冷启动，不操作已有 URI 或机器服务；仍要求可见且可获得前台的真实窗口。
 
 公共诊断在 `.artifacts/ci/`，私有 profiles、CA 私钥、身份和原始日志保留在自有测试目录且不上传。
+验证命令输出保存在 `logs/verify/`，报告的 log 字段相对于 checkout 根目录；手工重定向写 `logs/`，不再写根目录 `*.log`。
+`dev:init` 可将同 checkout 自有旧插件链接对应的 profile 引用迁移至 `@jshow/dsh-plugin-mcp-proxy`；身份和自定义配置保留，未知链接或冲突身份拒绝迁移。
 当前平台实测状态及未完成的真实模型、跨用户、多设备验收见[acceptance](acceptance.md)。
 
 ### 浏览器验收实现约束

@@ -10,5 +10,6 @@ packages/mcp-proxy/src-tauri/generated/
 packages/mcp-proxy/src-tauri/gen/
 .env
 *.log
+/logs/
 .env.*
 !.env.example

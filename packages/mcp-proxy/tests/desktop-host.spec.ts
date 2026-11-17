@@ -2,8 +2,8 @@ import { expect, it, vi } from 'vitest'
 import { desktopDataDirectory, DesktopHost } from '../src/desktop-host.ts'
 import { join } from 'node:path'
 import {tmpdir} from 'node:os'
-import type * as DesktopApi from '@j-show/mcp-proxy-runtime/desktop'
-import {parseLocalManagementReply} from '@j-show/mcp-proxy-local/management'
+import type * as DesktopApi from '@jshow/app-mcp-proxy/runtime/desktop'
+import {parseLocalManagementReply} from '@jshow/app-mcp-proxy/local/management'
 
 it('never stops an existing service rejected during desktop configuration ownership checks', async () => {
   const root = join(tmpdir(),'mcp-host-owner-fixture'), settings = join(root,'ours.json'), stop = vi.fn(),emit=vi.fn()

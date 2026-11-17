@@ -7,8 +7,8 @@ import { homedir } from 'node:os'
 import type {} from '@deepseek-ai/dsh-app-boot'
 import { Command } from 'commander'
 import { parseCmdline } from '@deepseek-ai/dsh-cmdline'
-import { readMcpProxySettings, parseManagedMcpSettings, parseLocalManagementReply } from '@j-show/mcp-proxy-local'
-import { parseProxyActivation } from '@j-show/mcp-proxy-protocol'
+import { readMcpProxySettings, parseManagedMcpSettings, parseLocalManagementReply } from '@jshow/app-mcp-proxy/local'
+import { parseProxyActivation } from '@jshow/app-mcp-proxy/protocol'
 import z from '@deepseek-ai/schemastery'
 import { forwardLocalAssociation, machineControlAddress, requestLocalStop, requestLocalManagement } from './control.ts'
 import { installWindowsUri, uninstallWindowsUri } from './windows-install.ts'
@@ -62,7 +62,7 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
   if (startup !== undefined && entry !== undefined) {
     ctx.effect(() => {
       const timer = setTimeout(() => {
-        const required = ['@j-show/mcp-proxy-runtime/startup', '@deepseek-ai/dsh-credentials-local', '@j-show/mcp-proxy-runtime']
+        const required = ['@jshow/app-mcp-proxy/runtime/startup', '@deepseek-ai/dsh-credentials-local', '@jshow/app-mcp-proxy/runtime']
         const siblings = Object.values(entry.parent.tree.store).filter(candidate => candidate.parent === entry.parent)
         // ACTIVE is ordinal 2 in the pinned Cordis const enum.
         if (required.some(name => !siblings.some(candidate => candidate.options.name === name && candidate.fiber?.state === 2))) {
@@ -130,7 +130,7 @@ async function configure(ctx: Context, config: Config, phase: { value: CommandSt
       if (options.install) await installMacosUri(local, config.controlTimeoutMs, lifetime.signal)
       else await uninstallMacosUri(local, config.controlTimeoutMs, lifetime.signal)
     } else if (options.install) {
-      const root = dirname(fileURLToPath(import.meta.resolve('@j-show/mcp-proxy-runtime/package.json')))
+      const root = dirname(fileURLToPath(import.meta.resolve('@jshow/app-mcp-proxy/package.json')))
       await installWindowsUri(spec, join(root, 'lib/mcp-proxy.exe'), config.controlTimeoutMs, lifetime.signal)
     } else await uninstallWindowsUri(spec, config.controlTimeoutMs, lifetime.signal)
     ctx.get('appExit')?.(0)

@@ -1,9 +1,9 @@
 /** Unified DSH adapter entry; child plugins remain owned by this mounting scope. */
 import type { Context, FiberState } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
-import Host, { type Config as HostConfig } from '@j-show/dsh-mcp-proxy-host'
-import * as Agent from '@j-show/dsh-mcp-proxy-agent'
-import * as Browser from '@j-show/dsh-mcp-proxy-browser'
+import Host, { type Config as HostConfig } from '@jshow/dsh-plugin-mcp-proxy/host'
+import * as Agent from '@jshow/dsh-plugin-mcp-proxy/agent'
+import * as Browser from '@jshow/dsh-plugin-mcp-proxy/browser'
 import { EntryGroup, type EntryOptions } from '@deepseek-ai/cordis-plugin-loader'
 
 /** One deployment configuration for the server adapter's internal components. */
@@ -42,10 +42,10 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
     await Promise.all(fibers.map(fiber => fiber?.dispose()))
   })
   const children = [
-    { name: '@j-show/dsh-mcp-proxy-host', config: spec.host },
-    { name: '@j-show/dsh-mcp-proxy-agent', config: spec.agent },
-    { name: '@j-show/dsh-mcp-proxy-browser', config: spec.browser },
-    { name: '@j-show/dsh-mcp-proxy-ui', config: spec.ui },
+    { name: '@jshow/dsh-plugin-mcp-proxy/host', config: spec.host },
+    { name: '@jshow/dsh-plugin-mcp-proxy/agent', config: spec.agent },
+    { name: '@jshow/dsh-plugin-mcp-proxy/browser', config: spec.browser },
+    { name: '@jshow/dsh-plugin-mcp-proxy/ui', config: spec.ui },
   ]
   for (const child of children) {
     const entry: EntryOptions = { ...child, id: group.tree.ensureId({}) }

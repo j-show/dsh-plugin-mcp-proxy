@@ -1,5 +1,5 @@
 /** Sandboxed renderer bridge; no arbitrary IPC channels or Node APIs are exposed. */
-import type { LocalManagementCommand, LocalManagementReply, LocalDesktopSnapshot } from '@j-show/mcp-proxy-local/management'
+import type { LocalManagementCommand, LocalManagementReply, LocalDesktopSnapshot } from '@jshow/app-mcp-proxy/local/management'
 
 /** The activation command is reserved for the native/main-process entry. */
 export type GuiCommand = Exclude<LocalManagementCommand, { kind: 'activate' }>

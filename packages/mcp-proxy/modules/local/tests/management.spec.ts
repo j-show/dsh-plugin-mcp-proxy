@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { expect, it, onTestFinished } from 'vitest'
 import { LocalMcpPool, resolveLocalServices } from '../src/index.ts'
-import { ProxyToolSchema } from '@j-show/mcp-proxy-protocol'
+import { ProxyToolSchema } from '@jshow/app-mcp-proxy/protocol'
 
 const options = { maxServices: 4, maxFrameBytes: 65536, maxDiscoveryPages: 8, maxClientRequests: 8,
   maxClientRequestRecords: 32, startupTimeoutMs: 10000, callTimeoutMs: 10000, taskCancelTimeoutMs: 1000 }

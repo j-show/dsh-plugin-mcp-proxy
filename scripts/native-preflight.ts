@@ -4,7 +4,7 @@ import {access,readdir,mkdtemp,writeFile,rm} from 'node:fs/promises'
 import {join} from 'node:path'
 import {tmpdir} from 'node:os'
 import {promisify} from 'node:util'
-import {nativeTar} from './native-tools.ts'
+import {nativeTar} from './run-mcp-build-command.ts'
 
 export interface Prerequisite {name:string;ready:boolean;hint:string;observation?:string;errorCode?:string|number}
 type Run=(file:string,args:readonly string[])=>Promise<string>

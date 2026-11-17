@@ -1,7 +1,7 @@
 /** Preserve cancellation of every valid legacy callback ID, including numeric zero. */
 import { CancelledNotificationSchema, type RequestId } from '@modelcontextprotocol/sdk/types.js'
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
-import type { InvocationId } from '@j-show/mcp-proxy-protocol'
+import type { InvocationId } from '@jshow/app-mcp-proxy/protocol'
 import { z } from 'zod'
 import type { LegacyTaskScope } from './legacy-task-scope.ts'
 

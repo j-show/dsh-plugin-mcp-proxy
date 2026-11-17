@@ -1,4 +1,4 @@
-# @j-show/dsh-mcp-proxy-browser
+# @jshow/dsh-plugin-mcp-proxy/browser
 
 Authenticated Web association and prompt admission; no device guessing.
 

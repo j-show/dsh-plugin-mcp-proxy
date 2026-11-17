@@ -1,0 +1,15 @@
+{
+  "sourceKind": "working tree based on 0b14c72; native CI must be matched to the resulting commit",
+  "layout": {"deliveryWorkspaces": 2, "removedInternalManifests": 7},
+  "local": {
+    "host": "Windows x64", "node": "22.23.5", "pnpm": "11.3.0",
+    "frozenInstall": "passed", "sharedBuildAndDeclarations": "passed",
+    "core": {"exitCode": 0, "passed": 609, "skipped": 8, "developmentPassed": 60},
+    "pluginArchive": "built with bundled components; no internal npm packages",
+    "windowsX64": {"installerBuild": "passed", "nativeProductCases": 5, "skipped": 0},
+    "reproducedFailure": "Installed DSH root lacked app bundle dependency; actual profile import failed with ERR_MODULE_NOT_FOUND. Dependency declared, immutable artifact rebuilt, all five native cases passed.",
+    "review": "Parent client discovery is unique, does not project host config, and runtime/profile ownership remains unchanged. Legacy/mixed profile references have regressions."
+  },
+  "includedPriorChanges": ["two parent package names", "logs/verify", "combined Apache-2.0 and upstream MIT LICENSE", "script consolidation"],
+  "boundaries": ["Intel DMG deferred", "Windows x86 on WoW64 only", "real model, multi-device, cross-user, persistence and release acceptance remain A1-A7", "macOS/Linux GUI/URI/tray matrix remains unverified", "local GUI/installer matrix requires unused integration; corresponding native CI provides clean-host validation"]
+}

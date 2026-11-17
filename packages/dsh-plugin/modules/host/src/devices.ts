@@ -1,5 +1,5 @@
 /** Durable public device admission, separate from browser association and Session data. */
-import type { EndpointId } from '@j-show/mcp-proxy-protocol'
+import type { EndpointId } from '@jshow/app-mcp-proxy/protocol'
 import { createHash, createPublicKey } from 'node:crypto'
 import { mkdir, readFile, stat } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'

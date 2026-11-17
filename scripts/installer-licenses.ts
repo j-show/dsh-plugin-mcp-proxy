@@ -36,7 +36,7 @@ export async function writeInstallerLicenses(root: string, output: string): Prom
     for (const dependency of Object.keys(manifest.dependencies ?? {})) await visit(dependency, join(directory, 'package.json'))
   }
   for (const dependency of ['execa', 'js-yaml']) await visit(dependency, join(root, 'package.json'))
-  for (const name of ['LICENSE', 'LICENSE-MIT-UPSTREAM', 'THIRD_PARTY_NOTICES.md']) {
+  for (const name of ['LICENSE', 'THIRD_PARTY_NOTICES.md']) {
     await copyFile(join(root, name), join(output, name))
   }
 }

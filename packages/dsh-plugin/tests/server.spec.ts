@@ -5,9 +5,9 @@ import Projections from '@deepseek-ai/dsh-session-projection'
 import Prompt from '@deepseek-ai/dsh-system-prompt'
 import Tools from '@deepseek-ai/dsh-tools'
 import * as Connection from '@deepseek-ai/dsh-client-connection'
-import * as Agent from '@j-show/dsh-mcp-proxy-agent'
-import * as Browser from '@j-show/dsh-mcp-proxy-browser'
-import * as Ui from '@j-show/dsh-mcp-proxy-ui'
+import * as Agent from '@jshow/dsh-plugin-mcp-proxy/agent'
+import * as Browser from '@jshow/dsh-plugin-mcp-proxy/browser'
+import * as Ui from '@jshow/dsh-plugin-mcp-proxy/ui'
 import { Context } from '@deepseek-ai/cordis'
 import { expect, it } from 'vitest'
 import { openHost } from '../modules/host/tests/helpers/composition.ts'
@@ -34,12 +34,12 @@ async function mountServer(ui?: unknown, expectedActivationError?: RegExp) {
     { name: '@deepseek-ai/dsh-tools', module: Tools, config: () => ({}) },
     { name: '@deepseek-ai/dsh-agent', module: Agents, config: () => ({}) },
     { name: '@deepseek-ai/dsh-client-connection', module: Connection, config: origin => ({ trustedHosts: [new URL(origin).host] }) },
-  ], { name: '@j-show/dsh-plugin-mcp-proxy', module: Server,
+  ], { name: '@jshow/dsh-plugin-mcp-proxy', module: Server,
     expectedActivationError,
     config: (origin, ref) => ({ host: { publicOrigin: origin, credentialRef: ref }, ...(ui === undefined ? {} : { ui }) }),
     modules: [
-      ['@j-show/dsh-mcp-proxy-agent', Agent], ['@j-show/dsh-mcp-proxy-browser', Browser],
-      ['@j-show/dsh-mcp-proxy-ui', Ui],
+      ['@jshow/dsh-plugin-mcp-proxy/agent', Agent], ['@jshow/dsh-plugin-mcp-proxy/browser', Browser],
+      ['@jshow/dsh-plugin-mcp-proxy/ui', Ui],
     ],
   })
   return fixture
@@ -49,10 +49,10 @@ it('mounts and disposes the connector and browser routes through one Loader entr
   const fixture = await mountServer()
   expect(fixture.ctx.get('mcpProxy')).toBeDefined()
   const adapterEntries = [...fixture.ctx.loader.entries()].filter(entry => [
-    '@j-show/dsh-mcp-proxy-host', '@j-show/dsh-mcp-proxy-agent', '@j-show/dsh-mcp-proxy-browser',
+    '@jshow/dsh-plugin-mcp-proxy/host', '@jshow/dsh-plugin-mcp-proxy/agent', '@jshow/dsh-plugin-mcp-proxy/browser',
   ].includes(entry.options.name))
   expect(adapterEntries).toHaveLength(3)
-  expect([...fixture.ctx.loader.entries()].some(entry => entry.options.name === '@j-show/dsh-mcp-proxy-ui')).toBe(true)
+  expect([...fixture.ctx.loader.entries()].some(entry => entry.options.name === '@jshow/dsh-plugin-mcp-proxy/ui')).toBe(true)
   const peer = await fixture.local()
   expect(peer.identity.endpointId).toBeTruthy()
   const handler = fixture.ctx.connection.createSharedFetchHandler('/api')
@@ -60,7 +60,7 @@ it('mounts and disposes the connector and browser routes through one Loader entr
   expect(uiConfig.status).toBe(200)
   expect(await uiConfig.json()).toMatchObject({ pollIntervalMs: 500, maxResponseBytes: 65536 })
   expect((await handler.fetch(new Request(fixture.origin + '/api/mcp-proxy/begin', { method: 'POST', body: '{}' }))).status).toBe(401)
-  const fiber = [...fixture.ctx.loader.entries()].find(entry => entry.options.name === '@j-show/dsh-plugin-mcp-proxy')?.fiber
+  const fiber = [...fixture.ctx.loader.entries()].find(entry => entry.options.name === '@jshow/dsh-plugin-mcp-proxy')?.fiber
   if (fiber === undefined) throw new Error('Expected unified server plugin')
   await fiber.dispose()
   expect(fixture.ctx.get('mcpProxy')).toBeUndefined()
@@ -70,7 +70,7 @@ it('mounts and disposes the connector and browser routes through one Loader entr
 it('rolls back the host and API when later UI configuration fails activation', async () => {
   const fixture = await mountServer({ maxResponseBytes: 0 }, /maxResponseBytes/)
   expect(fixture.ctx.get('mcpProxy') === undefined).toBe(true)
-  expect([...fixture.ctx.loader.entries()].some(entry => entry.options.name === '@j-show/dsh-mcp-proxy-browser')).toBe(false)
+  expect([...fixture.ctx.loader.entries()].some(entry => entry.options.name === '@jshow/dsh-plugin-mcp-proxy/browser')).toBe(false)
   const handler = fixture.ctx.connection.createSharedFetchHandler('/api')
   expect((await handler.fetch(new Request(fixture.origin + '/api/mcp-proxy/begin', { method: 'POST', body: '{}' }))).status).toBe(404)
 })

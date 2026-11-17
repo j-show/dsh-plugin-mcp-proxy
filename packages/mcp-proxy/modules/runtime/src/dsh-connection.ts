@@ -1,9 +1,9 @@
 /** TLS and identity admission for one independently owned DSH socket. */
 import { credentialRef, type CredentialProvider } from '@deepseek-ai/dsh-credentials'
-import { attachLocalProxy, type LocalDshSettings } from '@j-show/mcp-proxy-local'
+import { attachLocalProxy, type LocalDshSettings } from '@jshow/app-mcp-proxy/local'
 import { ProxyIdentity, proveProxyIdentity, catalogFingerprint, decodeFrame,
   type ChannelOptions, type ProxyFrame, type ProxyChannel, type CatalogRevision,
-  type AssociationRequestId, type AuthenticatedProxy } from '@j-show/mcp-proxy-protocol'
+  type AssociationRequestId, type AuthenticatedProxy } from '@jshow/app-mcp-proxy/protocol'
 import { readFile } from 'node:fs/promises'
 import WebSocket from 'ws'
 import type { ManagedDshChannel, ManagedDshContext } from './managed-runtime.ts'

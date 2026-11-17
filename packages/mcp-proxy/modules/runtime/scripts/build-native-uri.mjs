@@ -2,4 +2,4 @@
 import { compileWindowsUriHelper } from '../src/native-builder.ts'
 import { fileURLToPath } from 'node:url'
 
-await compileWindowsUriHelper(fileURLToPath(new URL('../lib/', import.meta.url)), 30000)
+await compileWindowsUriHelper(fileURLToPath(new URL('../../../lib/', import.meta.url)), 30000)

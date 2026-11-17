@@ -1,6 +1,6 @@
 import { Context } from '@deepseek-ai/cordis'
 import Credentials from '@deepseek-ai/dsh-credentials-local'
-import { pairingChallenge, verifyRegistration, decodeFrame, type AssociationRequestId } from '@j-show/mcp-proxy-protocol'
+import { pairingChallenge, verifyRegistration, decodeFrame, type AssociationRequestId } from '@jshow/app-mcp-proxy/protocol'
 import { createServer } from 'node:https'
 import { once } from 'node:events'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'

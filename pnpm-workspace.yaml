@@ -1,7 +1,6 @@
 # Older pnpm 10 reads package.json#pnpm; keep those compatibility settings synchronized.
 packages:
   - packages/*
-  - packages/*/modules/*
 autoInstallPeers: false
 verifyDepsBeforeRun: false
 supportedArchitectures:

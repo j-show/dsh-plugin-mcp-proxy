@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, it, onTestFinished } from 'vitest'
-import { ProxyIdentity } from '@j-show/mcp-proxy-protocol'
+import { ProxyIdentity } from '@jshow/app-mcp-proxy/protocol'
 import { DeviceRegistry } from '../src/devices.ts'
 
 async function fixture() {

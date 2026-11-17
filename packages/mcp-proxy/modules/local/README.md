@@ -1,4 +1,4 @@
-# @j-show/mcp-proxy-local
+# @jshow/app-mcp-proxy/local
 
 Downstream transport adapters, shared clients, configuration and per-origin routing.
 

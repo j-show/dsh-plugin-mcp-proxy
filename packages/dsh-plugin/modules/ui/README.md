@@ -1,4 +1,4 @@
-# @j-show/dsh-mcp-proxy-ui
+# @jshow/dsh-plugin-mcp-proxy/ui
 
 DSH connection status and form/URL elicitation UI with bounded request controllers.
 

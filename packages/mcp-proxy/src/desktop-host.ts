@@ -6,8 +6,8 @@ import { pathToFileURL } from 'node:url'
 import { homedir } from 'node:os'
 import { parseArgs } from 'node:util'
 import { setTimeout as delay } from 'node:timers/promises'
-import type * as DesktopApi from '@j-show/mcp-proxy-runtime/desktop'
-import type { LocalDesktopSnapshot, LocalManagementReply } from '@j-show/mcp-proxy-local/management'
+import type * as DesktopApi from '@jshow/app-mcp-proxy/runtime/desktop'
+import type { LocalDesktopSnapshot, LocalManagementReply } from '@jshow/app-mcp-proxy/local/management'
 import type { BootstrapState } from './client/api.ts'
 import { ensureLocalProfile } from './ensure-profile.ts'
 import { applyBundledConnections } from './bundled-connections.ts'
@@ -80,7 +80,7 @@ export class DesktopHost {
     if (this.api) return this.api
     if (this.dependencies.loadApi) { this.api = await this.dependencies.loadApi(); return this.api }
     const require = createRequire(join(this.options.resources, 'dsh/package.json'))
-    this.api = await import(pathToFileURL(require.resolve('@j-show/mcp-proxy-runtime/desktop')).href) as typeof DesktopApi
+    this.api = await import(pathToFileURL(require.resolve('@jshow/app-mcp-proxy/runtime/desktop')).href) as typeof DesktopApi
     return this.api
   }
   async start(): Promise<DesktopState> {
@@ -169,7 +169,7 @@ export class DesktopHost {
     const signal = new AbortController().signal
     if (process.platform === 'win32') {
       if (remove) await api.uninstallWindowsUri(spec, 10000, signal)
-      else await api.installWindowsUri(spec, join(this.options.resources, 'dsh/node_modules/@j-show/mcp-proxy-runtime/lib/mcp-proxy.exe'), 10000, signal)
+      else await api.installWindowsUri(spec, join(this.options.resources, 'dsh/node_modules/@jshow/app-mcp-proxy/lib/mcp-proxy.exe'), 10000, signal)
     } else if (process.platform === 'darwin') {
       const local = { ...spec, userHome: homedir() }
       if (remove) await api.uninstallMacosUri(local, 10000, signal); else await api.installMacosUri(local, 10000, signal)

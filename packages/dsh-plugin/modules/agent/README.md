@@ -1,4 +1,4 @@
-# @j-show/dsh-mcp-proxy-agent
+# @jshow/dsh-plugin-mcp-proxy/agent
 
 Per-Turn endpoint binding, tool projection and session-model callbacks.
 

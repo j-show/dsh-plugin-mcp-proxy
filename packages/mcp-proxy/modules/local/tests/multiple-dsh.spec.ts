@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 import WebSocket, { WebSocketServer } from 'ws'
 import { expect, it, onTestFinished, vi } from 'vitest'
 import { acceptProxyIdentity, decodeFrame, proveProxyIdentity, ProxyIdentity,
-  type DshConnectionId, type InvocationId, type ProxyChannel, type ProxyFrame } from '@j-show/mcp-proxy-protocol'
+  type DshConnectionId, type InvocationId, type ProxyChannel, type ProxyFrame } from '@jshow/app-mcp-proxy/protocol'
 import { attachLocalProxy, LocalInvocationRoutes, LocalMcpPool, resolveLocalServices } from '../src/index.ts'
 
 it('routes identical remote call IDs and MCP sampling through two DSH channels sharing one child', async () => {

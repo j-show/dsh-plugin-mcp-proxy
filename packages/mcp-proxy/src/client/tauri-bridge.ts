@@ -1,7 +1,7 @@
 /** Narrow Tauri bridge; renderer activation and arbitrary shell access remain unavailable. */
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
-import { parseLocalManagementReply } from '@j-show/mcp-proxy-local/management'
+import { parseLocalManagementReply } from '@jshow/app-mcp-proxy/local/management'
 import type { DesktopState } from '../desktop-host.ts'
 import type { DesktopBridge, BootstrapState } from './api.ts'
 
