@@ -18,26 +18,6 @@
     },
     "./package.json": "./package.json",
     "./cordis.patch.yml": "./cordis.patch.yml",
-    "./host": {
-      "types": "./lib/host.d.ts",
-      "default": "./lib/host.js"
-    },
-    "./agent": {
-      "types": "./lib/agent.d.ts",
-      "default": "./lib/agent.js"
-    },
-    "./browser": {
-      "types": "./lib/browser.d.ts",
-      "default": "./lib/browser.js"
-    },
-    "./ui": {
-      "types": "./lib/ui.d.ts",
-      "default": "./lib/ui.js"
-    },
-    "./protocol": {
-      "types": "./lib/protocol.d.ts",
-      "default": "./lib/protocol.js"
-    },
     "./client": "./lib/client.js"
   },
   "files": [

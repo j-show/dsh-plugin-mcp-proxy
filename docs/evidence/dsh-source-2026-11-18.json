@@ -1,0 +1,15 @@
+{
+  "sourceKind": "working tree based on 7f184a3; acceptance must match the resulting commit CI",
+  "layout": "one DSH package/compiler project; ordinary src components and tests; server/client build entries only",
+  "local": {
+    "node": "22.23.5", "pnpm": "11.3.0",
+    "verify": {"exitCode": 0, "defaultPassed": 610, "defaultSkipped": 8, "developmentPassed": 61},
+    "pluginBuild": {"exitCode": 0, "entries": ["lib/index.js", "lib/client.js"]},
+    "compiledEntryImport": "passed without component package exports",
+    "lifecycleRegression": "no component Loader imports; host/agent/browser/ui order; late UI failure rollback; registry and route cleanup; parent restart",
+    "recovery": "Protocol source restored from preserved archive after a local directory-link move; no Git content difference. Locked public dependencies restored offline and all checks rerun.",
+    "license": "Removed duplicate component license/notice copies are fully covered by parent package files."
+  },
+  "includedPendingChange": "retire obsolete package-name migration and clean current descriptions; unsupported profiles remain untouched and require manual update",
+  "unverified": ["Intel DMG remains deferred", "real model / multi-device / cross-user / history / release A1-A7 unchanged", "Mac/Linux complete GUI/URI/tray matrix unchanged", "native/browser results require corresponding commit CI, not this local core test count"]
+}

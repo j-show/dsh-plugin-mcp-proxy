@@ -1,6 +1,6 @@
 # DSH server plugin
 
-Workspace/package identity: `@jshow/dsh-plugin-mcp-proxy`. Host/agent/browser/ui are ordinary source modules, loaded via this package's subpath exports; browser discovery is registered once on the parent package. No internal npm packages are bundled or separately installed.
+Workspace/package identity: `@jshow/dsh-plugin-mcp-proxy`. Host/agent/browser/ui are ordinary src/ directories composed through relative imports and parent-owned Cordis fibers; browser discovery is registered once on the parent package. No internal npm packages are bundled or separately installed.
 
 This is the single public server entry. Its private modules provide authenticated endpoint admission, per-Turn tool binding, browser association and the Web connection UI. The archive bundles them with the shared protocol, so they require no separate publication.
 

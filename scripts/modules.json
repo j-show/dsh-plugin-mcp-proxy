@@ -18,21 +18,5 @@
   {
     "directory": "packages/dsh-plugin",
     "name": "@jshow/dsh-plugin-mcp-proxy"
-  },
-  {
-    "directory": "packages/dsh-plugin/modules/host",
-    "name": "@jshow/dsh-plugin-mcp-proxy/host"
-  },
-  {
-    "directory": "packages/dsh-plugin/modules/agent",
-    "name": "@jshow/dsh-plugin-mcp-proxy/agent"
-  },
-  {
-    "directory": "packages/dsh-plugin/modules/browser",
-    "name": "@jshow/dsh-plugin-mcp-proxy/browser"
-  },
-  {
-    "directory": "packages/dsh-plugin/modules/ui",
-    "name": "@jshow/dsh-plugin-mcp-proxy/ui"
   }
 ]

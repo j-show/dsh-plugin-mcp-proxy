@@ -6,6 +6,8 @@
 随包 Node 22 继续运行既有 DSH/MCP 核心，保留多 DSH 连接、调用归属、取消、配对及文件所有权检查。
 应用不提供文件工具，文件操作由配置的下游 MCP 完成。
 仅保留 `@jshow/app-mcp-proxy`、`@jshow/dsh-plugin-mcp-proxy` 两个交付工作区。runtime/local/protocol 与 host/agent/browser/ui 都是普通源码模块，分别编入对应产物；共享协议不再作为独立包安装。
+DSH 插件组件位于 `src/`，通过相对路径和父作用域拥有的 Cordis fiber 直接组合。仅构建服务端和浏览器两个入口，组件包导出及独立编译项目已移除。
+仅支持当前包名；使用已停用包名的 profile 须手工更新，启动时不自动改写配置或身份。
 
 ```mermaid
 flowchart LR
@@ -95,7 +97,7 @@ Windows 的真实浏览器验收先运行 `pnpm test:browser --preflight`，再�
 保留冷启动、配对、GUI 两页、隐藏/托盘恢复、二次启动、重连、退出和清理，预检或跳过不算通过。
 报告在 `.artifacts/ci`，不上传 profile、身份、私钥或原始服务日志。
 验证命令日志写入忽略提交的 `logs/verify/`；手工重定向也写入 `logs/`，不在项目根目录生成日志。
-重复初始化只迁移归属于本 checkout 的旧插件引用，保留配置和身份。
+初始化遇到不支持的 bundle 引用会拒绝继续；先正常停止自有环境、备份配置，再手工更新包引用。
 
 合并后的 [LICENSE](LICENSE) 包含原创增补的 Apache-2.0 条款及上游改编部分的完整 MIT 条款/版权声明，分别适用于对应部分。
 见[第三方声明](THIRD_PARTY_NOTICES.md)。签名、公证、正式发布及剩余产品矩阵分别验收。

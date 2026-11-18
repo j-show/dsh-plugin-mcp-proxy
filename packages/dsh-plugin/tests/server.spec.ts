@@ -5,12 +5,13 @@ import Projections from '@deepseek-ai/dsh-session-projection'
 import Prompt from '@deepseek-ai/dsh-system-prompt'
 import Tools from '@deepseek-ai/dsh-tools'
 import * as Connection from '@deepseek-ai/dsh-client-connection'
-import * as Agent from '@jshow/dsh-plugin-mcp-proxy/agent'
-import * as Browser from '@jshow/dsh-plugin-mcp-proxy/browser'
-import * as Ui from '@jshow/dsh-plugin-mcp-proxy/ui'
+import * as Agent from '../src/agent/index.ts'
+import * as Browser from '../src/browser/index.ts'
+import * as Ui from '../src/ui/index.ts'
+import Host from '../src/host/index.ts'
 import { Context } from '@deepseek-ai/cordis'
 import { expect, it } from 'vitest'
-import { openHost } from '../modules/host/tests/helpers/composition.ts'
+import { openHost } from './host/helpers/composition.ts'
 import * as Server from '../src/index.ts'
 
 it('rejects mounting without a profile Loader entry before creating adapter children', async () => {
@@ -26,6 +27,7 @@ it('rejects mounting without a profile Loader entry before creating adapter chil
 })
 
 async function mountServer(ui?: unknown, expectedActivationError?: RegExp) {
+  const order:string[]=[]
   const fixture = await openHost(4, [
     { name: '@deepseek-ai/dsh-llm', module: Llm, config: () => ({}) },
     { name: '@deepseek-ai/dsh-session', module: Sessions, config: () => ({}) },
@@ -36,23 +38,26 @@ async function mountServer(ui?: unknown, expectedActivationError?: RegExp) {
     { name: '@deepseek-ai/dsh-client-connection', module: Connection, config: origin => ({ trustedHosts: [new URL(origin).host] }) },
   ], { name: '@jshow/dsh-plugin-mcp-proxy', module: Server,
     expectedActivationError,
+    observe:ctx=>{ctx.on('internal/plugin',fiber=>{
+      if(fiber.uid===null)return // The same event also reports disposal; count creation only.
+      const callback=fiber.runtime?.callback
+      const component=callback===Host?'host':callback===Agent.apply?'agent':callback===Browser.apply?'browser':callback===Ui.apply?'ui':undefined
+      if(component)order.push(component)
+    })},
     config: (origin, ref) => ({ host: { publicOrigin: origin, credentialRef: ref }, ...(ui === undefined ? {} : { ui }) }),
-    modules: [
-      ['@jshow/dsh-plugin-mcp-proxy/agent', Agent], ['@jshow/dsh-plugin-mcp-proxy/browser', Browser],
-      ['@jshow/dsh-plugin-mcp-proxy/ui', Ui],
-    ],
   })
-  return fixture
+  return {...fixture,order}
 }
 
 it('mounts and disposes the connector and browser routes through one Loader entry', async () => {
   const fixture = await mountServer()
+  expect(fixture.order).toEqual(['host','agent','browser','ui'])
   expect(fixture.ctx.get('mcpProxy')).toBeDefined()
   const adapterEntries = [...fixture.ctx.loader.entries()].filter(entry => [
-    '@jshow/dsh-plugin-mcp-proxy/host', '@jshow/dsh-plugin-mcp-proxy/agent', '@jshow/dsh-plugin-mcp-proxy/browser',
+    '../src/host/index.ts', '../src/agent/index.ts', '../src/browser/index.ts',
   ].includes(entry.options.name))
-  expect(adapterEntries).toHaveLength(3)
-  expect([...fixture.ctx.loader.entries()].some(entry => entry.options.name === '@jshow/dsh-plugin-mcp-proxy/ui')).toBe(true)
+  expect(adapterEntries).toHaveLength(0)
+  expect([...fixture.ctx.loader.entries()].some(entry => entry.options.name === '../src/ui/index.ts')).toBe(false)
   const peer = await fixture.local()
   expect(peer.identity.endpointId).toBeTruthy()
   const handler = fixture.ctx.connection.createSharedFetchHandler('/api')
@@ -63,14 +68,29 @@ it('mounts and disposes the connector and browser routes through one Loader entr
   const fiber = [...fixture.ctx.loader.entries()].find(entry => entry.options.name === '@jshow/dsh-plugin-mcp-proxy')?.fiber
   if (fiber === undefined) throw new Error('Expected unified server plugin')
   await fiber.dispose()
+  for(const component of [Host,Agent.apply,Browser.apply,Ui.apply])expect(fixture.ctx.registry.has(component)).toBe(false)
   expect(fixture.ctx.get('mcpProxy')).toBeUndefined()
   expect((await handler.fetch(new Request(fixture.origin + '/api/mcp-proxy/begin', { method: 'POST', body: '{}' }))).status).toBe(404)
 })
 
 it('rolls back the host and API when later UI configuration fails activation', async () => {
   const fixture = await mountServer({ maxResponseBytes: 0 }, /maxResponseBytes/)
+  for(const component of [Host,Agent.apply,Browser.apply,Ui.apply])expect(fixture.ctx.registry.has(component)).toBe(false)
   expect(fixture.ctx.get('mcpProxy') === undefined).toBe(true)
-  expect([...fixture.ctx.loader.entries()].some(entry => entry.options.name === '@jshow/dsh-plugin-mcp-proxy/browser')).toBe(false)
+  expect([...fixture.ctx.loader.entries()].some(entry => entry.options.name === '../src/browser/index.ts')).toBe(false)
   const handler = fixture.ctx.connection.createSharedFetchHandler('/api')
   expect((await handler.fetch(new Request(fixture.origin + '/api/mcp-proxy/begin', { method: 'POST', body: '{}' }))).status).toBe(404)
+})
+
+it('restarts the parent with joined component cleanup and the same activation order',async()=>{
+  const fixture=await mountServer()
+  const fiber=[...fixture.ctx.loader.entries()].find(entry=>entry.options.name==='@jshow/dsh-plugin-mcp-proxy')?.fiber
+  if(!fiber)throw new Error('Expected server scope')
+  await fiber.restart()
+  expect(fixture.order).toEqual(['host','agent','browser','ui','host','agent','browser','ui'])
+  expect(fixture.ctx.get('mcpProxy')).toBeDefined()
+  const handler=fixture.ctx.connection.createSharedFetchHandler('/api')
+  expect((await handler.fetch(new Request(fixture.origin+'/api/mcp-proxy/ui-config'))).status).toBe(200)
+  await fiber.dispose()
+  for(const component of [Host,Agent.apply,Browser.apply,Ui.apply])expect(fixture.ctx.registry.has(component)).toBe(false)
 })

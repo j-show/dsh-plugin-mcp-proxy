@@ -124,7 +124,7 @@ Explorer、两种浏览器、空闲服务位及无已有 URI 注册。原有安�
 
 公共诊断在 `.artifacts/ci/`，私有 profiles、CA 私钥、身份和原始日志保留在自有测试目录且不上传。
 验证命令输出保存在 `logs/verify/`，报告的 log 字段相对于 checkout 根目录；手工重定向写 `logs/`，不再写根目录 `*.log`。
-`dev:init` 可将同 checkout 自有旧插件链接对应的 profile 引用迁移至 `@jshow/dsh-plugin-mcp-proxy`；身份和自定义配置保留，未知链接或冲突身份拒绝迁移。
+`dev:init` 仅接受当前父包引用，旧包名自动迁移已取消。遇到不支持的引用，先正常停止自有环境并备份 profile 配置，再手工更新 bundle/dependency 引用及自有源码链接；保留身份和工作文件。
 当前平台实测状态及未完成的真实模型、跨用户、多设备验收见[acceptance](acceptance.md)。
 
 ### 浏览器验收实现约束

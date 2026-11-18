@@ -4,6 +4,8 @@ English | [中文](README.zh.md)
 
 A Tauri desktop connector for local MCP servers and a separately installable DSH plugin.
 The only delivery workspaces are `@jshow/app-mcp-proxy` and `@jshow/dsh-plugin-mcp-proxy`. Runtime/local/protocol and host/agent/browser/ui are ordinary source modules, bundled into these two packages. Shared protocol code is compiled into each consumer; it is not a separately installed package.
+The DSH plugin keeps server components under `src/` and composes them through relative imports and parent-owned Cordis fibers. Only its server and browser entries are built; component package exports and separate component compiler projects are retired.
+Only current package identities are supported. Existing profiles using retired names require an explicit manual update; startup never rewrites their configuration or identity.
 The application shares one MCP list across multiple DSH connections while retaining call,
 callback, cancellation and device ownership. Downstream MCPs perform file operations.
 The Rust desktop shell supervises the existing Node/DSH core; the renderer receives only a narrow management bridge.
@@ -113,7 +115,7 @@ Cold startup, pairing, both GUI pages, hide/restore, second launch, reconnect,
 tray exit and owned cleanup remain mandatory. Preflight refusal and skipped cases are not passes.
 Reports are in `.artifacts/ci`; profiles, credentials, private TLS keys and raw server logs are never uploaded.
 Verification command logs are in ignored `logs/verify/`; keep ad-hoc redirected logs under `logs/`, not the repository root.
-Development profile initialization migrates the old plugin reference only when its link belongs to this checkout, preserving configuration and identity.
+Development initialization refuses unsupported bundle references; stop the owned environment and back up configuration before updating its package references.
 
 The combined [LICENSE](LICENSE) contains Apache-2.0 for original additions and the complete MIT terms/copyright for adapted upstream code; each applies to its respective portions.
 See [third-party notices](THIRD_PARTY_NOTICES.md). Signing, notarization, release publication and the remaining product matrix require their own verification.

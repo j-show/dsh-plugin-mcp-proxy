@@ -18,18 +18,6 @@
       "path": "packages/dsh-plugin"
     },
     {
-      "path": "packages/dsh-plugin/modules/host"
-    },
-    {
-      "path": "packages/dsh-plugin/modules/agent"
-    },
-    {
-      "path": "packages/dsh-plugin/modules/browser"
-    },
-    {
-      "path": "packages/dsh-plugin/modules/ui"
-    },
-    {
       "path": "scripts"
     }
   ]

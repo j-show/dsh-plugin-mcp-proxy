@@ -1,6 +1,7 @@
 # Build scripts
 
 - Build only the two parent workspaces and public npm dependencies. modules.json is a source/subpath registry, not a package list; internal directories have no package manifests, versions or packing step.
+- DSH packaging has only index/client outputs, with component code bundled from src/. Do not restore per-component build entries or require component package files in archive validation.
 - Package the combined LICENSE at desktop resources and plugin output. Never substitute it for dependency licenses. Plugin archives require all component/client entries and must not contain internal workspace packages.
 - Keep intermediates/reports under .artifacts, command logs under logs/verify and deliveries under release. Report log paths relative to the checkout root; never generate root-level *.log. Validate dependency closure before packaging.
 - Development initialization preserves existing settings/identities and refuses unowned or linked paths. Unit trust/proxy checks leave certificate stores unchanged; browser acceptance uses the temporary CA ownership contract below.

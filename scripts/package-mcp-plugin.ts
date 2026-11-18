@@ -15,6 +15,7 @@ export async function packageMcpPlugin(root:string,_work:string,output:string,ow
 }
 export function validateMcpPluginMembers(members:readonly string[]):void{
  if(members.some(member=>!member.startsWith('package/')||member.split('/').includes('..')))throw new Error('MCP archive contains a path outside its package')
- for(const file of ['lib/index.js','lib/host.js','lib/agent.js','lib/browser.js','lib/ui.js','lib/client.js','cordis.patch.yml','LICENSE'])if(!members.includes('package/'+file))throw new Error('Bundled entry or license missing: '+file)
- if(members.some(member=>member.startsWith('package/node_modules/@j-show/')||member.startsWith('package/node_modules/@jshow/')))throw new Error('Internal package leaked into archive')
+ for(const file of ['lib/index.js','lib/client.js','cordis.patch.yml','LICENSE'])if(!members.includes('package/'+file))throw new Error('Bundled entry or license missing: '+file)
+ // Reject nested current delivery packages.
+ if(members.some(member=>member.startsWith('package/node_modules/@jshow/')))throw new Error('Internal package leaked into archive')
 }

@@ -66,11 +66,11 @@ flowchart LR
 | --- | --- | --- |
 | 下游传输 | stdio、Streamable HTTP、旧 HTTP＋SSE；通过锁定的官方 SDK 协商和兼容适配。不是所有协议修订均已逐一产品验收 | [drivers.ts](../packages/mcp-proxy/modules/local/src/drivers.ts) |
 | tools | 发现分页、稳定服务别名、工具调用、输入输出 schema；原始工具扩展信息保留在聚合目录中 | [pool.ts](../packages/mcp-proxy/modules/local/src/pool.ts) |
-| 模型可见工具 | 使用 `mcp__<别名>__<工具名>`；非法字符或过长名称规范化并附哈希。传入公共 DSH 适配器的是名称、描述及输入输出 schema，不承诺把所有 annotations、execution、`_meta` 都作为模型字段暴露 | [agent/index.ts](../packages/dsh-plugin/modules/agent/src/index.ts) |
+| 模型可见工具 | 使用 `mcp__<别名>__<工具名>`；非法字符或过长名称规范化并附哈希。传入公共 DSH 适配器的是名称、描述及输入输出 schema，不承诺把所有 annotations、execution、`_meta` 都作为模型字段暴露 | [agent/index.ts](../packages/dsh-plugin/src/agent/index.ts) |
 | 工具结果 | 聚合通道保留 content、structuredContent、isError、`_meta` 及允许的 JSON 扩展。DSH/模型展示受公共适配器及模型模态支持限制，不能把原始结果保留理解为所有内容都可直接输入模型 | [protocol.ts](../packages/mcp-proxy/modules/protocol/src/protocol.ts) |
 | 任务式工具 | 本地支持需要任务生命周期的旧协议工具，并保持最终结果、取消与原调用关联；现代 input-required 续接保留原始调用，不重新提交初始操作 | [legacy-tasks.ts](../packages/mcp-proxy/modules/local/src/legacy-tasks.ts)、[drivers.ts](../packages/mcp-proxy/modules/local/src/drivers.ts) |
-| sampling | 使用接收回调时的会话模型；支持文本与 PNG/JPEG/WebP/GIF 图片输入（图片需要附件服务），返回文本。拒绝 sampling tools/toolChoice，不支持音频输入或任意模型输出；不依据 MCP 偏好更换模型提供方 | [sampling.ts](../packages/dsh-plugin/modules/agent/src/sampling.ts) |
-| elicitation | 表单和 URL 模式；表单 UI 支持字符串、数值/整数、布尔、字符串枚举及枚举多选，不是任意嵌套 JSON Schema 编辑器。URL 由用户明确打开，服务器不抓取，历史不保存其认证 URL | [fields](../packages/dsh-plugin/modules/ui/src/client/elicitation-fields.ts)、[elicitation.ts](../packages/dsh-plugin/modules/agent/src/elicitation.ts) |
+| sampling | 使用接收回调时的会话模型；支持文本与 PNG/JPEG/WebP/GIF 图片输入（图片需要附件服务），返回文本。拒绝 sampling tools/toolChoice，不支持音频输入或任意模型输出；不依据 MCP 偏好更换模型提供方 | [sampling.ts](../packages/dsh-plugin/src/agent/sampling.ts) |
+| elicitation | 表单和 URL 模式；表单 UI 支持字符串、数值/整数、布尔、字符串枚举及枚举多选，不是任意嵌套 JSON Schema 编辑器。URL 由用户明确打开，服务器不抓取，历史不保存其认证 URL | [fields](../packages/dsh-plugin/src/client/elicitation-fields.ts)、[elicitation.ts](../packages/dsh-plugin/src/agent/elicitation.ts) |
 | roots | 初始化前后均由本地按服务配置回答，转换为文件 URI；不是目录沙箱或权限限制 | [callbacks.ts](../packages/mcp-proxy/modules/local/src/callbacks.ts) |
 | 通知及动态目录 | 不提供任意 MCP 通知的透明隧道。配置增删、恢复会重建并确认完整目录；不承诺下游自发 tools/list_changed 或 roots 变更通知的端到端热更新 | [pool.ts](../packages/mcp-proxy/modules/local/src/pool.ts)、[managed-runtime.ts](../packages/mcp-proxy/modules/runtime/src/managed-runtime.ts) |
 | 断线及重启 | 恢复身份和新连接可用性；不重放外部调用。页面关闭不终止存活调用；进程重启不恢复已丢失的 socket、调用或人工等待续接 | [design](design.md#持久化与恢复) |

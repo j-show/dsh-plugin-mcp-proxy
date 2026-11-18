@@ -1,6 +1,6 @@
 # Local MCP desktop client
 
-Workspace/package identity: `@jshow/app-mcp-proxy`. Runtime/protocol/local are ordinary source modules built into its `lib/` exports. This parent is also the local DSH profile bundle; legacy profile references migrate without replacing identity or custom settings.
+Workspace/package identity: `@jshow/app-mcp-proxy`. Runtime/protocol/local are ordinary source modules built into its `lib/` exports. This parent is the only supported local DSH profile bundle. Unsupported profiles must be updated manually; startup preserves their identity and custom settings.
 
 Tauri owns the window, tray, single instance and restricted renderer bridge.
 The bundled Node 22 supervisor starts the existing DSH profile; the MCP core,

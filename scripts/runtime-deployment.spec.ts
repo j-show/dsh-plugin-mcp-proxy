@@ -38,13 +38,13 @@ it('restores a missing declared package without copying its source node_modules'
 
 it('removes unreferenced workspace hoists before materializing links without touching source packages',async()=>{
   const {stage,source}=await setup()
-  const scope=join(stage,'node_modules/@j-show');await mkdir(scope)
+  const scope=join(stage,'node_modules/@fixture');await mkdir(scope)
   await symlink(join(source,'package'),join(scope,'server'),process.platform==='win32'?'junction':'dir')
-  await mkdir(join(stage,'node_modules/.pnpm/node_modules/@j-show/server'),{recursive:true})
-  await writeFile(join(stage,'node_modules/.pnpm/node_modules/@j-show/server/source.ts'),'not a runtime dependency')
-  await pruneDeploymentWorkspaces(stage,new Set(['@j-show/server']))
+  await mkdir(join(stage,'node_modules/.pnpm/node_modules/@fixture/server'),{recursive:true})
+  await writeFile(join(stage,'node_modules/.pnpm/node_modules/@fixture/server/source.ts'),'not a runtime dependency')
+  await pruneDeploymentWorkspaces(stage,new Set(['@fixture/server']))
   await expect(lstat(join(scope,'server'))).rejects.toMatchObject({code:'ENOENT'})
-  await expect(lstat(join(stage,'node_modules/.pnpm/node_modules/@j-show/server'))).rejects.toMatchObject({code:'ENOENT'})
+  await expect(lstat(join(stage,'node_modules/.pnpm/node_modules/@fixture/server'))).rejects.toMatchObject({code:'ENOENT'})
   expect(await readFile(join(source,'package/index.js'),'utf8')).toContain('value = 1')
 })
 

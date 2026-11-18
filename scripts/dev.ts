@@ -93,7 +93,7 @@ async function run(): Promise<void> {
   if (command === 'check') {
     await runMcpBuildCommand(process.execPath, [join(root, 'node_modules/vitest/vitest.mjs'), 'run',
       'scripts/development.spec.ts', 'scripts/development-proxy.spec.ts', 'scripts/development-signals.spec.ts', 'scripts/download-runtime.spec.ts', 'packages/mcp-proxy/modules/local/tests/tunnel.spec.ts',
-      'packages/dsh-plugin/modules/browser/tests/association.spec.ts', 'packages/dsh-plugin/tests/server.spec.ts'], root)
+      'packages/dsh-plugin/tests/browser/association.spec.ts', 'packages/dsh-plugin/tests/server.spec.ts'], root)
     return
   }
   if (!values['skip-build']) await buildLibraries(root, true)

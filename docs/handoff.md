@@ -5,7 +5,7 @@
 
 ## 目标与入口
 
-仓库只有 packages/dsh-plugin、packages/mcp-proxy 两个交付包。modules/ 下无独立 package.json 或版本，组件通过父包子路径加载，共享协议源码分别编入两个产物。构建只打包父包，浏览器模块元数据在服务端父包登记一次。已有本地 runtime profile 的旧 bundle 引用在初始化时迁移，身份和用户配置保留；这些变更不关闭后文暂缓/待验事项。
+仓库只有 packages/dsh-plugin、packages/mcp-proxy 两个交付包。DSH 插件的 src/host、agent、browser、ui 通过相对路径直接组合，浏览器源码在 src/client；只有一个父包编译项目及服务端/浏览器入口。应用仍按源码模块划分 runtime/local/protocol，共享协议分别编入两个产物。浏览器元数据仅在插件父包登记一次。旧包名自动迁移已取消，旧 profile 须手工更新当前父包引用并保留身份/配置；暂缓及待验事项不变。
 
 按 [requirements](requirements.md) 的 B/M 编号确定行为，[design](design.md) 和
 [configuration](configuration.md) 说明实现；[acceptance](acceptance.md) 列出未完成产品验收。

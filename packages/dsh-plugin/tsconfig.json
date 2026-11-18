@@ -11,18 +11,6 @@
   ],
   "references": [
     {
-      "path": "modules/host/tsconfig.json"
-    },
-    {
-      "path": "modules/agent/tsconfig.json"
-    },
-    {
-      "path": "modules/browser/tsconfig.json"
-    },
-    {
-      "path": "modules/ui/tsconfig.host.json"
-    },
-    {
       "path": "../mcp-proxy/modules/protocol/tsconfig.json"
     }
   ]

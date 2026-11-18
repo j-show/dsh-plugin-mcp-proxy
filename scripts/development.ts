@@ -104,22 +104,7 @@ export async function initializeDevelopmentProfiles(repository: string, p: Devel
       const stat = await lstat(join(directory, file))
       if (!stat.isFile() || stat.isSymbolicLink()) throw new Error('Development profile files must be regular files')
     }
-    let manifest = JSON.parse(await readFile(filename, 'utf8'))
-    const legacy=profile.name==='web'?'@j-show/dsh-plugin-mcp-proxy':'@j-show/mcp-proxy-runtime'
-    if(manifest.dsh?.profile?.bundles?.includes(legacy)){
-      const oldLink=join(directory,'node_modules',legacy),target=resolve(repository,profile.local)
-      const oldTarget=profile.name==='web'?target:resolve(repository,'packages/mcp-proxy/modules/runtime')
-      if(!(await lstat(oldLink)).isSymbolicLink()||await realpath(oldLink)!==await realpath(oldTarget))throw new Error('Legacy development plugin is not owned by this checkout')
-      if(manifest.dependencies?.[profile.package]||manifest.dsh.profile.bundles.includes(profile.package))throw new Error('Conflicting development plugin identities; inspect before migrating')
-      const version=manifest.dependencies?.[legacy]
-      if(typeof version!=='string')throw new Error('Legacy development plugin dependency missing')
-      const newLink=join(directory,'node_modules',profile.package)
-      if(await exists(newLink)&&await realpath(newLink)!==await realpath(target))throw new Error('Development profile package points to another checkout')
-      const {[legacy]:_old,...dependencies}=manifest.dependencies
-      manifest={...manifest,dependencies:{...dependencies,[profile.package]:version},dsh:{...manifest.dsh,
-        profile:{...manifest.dsh.profile,bundles:manifest.dsh.profile.bundles.map((name:string)=>name===legacy?profile.package:name)}}}
-      await writeFile(filename,JSON.stringify(manifest,null,2)+'\n')
-    }
+    const manifest = JSON.parse(await readFile(filename, 'utf8'))
     if (!manifest.dsh?.profile?.bundles?.includes(profile.package)) throw new Error('Existing development profile is missing its local bundle; inspect before changing it')
     if (!manifest.dependencies?.[profile.package]) {
       await writeFile(filename, JSON.stringify({ ...manifest, dependencies: { ...manifest.dependencies, [profile.package]: '0.1.0' } }, null, 2) + '\n')

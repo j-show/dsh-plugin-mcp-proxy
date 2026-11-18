@@ -45,33 +45,6 @@
       "@jshow/dsh-plugin-mcp-proxy": [
         "./packages/dsh-plugin/src/index.ts"
       ],
-      "@jshow/dsh-plugin-mcp-proxy/*": [
-        "./packages/dsh-plugin/src/*"
-      ],
-      "@jshow/dsh-plugin-mcp-proxy/host": [
-        "./packages/dsh-plugin/modules/host/src/index.ts"
-      ],
-      "@jshow/dsh-plugin-mcp-proxy/host/*": [
-        "./packages/dsh-plugin/modules/host/src/*"
-      ],
-      "@jshow/dsh-plugin-mcp-proxy/agent": [
-        "./packages/dsh-plugin/modules/agent/src/index.ts"
-      ],
-      "@jshow/dsh-plugin-mcp-proxy/agent/*": [
-        "./packages/dsh-plugin/modules/agent/src/*"
-      ],
-      "@jshow/dsh-plugin-mcp-proxy/browser": [
-        "./packages/dsh-plugin/modules/browser/src/index.ts"
-      ],
-      "@jshow/dsh-plugin-mcp-proxy/browser/*": [
-        "./packages/dsh-plugin/modules/browser/src/*"
-      ],
-      "@jshow/dsh-plugin-mcp-proxy/ui": [
-        "./packages/dsh-plugin/modules/ui/src/index.ts"
-      ],
-      "@jshow/dsh-plugin-mcp-proxy/ui/*": [
-        "./packages/dsh-plugin/modules/ui/src/*"
-      ],
       "@jshow/app-mcp-proxy/runtime/desktop": [
         "./packages/mcp-proxy/modules/runtime/src/desktop.ts"
       ],

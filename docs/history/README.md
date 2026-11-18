@@ -17,10 +17,10 @@
 | 内容 | 对现行开发的影响 |
 | --- | --- |
 | 两个完整交付物、方案 A、B18—B20 及插件方式 | 保留已确认目标；内部模块不是独立部署产品 |
-| macOS/Linux 暂缓、Windows 单 Electron EXE | 当前交付范围以 Windows x64 为准；原跨平台方案仅保留历史 |
+| M4 Tauri 与跨平台构建 | 取代历史 Electron/单 EXE 限定；Windows x86/x64、Mac ARM、Ubuntu 原生验证范围见现行验收，Intel DMG 仍按用户决定暂缓 |
 | 多 DSH、共享 MCP、严格来源归属 | B23—B28 生效；按连接和代际区分调用，不改变下游参数 |
 | 首地址自动连接及退出无二次确认 | 自动激活替代早期的首次本地允许/拒绝选择；手动断开仍保留；退出直接清理 |
-| 独立开源项目 | 包名改为 `@j-show/*`，目录改为本项目两个 packages；消费方只使用产物 |
+| 两个交付包 | 当前仅有 `@jshow/dsh-plugin-mcp-proxy` 与 `@jshow/app-mcp-proxy`；内部目录为普通源码模块，不再是独立包 |
 | 独立应用状态目录 | 当前为 `%LOCALAPPDATA%/McpProxy/`；历史 CurrentAgent 目录不是新默认值 |
 | 固定 DSH 最小补丁获批准 | 仅补充四个必需事件名；开发依赖和目标安装分别验证，不弱化恢复规则 |
 

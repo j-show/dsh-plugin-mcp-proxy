@@ -4,7 +4,7 @@
 
 ## 部署与模块
 
-仓库只有应用与 DSH 插件两个 workspace。`modules/` 仅划分源码职责和类型检查边界，没有独立包清单或版本。应用导出 runtime/local/protocol 子路径，插件导出 host/agent/browser/ui 子路径；共享协议分别 bundle 到两个父包。客户端发现元数据只登记在插件父包，子组件仍保留 Loader 子作用域及原有释放/回滚顺序。
+仓库只有应用与 DSH 插件两个 workspace。`modules/` 仅划分源码职责和类型检查边界，没有独立包清单或版本。应用导出 runtime/local/protocol 子路径，插件通过相对路径直接组合 host/agent/browser/ui 源码；共享协议分别 bundle 到两个父包。客户端发现元数据只登记在插件父包，子组件使用父作用域拥有的 Cordis fiber，保留启动、释放和失败回滚顺序。
 
 ```mermaid
 flowchart TB
@@ -36,12 +36,12 @@ flowchart TB
 | `packages/mcp-proxy/modules/local` | MCP SDK 适配、配置解析、共享池、串行调用、roots、管理事务与路由 |
 | `packages/mcp-proxy/modules/runtime` | dsh profile、凭据、机器级控制入口、每 DSH 连接、配对、管理和恢复 |
 | `packages/dsh-plugin/src` | 一个公开 Cordis 组合入口，拥有子插件的挂载与释放 |
-| `packages/dsh-plugin/modules/host` | 接入、设备公钥登记、目录缓存、关联事务、调用与人工等待 |
-| `packages/dsh-plugin/modules/agent` | 输入/轮次绑定、工具注册、sampling、elicitation 事件 |
-| `packages/dsh-plugin/modules/browser` | 既有已认证 Connection 请求上的关联及 prompt 适配 |
-| `packages/dsh-plugin/modules/ui` | 浏览器连接状态、设置入口和 elicitation UI |
+| `packages/dsh-plugin/src/host` | 接入、设备公钥登记、目录缓存、关联事务、调用与人工等待 |
+| `packages/dsh-plugin/src/agent` | 输入/轮次绑定、工具注册、sampling、elicitation 事件 |
+| `packages/dsh-plugin/src/browser` | 既有已认证 Connection 请求上的关联及 prompt 适配 |
+| `packages/dsh-plugin/src/ui` | 浏览器连接状态、设置入口和 elicitation UI |
 
-仅两个产品交付。七个内部模块是私有 workspace 单元，随父产物打包。源码只依赖公共固定版本 DSH 包，不从消费项目解析实现。
+仅两个产品交付。内部目录只划分源码职责，不是私有 workspace；DSH 插件组件直接组合，应用源码模块随父产物打包。源码只依赖公共固定版本 DSH 包，不从消费项目解析实现。
 
 ## 桌面进程、运行时与单实例
 

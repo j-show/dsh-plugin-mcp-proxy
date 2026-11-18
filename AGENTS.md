@@ -2,6 +2,8 @@
 
 - Local desktop sources belong under packages/mcp-proxy; DSH adapters belong under packages/dsh-plugin. Internal modules are bundled into the two deliverables, not published separately.
 - Only packages/mcp-proxy and packages/dsh-plugin are delivery workspaces. Internal modules are ordinary source directories exposed through parent subpaths or bundled inline; do not recreate internal package manifests. Repository command logs belong under logs/; private profile logs retain their isolated locations.
+- DSH components live under packages/dsh-plugin/src and use relative imports/direct composition; do not recreate component Loader entries, self-package imports or independent compiler projects. Preserve activation order, rollback and joined disposal.
+- Support only current parent package identities; automatic package-name migration is retired. Refuse unsupported profiles without rewriting their configuration or identity, and direct users to update their own profile explicitly.
 - Never reference a consumer checkout, copy credentials, or commit generated runtimes. Depend on public versioned DSH packages.
 - Preserve complete upstream MIT terms/copyright in each combined LICENSE; Apache-2.0 applies to original additions. Ship the combined file in every deliverable and retain dependency-specific notices. Update README and focused tests with changes.
 - Use Node 22.x >=22.19 and pnpm >=10. Keep shared orchestration in Node.js; PowerShell dependencies require explicit user approval.
